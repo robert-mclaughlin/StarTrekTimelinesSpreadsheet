@@ -50,9 +50,9 @@ const std::array<Crew, SEARCH_DEPTH> &SortedCrew::get(const char *skillName) con
     }
 }
 
-VoyageCalculator::VoyageCalculator(std::istream &stream) noexcept
+VoyageCalculator::VoyageCalculator(const char* jsonInput) noexcept
 {
-    stream >> j;
+    j = json::parse(jsonInput);
     primarySkill = j["voyage_skills"]["primary_skill"];
     secondarySkill = j["voyage_skills"]["secondary_skill"];
     shipAntiMatter = j["shipAM"];
@@ -95,6 +95,7 @@ VoyageCalculator::VoyageCalculator(std::istream &stream) noexcept
     for (int i = 0; i < SLOT_COUNT; i++)
     {
         slotRoster[i] = &sortedRoster.get(j["voyage_crew_slots"][i]["skill"].get<std::string>().c_str());
+        slotNames[i] = j["voyage_crew_slots"][i]["name"].get<std::string>();
     }
 }
 
@@ -104,7 +105,7 @@ void VoyageCalculator::fillSlot(size_t slot) noexcept
     {
         if (slot == 0)
         {
-            std::cout << "Processing " << crew.id << "\n";
+            //std::cout << "Processing " << crew.id << "\n";
         }
 
         bool alreadyIn = false;
@@ -136,6 +137,7 @@ void VoyageCalculator::fillSlot(size_t slot) noexcept
             {
                 bestconsidered = considered;
                 bestscore = score;
+                progressUpdate(bestconsidered);
             }
         }
 

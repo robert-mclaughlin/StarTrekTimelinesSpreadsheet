@@ -1,10 +1,9 @@
 #ifndef VOYAGE_CALCULATOR_H
 #define VOYAGE_CALCULATOR_H
-#include <fstream>
-#include <iostream>
 #include <array>
 #include <vector>
 #include <algorithm>
+#include <functional>
 
 #include "json.hpp"
 
@@ -44,10 +43,16 @@ struct SortedCrew
 class VoyageCalculator
 {
   public:
-    VoyageCalculator(std::istream &stream) noexcept;
+    VoyageCalculator(const char* jsonInput) noexcept;
 
-    std::array<const Crew *, SLOT_COUNT> Calculate() noexcept
+    const std::string& GetSlotName(int index) const noexcept
     {
+        return slotNames[index];
+    }
+
+    std::array<const Crew *, SLOT_COUNT> Calculate(std::function<void(const std::array<const Crew *, SLOT_COUNT>&)> progressCallback) noexcept
+    {
+        progressUpdate = progressCallback;
         fillSlot(0);
         return bestconsidered;
     }
@@ -58,6 +63,8 @@ class VoyageCalculator
 
     nlohmann::json j;
 
+    std::function<void(const std::array<const Crew *, SLOT_COUNT>&)> progressUpdate;
+    std::array<std::string, SLOT_COUNT> slotNames;
     std::array<const Crew *, SLOT_COUNT> considered; // TODO: per-thread
     std::string primarySkill;
     std::string secondarySkill;

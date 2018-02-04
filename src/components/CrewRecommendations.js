@@ -202,11 +202,23 @@ export class VoyageCrew extends React.Component {
 				iconUrl: crew.iconUrl
 			})),
 			voyage_skills: STTApi.playerData.character.voyage_descriptions[0].skills,
-			voyage_crew_slots: STTApi.playerData.character.voyage_descriptions[0].crew_slots
+			voyage_crew_slots: STTApi.playerData.character.voyage_descriptions[0].crew_slots,
+			shipAM: this.state.voyageRecommendations.bestShips[0].score // TODO: where should this come from (keep it in JS?)
 		}
 
-		const fs = require('fs');
-		fs.writeFile('voyageRecommendations.json', JSON.stringify(dataToExport), function (err) {
+		//const fs = require('fs');
+		//fs.writeFile('voyageRecommendations.json', JSON.stringify(dataToExport), function (err) {
+		//});
+
+		const NativeExtension = require('electron').remote.require('native');
+		NativeExtension.calculateVoyageRecommendations(JSON.stringify(dataToExport), result => {
+			console.log("FINAL:" + result);
+			// TODO: map what we get from C++ into something we can display
+			/*this.setState({ voyageRecommendations: {
+				crewSelection:
+			}});*/
+		}, progressResult => {
+			console.log(progressResult);
 		});
 	}
 }

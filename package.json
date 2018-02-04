@@ -50,6 +50,7 @@
     "exceljs": "latest",
     "fb": "latest",
     "json2csv": "latest",
+    "native": "file:native",
     "office-ui-fabric-react": "^4.0.0",
     "pubnub": "latest",
     "sttapi": "file:sttapi",
