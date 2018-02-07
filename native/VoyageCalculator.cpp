@@ -1,4 +1,5 @@
 #include "VoyageCalculator.h"
+#include <cmath>
 
 using json = nlohmann::json;
 
@@ -12,7 +13,7 @@ double Crew::score(const char *skill, const char *primarySkill, const char *seco
            get(skill) * 3 + get(primarySkill) * 2.5 + get(secondarySkill) * 1.5;
 }
 
-int16_t Crew::get(const char *skillName) const noexcept
+unsigned int Crew::get(const char *skillName) const noexcept
 {
     switch (skillName[0])
     {
@@ -27,7 +28,7 @@ int16_t Crew::get(const char *skillName) const noexcept
     case 's':
         return skillName[1] == 'c' ? science_skill : security_skill;
     default:
-        return -1;
+        assert(false);
     }
 }
 
@@ -94,7 +95,7 @@ VoyageCalculator::VoyageCalculator(const char* jsonInput) noexcept
     std::partial_sort_copy(roster.begin(), roster.end(), sortedRoster.medicine_skill.begin(), sortedRoster.medicine_skill.end(),
                            [&](Crew i, Crew j) { return (i.score("medicine_skill", primarySkill.c_str(), secondarySkill.c_str()) > j.score("medicine_skill", primarySkill.c_str(), secondarySkill.c_str())); });
 
-    for (int i = 0; i < SLOT_COUNT; i++)
+    for (size_t i = 0; i < SLOT_COUNT; i++)
     {
         slotRoster[i] = &sortedRoster.get(j["voyage_crew_slots"][i]["skill"].get<std::string>().c_str());
         slotNames[i] = j["voyage_crew_slots"][i]["name"].get<std::string>();
@@ -149,7 +150,7 @@ void VoyageCalculator::fillSlot(size_t slot) noexcept
 
 double VoyageCalculator::calculateDuration(std::array<const Crew *, SLOT_COUNT> complement) noexcept
 {
-    int32_t shipAM = shipAntiMatter;
+    unsigned int shipAM = shipAntiMatter;
     Crew totals;
     for (const auto &crew : complement)
     {
@@ -166,87 +167,173 @@ double VoyageCalculator::calculateDuration(std::array<const Crew *, SLOT_COUNT> 
         }
     }
 
-    // This is using Chewable C++'s values from here https://docs.google.com/spreadsheets/d/1IS2qEggZKo1P1kBJq-qoDxJvxtKfQXpfVna9z4E_dNo/edit#gid=0
-    auto H3 = 560;          // Cycle Length (s)
-    auto H4 = 6.4286;       // Cycles Per Hour
-    auto H5 = 6;            // Hazards/cycle
-    auto H6 = 18;           // Activity/cycle
-    auto H7 = 0.5;          // Dilemmas/hr
-    auto H8 = 38.0714;      // Hazards/hr
-    auto H9 = 1246;         // Hazard Diff/hr
-    auto H10 = 5;           // Hazard AM Pass
-    auto H11 = 30;          // Hazard AM Fail
-    auto H12 = 115.7142857; // AM/hour cost
-    auto H13 = 0.35;        // Pri. Skill Chance
-    auto H14 = 0.25;        // Sec. Skill Chance
-    auto H15 = 0.1;         // Other Skill Chance
+    unsigned int PrimarySkill = totals.get(primarySkill.c_str());
+    unsigned int SecondarySkill = totals.get(secondarySkill.c_str());
+    unsigned int OtherSkills = 0;
+    unsigned int MaxSkill = 0;
 
-    auto PrimarySkill = totals.get(primarySkill.c_str());
-    auto SecondarySkill = totals.get(secondarySkill.c_str());
-    auto OtherSkills = 0;
-    auto MaxSkill = 0;
+    auto lambdaSkills = [&](unsigned int skill) {
+        if ((skill != PrimarySkill) && (skill != SecondarySkill))
+            OtherSkills += skill;
 
-    // TODO: lots of repetition here, JS code is cleaner; perhaps templates?
-    if ((totals.command_skill != PrimarySkill) && (totals.command_skill != SecondarySkill))
-    {
-        OtherSkills += totals.command_skill;
-    }
-    if (totals.command_skill > MaxSkill)
-    {
-        MaxSkill = totals.command_skill;
-    }
+        if (skill > MaxSkill)
+            MaxSkill = skill;
+    };
 
-    if ((totals.science_skill != PrimarySkill) && (totals.science_skill != SecondarySkill))
-    {
-        OtherSkills += totals.science_skill;
-    }
-    if (totals.science_skill > MaxSkill)
-    {
-        MaxSkill = totals.science_skill;
-    }
+    lambdaSkills(totals.command_skill);
+    lambdaSkills(totals.science_skill);
+    lambdaSkills(totals.security_skill);
+    lambdaSkills(totals.engineering_skill);
+    lambdaSkills(totals.diplomacy_skill);
+    lambdaSkills(totals.medicine_skill);
 
-    if ((totals.security_skill != PrimarySkill) && (totals.security_skill != SecondarySkill))
-    {
-        OtherSkills += totals.security_skill;
-    }
-    if (totals.security_skill > MaxSkill)
-    {
-        MaxSkill = totals.security_skill;
-    }
+    // Code translated from Chewable C++'s JS implementation from https://codepen.io/somnivore/pen/Nabyzw
+    // TODO: make this prettier
 
-    if ((totals.engineering_skill != PrimarySkill) && (totals.engineering_skill != SecondarySkill))
-    {
-        OtherSkills += totals.engineering_skill;
-    }
-    if (totals.engineering_skill > MaxSkill)
-    {
-        MaxSkill = totals.engineering_skill;
-    }
+	//let maxExtends = 100000
+	unsigned int maxExtends = 0; // we only care about the first one atm
+		
+	// variables
+	unsigned int ticksPerCycle = 28;
+	unsigned int secondsPerTick = 20;
+	unsigned int cycleSeconds = ticksPerCycle*secondsPerTick;
+	double cyclesPerHour = 60*60/cycleSeconds;
+	unsigned int hazPerCycle = 6;
+	double activityPerCycle = 18;
+	double dilemmasPerHour = 0.5;
+	double hazPerHour = hazPerCycle*cyclesPerHour-dilemmasPerHour;
+	unsigned int hazSkillPerHour = 1250;
+	double hazSkillVariance = 0.15; // todo: from input
+	unsigned int hazAmPass = 5;
+	unsigned int hazAmFail = 30;
+	double activityAmPerHour = activityPerCycle*cyclesPerHour;
+	unsigned int minPerHour = 60;
+	double psChance = 0.35;
+	double ssChance = 0.25;
+	double osChance = 0.1;
+	unsigned int dilPerMin = 5;
 
-    if ((totals.diplomacy_skill != PrimarySkill) && (totals.diplomacy_skill != SecondarySkill))
+	unsigned int elapsedHours = 0; // TODO: deal with this later
+	unsigned int elapsedHazSkill = elapsedHours*hazSkillPerHour;
+	
+	MaxSkill = std::max((unsigned int)0, MaxSkill - elapsedHazSkill);
+	double endVoySkill = MaxSkill*(1+hazSkillVariance);
+
+    std::vector<unsigned int> skills = {totals.command_skill, totals.science_skill, totals.security_skill, totals.engineering_skill, totals.diplomacy_skill, totals.medicine_skill};
+    std::vector<double> skillChances = {osChance,osChance,osChance,osChance,osChance,osChance};
+
+    for (size_t i = 0; i <= skills.size(); i++)
     {
-        OtherSkills += totals.diplomacy_skill;
-    }
-    if (totals.diplomacy_skill > MaxSkill)
-    {
-        MaxSkill = totals.diplomacy_skill;
+        if (skills[i] == PrimarySkill)
+            skillChances[i] = psChance;
+
+        if (skills[i] == SecondarySkill)
+            skillChances[i] = ssChance;
     }
 
-    if ((totals.medicine_skill != PrimarySkill) && (totals.medicine_skill != SecondarySkill))
+	double totalRefillCost = 0;
+	double voyTime = 0;
+	for (size_t extend = 0; extend <= maxExtends; extend++)
     {
-        OtherSkills += totals.medicine_skill;
-    }
-    if (totals.medicine_skill > MaxSkill)
-    {
-        MaxSkill = totals.medicine_skill;
+		// converging loop - refine calculation based on voyage time every iteration
+		unsigned int tries = 0;
+		while (true)
+        {
+			tries++;
+			if (tries == 100)
+            {
+				//console.error("Something went wrong! Check your inputs.")
+				break;
+			}
+
+			//test.text += Math.floor(endVoySkill) + " "
+			double am = shipAM + shipAM*extend;
+			for (size_t i = 0; i < 6; i++)
+            {
+				unsigned int skill = skills[i];
+				skill = std::max((unsigned int)0, skill-elapsedHazSkill);
+				double chance = skillChances[i];
+
+				// skill amount for 100% pass
+				double passSkill = std::min(endVoySkill,skill*(1-hazSkillVariance));
+
+				// skill amount for RNG pass
+				// (compute passing proportion of triangular RNG area - integral of x)
+				double skillRngRange = skill*hazSkillVariance*2;
+				double lostRngProportion = 0;
+				if (skillRngRange > 0)
+                { // avoid division by 0
+					lostRngProportion = std::max(0.0, std::min(1.0, (skill*(1+hazSkillVariance) - endVoySkill) / skillRngRange));
+				}
+				double skillPassRngProportion = 1 - lostRngProportion*lostRngProportion;
+				passSkill += skillRngRange*skillPassRngProportion/2;
+
+				// am gained for passing hazards
+				am += passSkill * chance / hazSkillPerHour * hazPerHour * hazAmPass;
+
+				// skill amount for 100% hazard fail
+				double failSkill = std::max(0.0, endVoySkill-skill*(1+hazSkillVariance));
+				// skill amount for RNG fail
+				double skillFailRngProportion = std::pow(1-lostRngProportion, 2);
+				failSkill += skillRngRange*skillFailRngProportion/2;
+
+				// am lost for failing hazards
+				am -= failSkill * chance / hazSkillPerHour * hazPerHour * hazAmFail;
+			}
+
+			double amLeft = am - endVoySkill/hazSkillPerHour*activityAmPerHour;
+			double timeLeft = amLeft / (hazPerHour*hazAmFail + activityAmPerHour);
+
+			voyTime = endVoySkill/hazSkillPerHour + timeLeft + elapsedHours;
+
+			if (timeLeft > 0.001)
+            {
+				endVoySkill = (voyTime-elapsedHours)*hazSkillPerHour;
+				continue;
+			}
+            else
+            {
+				break;
+			}
+		}
+
+		// compute other results
+		double safeTime = voyTime*0.95;
+		double saferTime = voyTime*0.90;
+		double refillTime = shipAM / (hazPerHour*hazAmFail + activityAmPerHour);
+		double refillCost = std::ceil(voyTime*60/dilPerMin);
+
+		// display results
+		/*if (extend < 3)
+        {
+			//window['result'+extend].value = timeToString(voyTime)
+			//window['safeResult'+extend].value = timeToString(safeTime)
+			//window['saferResult'+extend].value = timeToString(saferTime)
+			if (extend > 0)
+				window['refillCostResult'+extend].value = totalRefillCost
+			//test.text = MaxSkill*(1+hazSkillVariance)/hazSkillPerHour
+			// the threshold here is just a guess
+			if (MaxSkill/hazSkillPerHour > voyTime) {
+				let tp = Math.floor(voyTime*hazSkillPerHour)
+				// TODO: warn somehow
+				//setWarning(extend, "Your highest skill is too high by about " + Math.floor(MaxSkill - voyTime*hazSkillPerHour) + ". To maximize voyage time, redistribute more like this: " + tp + "/" + tp + "/" + tp/4 + "/" + tp/4 + "/" + tp/4 + "/" + tp/4 + ".")
+			}
+		}
+		
+		totalRefillCost += refillCost
+		
+		if (voyTime >= 20) {
+			//test.text += "hi"
+			// TODO: show 20 hr?
+			//window['20hrdil'].value = totalRefillCost
+			//window['20hrrefills'].value = extend
+			break
+		}*/
+
+		return voyTime;
     }
 
-    auto AMGained = shipAM + (PrimarySkill * H13 + SecondarySkill * H14 + OtherSkills * H15) / H9 * H8 * H10;
-    auto AMVariableHaz = ((MaxSkill - PrimarySkill) * H13 + (MaxSkill - SecondarySkill) * H14 + (MaxSkill * 4 - OtherSkills) * H15) / H9 * H8 * H11;
-    auto AMLeft = AMGained - AMVariableHaz - MaxSkill / H9 * H12;
-    auto TimeLeft = AMLeft / (H8 * H11 + H12);
-
-    return MaxSkill / H9 + TimeLeft;
+    return 0;
 }
 
 } //namespace VoyageTools

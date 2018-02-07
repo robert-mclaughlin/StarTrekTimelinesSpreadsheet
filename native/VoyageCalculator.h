@@ -14,17 +14,17 @@ constexpr unsigned int SLOT_COUNT = 12;
 
 struct Crew
 {
-    int16_t id{0}; // TODO: should be crewId if someone has duplicates for some reason (2 FF/FE 5-stars of the same crew for the same skill)
-    int16_t command_skill{0};
-    int16_t science_skill{0};
-    int16_t security_skill{0};
-    int16_t engineering_skill{0};
-    int16_t diplomacy_skill{0};
-    int16_t medicine_skill{0};
+    unsigned int id{0}; // TODO: should be crewId if someone has duplicates for some reason (2 FF/FE 5-stars of the same crew for the same skill)
+    unsigned int command_skill{0};
+    unsigned int science_skill{0};
+    unsigned int security_skill{0};
+    unsigned int engineering_skill{0};
+    unsigned int diplomacy_skill{0};
+    unsigned int medicine_skill{0};
     bool hasTrait{false}; // TODO
 
     double score(const char *skill, const char *primarySkill, const char *secondarySkill) const noexcept;
-    int16_t get(const char *skillName) const noexcept;
+    unsigned int get(const char *skillName) const noexcept;
 };
 
 struct SortedCrew
@@ -54,7 +54,7 @@ class VoyageCalculator
   public:
     VoyageCalculator(const char* jsonInput) noexcept;
 
-    const std::string& GetSlotName(int index) const noexcept
+    const std::string& GetSlotName(size_t index) const noexcept
     {
         return slotNames[index];
     }
@@ -78,7 +78,7 @@ class VoyageCalculator
     std::array<const Crew *, SLOT_COUNT> considered; // TODO: per-thread
     std::string primarySkill;
     std::string secondarySkill;
-    int32_t shipAntiMatter;
+    int shipAntiMatter;
     std::vector<Crew> roster;
     SortedCrew sortedRoster;
 
