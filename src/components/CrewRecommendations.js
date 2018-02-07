@@ -4,12 +4,13 @@ import { Icon } from 'office-ui-fabric-react/lib/Icon';
 import { Image, ImageFit } from 'office-ui-fabric-react/lib/Image';
 import { Persona, PersonaSize, PersonaPresence } from 'office-ui-fabric-react/lib/Persona';
 import { PrimaryButton, DefaultButton } from 'office-ui-fabric-react/lib/Button';
+import { SpinButton } from 'office-ui-fabric-react/lib/SpinButton';
 
 import { CrewList } from './CrewList.js';
 import { CollapsibleSection } from './CollapsibleSection.js';
 
 import STTApi from 'sttapi';
-import { CONFIG, bestVoyageSelection } from 'sttapi';
+import { CONFIG, bestVoyageShip } from 'sttapi';
 
 export class GuaranteedSuccess extends React.Component {
 	render() {
@@ -119,47 +120,29 @@ export class VoyageCrew extends React.Component {
 		let voyage = STTApi.playerData.character.voyage[0];
 		/*if (!voyage || voyage.state == 'unstarted') {
 			this.state = {
-				voyageRecommendations: undefined,
 				state: 'nothingToDo'
 			};
 		}
 		else*/ {
 			this.state = {
-				voyageRecommendations: undefined,
+				bestShips: bestVoyageShip(),
+				searchDepth: 6,
 				state: 'calculating'
 			};
-
-			bestVoyageSelection(3, (val, max, bestSoFar) => {
-				// TODO: Can't report progress because the UI thread is blocked in a tight loop
-				// Perhaps web worker is a solution, but I can't access STTApi from there, so would need to transfer all crew data along
-				//console.log(`Voyage calculation ${val} of ${max}.`);
-			}).then(result => {
-				this.setState({ voyageRecommendations: result, state: 'done' });
-			});
 		}
 
 		this._exportVoyageData = this._exportVoyageData.bind(this);
 	}
 
-	render() {
+	renderBestCrew() {
 		if (this.state.state === "nothingToDo") {
-			return <span>Can only show voyage recommendations if you didn't begin your voyage yet!</span>;
+			return <p>Can only show voyage recommendations if you didn't begin your voyage yet!</p>;
 		} else if (this.state.state === "calculating") {
-			return <span>Calculations not finished yet, please wait...</span>;
+			return <p>Use the button below to calculate crew. <b>WARNING</b> Calculation duration increases exponentially with the search depth</p>;
 		}
 		else {
-			let shipSpans = [];
-			this.state.voyageRecommendations.bestShips.forEach(entry => {
-				shipSpans.push(<Persona
-					key={entry.ship.id}
-					imageUrl={entry.ship.iconUrl}
-					primaryText={entry.ship.name}
-					secondaryText={entry.score.toFixed(0)}
-					size={PersonaSize.regular} />);
-			});
-
 			let crewSpans = [];
-			this.state.voyageRecommendations.crewSelection.forEach(entry => {
+			this.state.crewSelection.forEach(entry => {
 				crewSpans.push(<Persona
 					key={entry.choice.name}
 					imageUrl={entry.choice.iconUrl}
@@ -170,20 +153,45 @@ export class VoyageCrew extends React.Component {
 					presence={entry.hasTrait ? PersonaPresence.online : PersonaPresence.away} />);
 			});
 
-			return (<CollapsibleSection title='Recommendations for next voyage'>
-				<p><b>NOTE: </b>This algorithm is poor and a work in progress. Please only use these as rough guidelines.</p>
-				<p>Best ship(s)</p>
-				<div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap' }}>
-					{shipSpans}
-				</div>
+			return (<div>
 				<p>Crew</p>
+				{(this.state.state === "inprogress") && (
+					<Spinner size={SpinnerSize.small} label='Still calculating...' />
+				)}
 				<div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap' }}>
-                	{crewSpans}
-            	</div>
-				<p>Estimated duration: <b>{this.state.voyageRecommendations.estimatedDuration.toFixed(2)} hours</b></p>
-				<PrimaryButton onClick={this._exportVoyageData} text='Export for external tool' />
-			</CollapsibleSection>);
+					{crewSpans}
+				</div>
+				<p>Estimated duration: <b>{this.state.estimatedDuration.toFixed(2)} hours</b></p>
+			</div>);
 		}
+	}
+
+	render() {
+		let shipSpans = [];
+		this.state.bestShips.forEach(entry => {
+			shipSpans.push(<Persona
+				key={entry.ship.id}
+				imageUrl={entry.ship.iconUrl}
+				primaryText={entry.ship.name}
+				secondaryText={entry.score.toFixed(0)}
+				size={PersonaSize.regular} />);
+		});
+
+		return (<CollapsibleSection title='Recommendations for next voyage'>
+			<p><b>NOTE: </b>This algorithm is poor and a work in progress. Please only use these as rough guidelines.</p>
+			<p>Best ship(s)</p>
+			<div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap' }}>
+				{shipSpans}
+			</div>
+			{this.renderBestCrew()}
+			<div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'nowrap' }}>
+				<SpinButton className='autoWidth' value={this.state.searchDepth} label={ 'Search depth:' } min={ 2 } max={ 30 } step={ 1 }
+					onIncrement={(value) => { this.setState({ searchDepth: +value + 1}); }}
+					onDecrement={(value) => { this.setState({ searchDepth: +value - 1}); }}
+				/>
+				<PrimaryButton onClick={this._exportVoyageData} text='Calculate best crew selection' />
+			</div>
+		</CollapsibleSection>);
 	}
 
 	_exportVoyageData() {
@@ -203,22 +211,36 @@ export class VoyageCrew extends React.Component {
 			})),
 			voyage_skills: STTApi.playerData.character.voyage_descriptions[0].skills,
 			voyage_crew_slots: STTApi.playerData.character.voyage_descriptions[0].crew_slots,
-			shipAM: this.state.voyageRecommendations.bestShips[0].score // TODO: where should this come from (keep it in JS?)
+			search_depth: this.state.searchDepth,
+			shipAM: this.state.bestShips[0].score
 		}
 
-		//const fs = require('fs');
-		//fs.writeFile('voyageRecommendations.json', JSON.stringify(dataToExport), function (err) {
-		//});
-
+		//require('fs').writeFile('voyageRecommendations.json', JSON.stringify(dataToExport), function (err) {});
 		const NativeExtension = require('electron').remote.require('native');
+
+		function parseResults(result, state) {
+			let parsedResult = JSON.parse(result);
+			let entries = [];
+			for (var slotName in parsedResult.selection) {
+				let entry = {
+					hasTrait: false,
+					slotName: slotName,
+					score: 0,
+					choice: STTApi.roster.find((crew) => (crew.id == parsedResult.selection[slotName]))
+				};
+
+				entries.push(entry);
+			}
+			return {
+				crewSelection: entries,
+				estimatedDuration: parsedResult.score,
+				state: state};
+		}
+
 		NativeExtension.calculateVoyageRecommendations(JSON.stringify(dataToExport), result => {
-			console.log("FINAL:" + result);
-			// TODO: map what we get from C++ into something we can display
-			/*this.setState({ voyageRecommendations: {
-				crewSelection:
-			}});*/
+			this.setState(parseResults(result, 'done'));
 		}, progressResult => {
-			console.log(progressResult);
+			this.setState(parseResults(progressResult, 'inprogress'));
 		});
 	}
 }

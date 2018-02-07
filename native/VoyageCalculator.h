@@ -11,7 +11,6 @@ namespace VoyageTools
 {
 
 constexpr unsigned int SLOT_COUNT = 12;
-constexpr unsigned int SEARCH_DEPTH = 6; // TODO: this should be configurable by the caller
 
 struct Crew
 {
@@ -30,14 +29,24 @@ struct Crew
 
 struct SortedCrew
 {
-    std::array<Crew, SEARCH_DEPTH> command_skill;
-    std::array<Crew, SEARCH_DEPTH> science_skill;
-    std::array<Crew, SEARCH_DEPTH> security_skill;
-    std::array<Crew, SEARCH_DEPTH> engineering_skill;
-    std::array<Crew, SEARCH_DEPTH> diplomacy_skill;
-    std::array<Crew, SEARCH_DEPTH> medicine_skill;
+    std::vector<Crew> command_skill;
+    std::vector<Crew> science_skill;
+    std::vector<Crew> security_skill;
+    std::vector<Crew> engineering_skill;
+    std::vector<Crew> diplomacy_skill;
+    std::vector<Crew> medicine_skill;
 
-    const std::array<Crew, SEARCH_DEPTH> &get(const char *skillName) const noexcept;
+    const std::vector<Crew> &get(const char *skillName) const noexcept;
+
+    void setSearchDepth(const size_t depth) noexcept
+    {
+        command_skill.resize(depth);
+        science_skill.resize(depth);
+        security_skill.resize(depth);
+        engineering_skill.resize(depth);
+        diplomacy_skill.resize(depth);
+        medicine_skill.resize(depth);
+    }
 };
 
 class VoyageCalculator
@@ -50,10 +59,11 @@ class VoyageCalculator
         return slotNames[index];
     }
 
-    std::array<const Crew *, SLOT_COUNT> Calculate(std::function<void(const std::array<const Crew *, SLOT_COUNT>&)> progressCallback) noexcept
+    std::array<const Crew *, SLOT_COUNT> Calculate(std::function<void(const std::array<const Crew *, SLOT_COUNT>&, double)> progressCallback, double& score) noexcept
     {
         progressUpdate = progressCallback;
         fillSlot(0);
+        score = bestscore;
         return bestconsidered;
     }
 
@@ -63,7 +73,7 @@ class VoyageCalculator
 
     nlohmann::json j;
 
-    std::function<void(const std::array<const Crew *, SLOT_COUNT>&)> progressUpdate;
+    std::function<void(const std::array<const Crew *, SLOT_COUNT>&, double)> progressUpdate;
     std::array<std::string, SLOT_COUNT> slotNames;
     std::array<const Crew *, SLOT_COUNT> considered; // TODO: per-thread
     std::string primarySkill;
@@ -72,7 +82,7 @@ class VoyageCalculator
     std::vector<Crew> roster;
     SortedCrew sortedRoster;
 
-    std::array<const std::array<Crew, SEARCH_DEPTH> *, SLOT_COUNT> slotRoster;
+    std::array<const std::vector<Crew> *, SLOT_COUNT> slotRoster;
 
     std::array<const Crew *, SLOT_COUNT> bestconsidered;
     double bestscore{0.0};

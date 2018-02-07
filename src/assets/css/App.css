@@ -92,6 +92,10 @@
     color: black;
 }
 
+.autoWidth {
+    width: auto;
+}
+
 .gauntletCrew-statline {
     display: inline-flex;
 }

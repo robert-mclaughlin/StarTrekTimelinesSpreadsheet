@@ -31,7 +31,7 @@ int16_t Crew::get(const char *skillName) const noexcept
     }
 }
 
-const std::array<Crew, SEARCH_DEPTH> &SortedCrew::get(const char *skillName) const noexcept
+const std::vector<Crew> &SortedCrew::get(const char *skillName) const noexcept
 {
     switch (skillName[0])
     {
@@ -73,6 +73,8 @@ VoyageCalculator::VoyageCalculator(const char* jsonInput) noexcept
         c.medicine_skill = crew["medicine_skill"]["core"].get<int16_t>() + (crew["medicine_skill"]["max"].get<int16_t>() - crew["medicine_skill"]["min"].get<int16_t>()) / 2;
         roster.emplace_back(std::move(c));
     }
+
+    sortedRoster.setSearchDepth(j["search_depth"]);
 
     std::partial_sort_copy(roster.begin(), roster.end(), sortedRoster.command_skill.begin(), sortedRoster.command_skill.end(),
                            [&](Crew i, Crew j) { return (i.score("command_skill", primarySkill.c_str(), secondarySkill.c_str()) > j.score("command_skill", primarySkill.c_str(), secondarySkill.c_str())); });
@@ -137,7 +139,7 @@ void VoyageCalculator::fillSlot(size_t slot) noexcept
             {
                 bestconsidered = considered;
                 bestscore = score;
-                progressUpdate(bestconsidered);
+                progressUpdate(bestconsidered, bestscore);
             }
         }
 

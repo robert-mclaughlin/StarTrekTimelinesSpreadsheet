@@ -14,36 +14,38 @@ public:
 
   void Execute(const Nan::AsyncProgressWorker::ExecutionProgress &progress) override
   {
-    auto finalResult = voyageCalculator->Calculate([&](const std::array<const VoyageTools::Crew*, VoyageTools::SLOT_COUNT>& bestSoFar) {
-      auto resultSoFar = ResultToString(bestSoFar);
+    double finalScore;
+    auto finalResult = voyageCalculator->Calculate([&](const std::array<const VoyageTools::Crew*, VoyageTools::SLOT_COUNT>& bestSoFar, double bestScore) {
+      auto resultSoFar = ResultToString(bestSoFar, bestScore);
       progress.Send(resultSoFar.c_str(), resultSoFar.size());
-    });
+    }, finalScore);
 
-    result = ResultToString(finalResult);
+    result = ResultToString(finalResult, finalScore);
   }
 
   void HandleOKCallback() override
   {
     Nan::HandleScope scope;
-    v8::Local<v8::Value> argv[] = {Nan::New(result).ToLocalChecked()};
+    v8::Local<v8::Value> argv[] = {Nan::New(result.c_str(), result.size()).ToLocalChecked()};
     callback->Call(1, argv);
   };
 
   void HandleProgressCallback(const char *data, size_t size)
   {
     Nan::HandleScope scope;
-    v8::Local<v8::Value> argv[] = {Nan::New(data).ToLocalChecked()};
+    v8::Local<v8::Value> argv[] = {Nan::New(data, size).ToLocalChecked()};
     progressCallback->Call(1, argv);
   }
 
 private:
-  std::string ResultToString(const std::array<const VoyageTools::Crew*, VoyageTools::SLOT_COUNT>& res) noexcept
+  std::string ResultToString(const std::array<const VoyageTools::Crew*, VoyageTools::SLOT_COUNT>& res, double score) noexcept
   {
     nlohmann::json j;
     for(int i = 0; i < VoyageTools::SLOT_COUNT; i++)
     {
       j["selection"][voyageCalculator->GetSlotName(i)] = res[i]->id;
     }
+    j["score"] = score;
     return j.dump();
   }
 
