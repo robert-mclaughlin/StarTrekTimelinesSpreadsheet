@@ -4,7 +4,7 @@ import { ChoiceGroup, IChoiceGroupOption } from 'office-ui-fabric-react/lib/Choi
 import { Spinner, SpinnerSize } from 'office-ui-fabric-react/lib/Spinner';
 import uuidv4 from 'uuid/v4';
 import vis from 'vis';
-import '!style-loader!css-loader!vis/dist/vis.css';
+import '!css-loader?url=false!vis/dist/vis.css';
 
 import { CollapsibleSection } from './CollapsibleSection.js';
 

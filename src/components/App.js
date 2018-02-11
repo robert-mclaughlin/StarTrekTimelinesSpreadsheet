@@ -27,7 +27,7 @@ import { Image, ImageFit } from 'office-ui-fabric-react/lib/Image';
 import { Callout } from 'office-ui-fabric-react/lib/Callout';
 import { SearchBox } from 'office-ui-fabric-react/lib/SearchBox';
 
-import { exportExcel } from '../utils/excelExporter.js';
+//import { exportExcel } from '../utils/excelExporter.js';
 import { exportCsv } from '../utils/csvExporter.js';
 import { shareCrew } from '../utils/pastebin.js';
 import { FileImageCache } from '../utils/fileImageCache.js';
@@ -216,7 +216,7 @@ class App extends React.Component {
 
 	_getCommandItems() {
 		return [
-			{
+			/*{
 				key: 'exportExcel',
 				name: 'Export Excel',
 				icon: 'ExcelLogo',
@@ -240,7 +240,7 @@ class App extends React.Component {
 						}.bind(this));
 
 				}.bind(this)
-			},
+			},*/
 			{
 				key: 'exportCsv',
 				name: 'Export CSV',

@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "configure": "node-gyp configure",
-    "build": "node-gyp build --dist-url=https://atom.io/download/atom-shell",
+    "build": "node-gyp build",
     "test": "mocha"
   },
   "devDependencies": {

@@ -87,7 +87,6 @@ After running npm install, go into node_modules\binary-parser\lib\binary_parser.
     ctx.generateError('"argument buffer is not a Buffer object"');
     ctx.pushCode('}');*/
 ```
-Then go into node_modules\vis\dist\vis.css and replace `url("img` with `url("/img`.
 
 ##### Development
 * Run `npm run dev` to start webpack-dev-server. Electron will launch automatically after compilation.

@@ -1,4 +1,4 @@
-const Excel = require('electron').remote.require('exceljs');
+/*const Excel = require('electron').remote.require('exceljs');
 import STTApi from 'sttapi';
 
 export function exportExcel(itemList, fileName) {
@@ -134,4 +134,4 @@ export function exportExcel(itemList, fileName) {
 	});
 
 	return workbook.xlsx.writeFile(fileName).then(() => Promise.resolve(fileName));
-}
+}*/

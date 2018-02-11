@@ -5,7 +5,7 @@ import { Dropdown, DropdownMenuItemType, IDropdownOption } from 'office-ui-fabri
 import { Checkbox } from 'office-ui-fabric-react/lib/Checkbox';
 import { Persona, PersonaSize, PersonaPresence } from 'office-ui-fabric-react/lib/Persona';
 import vis from 'vis';
-import '!style-loader!css-loader!vis/dist/vis.css';
+import '!css-loader?url=false!vis/dist/vis.css';
 
 import STTApi from 'sttapi';
 import { CONFIG } from 'sttapi';
