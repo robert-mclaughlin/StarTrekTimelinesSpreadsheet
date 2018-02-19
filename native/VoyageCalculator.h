@@ -4,6 +4,8 @@
 #include <vector>
 #include <algorithm>
 #include <functional>
+#include <chrono>
+#include <cstdio>
 
 #include "json.hpp"
 
@@ -11,42 +13,69 @@ namespace VoyageTools
 {
 
 constexpr unsigned int SLOT_COUNT = 12;
+constexpr unsigned int SKILL_COUNT = 6;
+
+struct Timer {
+	using clock = std::chrono::high_resolution_clock;
+	using timepoint = decltype(clock::now());
+	using duration = decltype(clock::now()-clock::now());
+
+	Timer() = delete;
+	Timer(std::string name = "", bool start = true) : name(name), running(start) {}
+	~Timer() { if (running) Pause(); Print(); }
+
+	void Pause() {
+		total += clock::now()-start;
+	}
+
+	void Resume() {
+		start = clock::now();
+	}
+
+	struct Scope {
+		Timer &timer;
+		Scope(Timer &timer) : timer(timer) { timer.Resume(); }
+		~Scope() { timer.Pause(); }
+	};
+
+	void Print() {
+		printf("%stook %lluus\n", name.empty()?"":(name + " ").c_str(),
+			std::chrono::duration_cast<std::chrono::milliseconds>(total).count());
+		fflush(stdout);
+	}
+
+	bool running;
+	std::string name;
+	duration total{0};
+	timepoint start = clock::now();
+};
+
 
 struct Crew
 {
-    unsigned int id{0}; // TODO: should be crewId if someone has duplicates for some reason (2 FF/FE 5-stars of the same crew for the same skill)
-    unsigned int command_skill{0};
-    unsigned int science_skill{0};
-    unsigned int security_skill{0};
-    unsigned int engineering_skill{0};
-    unsigned int diplomacy_skill{0};
-    unsigned int medicine_skill{0};
-    bool hasTrait{false}; // TODO
+	std::string name;
+    unsigned int id{0};
+	std::array<unsigned int, SKILL_COUNT> skills;
+	std::array<unsigned int, SKILL_COUNT> skillMaxProfs;
+	std::array<unsigned int, SKILL_COUNT> skillMinProfs;
+	std::vector<bool> traits;
+	mutable bool considered{false};
+	const Crew *original{nullptr};
+	unsigned int score{0};
 
-    double score(const char *skill, const char *primarySkill, const char *secondarySkill) const noexcept;
-    unsigned int get(const char *skillName) const noexcept;
+    unsigned int computeScore(size_t skill, size_t trait, size_t primarySkill, size_t secondarySkill) const noexcept;
 };
 
 struct SortedCrew
 {
-    std::vector<Crew> command_skill;
-    std::vector<Crew> science_skill;
-    std::vector<Crew> security_skill;
-    std::vector<Crew> engineering_skill;
-    std::vector<Crew> diplomacy_skill;
-    std::vector<Crew> medicine_skill;
+	std::array<std::vector<Crew>,SLOT_COUNT> slotRosters;
 
-    const std::vector<Crew> &get(const char *skillName) const noexcept;
-
-    void setSearchDepth(const size_t depth) noexcept
+    void setSearchDepth(size_t depth) noexcept
     {
-        command_skill.resize(depth);
-        science_skill.resize(depth);
-        security_skill.resize(depth);
-        engineering_skill.resize(depth);
-        diplomacy_skill.resize(depth);
-        medicine_skill.resize(depth);
+		this->depth = depth;
     }
+
+	size_t depth = 0;
 };
 
 class VoyageCalculator
@@ -59,25 +88,33 @@ class VoyageCalculator
         return slotNames[index];
     }
 
-    std::array<const Crew *, SLOT_COUNT> Calculate(std::function<void(const std::array<const Crew *, SLOT_COUNT>&, double)> progressCallback, double& score) noexcept
+    std::array<const Crew *, SLOT_COUNT> Calculate(
+		std::function<void(const std::array<const Crew *,SLOT_COUNT>&, double)> progressCallback,
+		double& score) noexcept
     {
         progressUpdate = progressCallback;
-        fillSlot(0);
+		calculate();
         score = bestscore;
         return bestconsidered;
     }
 
   private:
-    void fillSlot(size_t slot) noexcept;
-    double calculateDuration(std::array<const Crew *, SLOT_COUNT> complement) noexcept;
+	void calculate();
+	void fillSlot(size_t slot, unsigned int minScore, size_t minDepth);
+    float calculateDuration(std::array<const Crew *, SLOT_COUNT> complement, bool debug = false) noexcept;
 
     nlohmann::json j;
 
     std::function<void(const std::array<const Crew *, SLOT_COUNT>&, double)> progressUpdate;
     std::array<std::string, SLOT_COUNT> slotNames;
+	std::array<unsigned int, SLOT_COUNT> slotSkills;
+	std::array<std::string, SLOT_COUNT> slotSkillNames;
+	std::array<size_t, SLOT_COUNT> slotTraits;
     std::array<const Crew *, SLOT_COUNT> considered; // TODO: per-thread
-    std::string primarySkill;
-    std::string secondarySkill;
+	unsigned int primarySkill;
+	unsigned int secondarySkill;
+    std::string primarySkillName;
+    std::string secondarySkillName;
     int shipAntiMatter;
     std::vector<Crew> roster;
     SortedCrew sortedRoster;
@@ -85,7 +122,10 @@ class VoyageCalculator
     std::array<const std::vector<Crew> *, SLOT_COUNT> slotRoster;
 
     std::array<const Crew *, SLOT_COUNT> bestconsidered;
-    double bestscore{0.0};
+    float bestscore{0.0};
+
+	Timer timer{"voyage calculation"};
+	Timer voyageCalcTime{"actual calc", false};
 };
 
 } //namespace VoyageTools
