@@ -212,7 +212,12 @@ export class VoyageCrew extends React.Component {
 			voyage_skills: STTApi.playerData.character.voyage_descriptions[0].skills,
 			voyage_crew_slots: STTApi.playerData.character.voyage_descriptions[0].crew_slots,
 			search_depth: this.state.searchDepth,
-			shipAM: this.state.bestShips[0].score
+			shipAM: this.state.bestShips[0].score,
+			// These values should be user-configurable to give folks a chance to tune the scoring function and provide feedback
+			skillPrimaryMultiplier: 3.5,
+			skillSecondaryMultiplier: 2.5,
+			skillMatchingMultiplier: 1.1,
+			traitScoreBoost: 200
 		}
 
 		//require('fs').writeFile('voyageRecommendations.json', JSON.stringify(dataToExport), function (err) {});

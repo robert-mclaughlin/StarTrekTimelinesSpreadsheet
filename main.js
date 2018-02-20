@@ -27,6 +27,9 @@ const FB = require('fb');
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow;
 
+// If seeing certificate errors, uncomment this line. DO NOT SHIP THIS TURNED ON!
+// app.commandLine.appendSwitch('ignore-certificate-errors'); 
+
 // Keep a reference for dev mode
 let dev = false;
 if ( process.defaultApp || /[\\/]electron-prebuilt[\\/]/.test(process.execPath) || /[\\/]electron[\\/]/.test(process.execPath) ) {
