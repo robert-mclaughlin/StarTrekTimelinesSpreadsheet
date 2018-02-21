@@ -127,6 +127,8 @@ private:
 	const float config_skillSecondaryMultiplier{2.5};
 	const float config_skillMatchingMultiplier{1.0};
 	const unsigned int config_traitScoreBoost{200};
+	const bool config_includeAwayCrew{false};
+	const bool config_includeFrozenCrew{false};
 
 	std::array<const std::vector<Crew> *, SLOT_COUNT> slotRoster;
 

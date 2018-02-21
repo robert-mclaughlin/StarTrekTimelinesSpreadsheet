@@ -75,7 +75,9 @@ VoyageCalculator::VoyageCalculator(const char* jsonInput) noexcept :
 		config_skillPrimaryMultiplier(j["skillPrimaryMultiplier"]),
 		config_skillSecondaryMultiplier(j["skillSecondaryMultiplier"]),
 		config_skillMatchingMultiplier(j["skillMatchingMultiplier"]),
-		config_traitScoreBoost(j["traitScoreBoost"])
+		config_traitScoreBoost(j["traitScoreBoost"]),
+		config_includeAwayCrew(j["includeAwayCrew"]),
+		config_includeFrozenCrew(j["includeFrozenCrew"])
 {
 	std::map<std::string, size_t> skillMap;
 	skillMap.insert({"command_skill",0});
@@ -107,7 +109,10 @@ VoyageCalculator::VoyageCalculator(const char* jsonInput) noexcept :
 
 	for (const auto &crew : j["crew"])
 	{
-		if (crew["frozen"] != 0)
+		if (!config_includeFrozenCrew && crew["frozen"] != 0)
+			continue;
+
+		if (!config_includeAwayCrew && crew["active_id"] != 0)
 			continue;
 
 		Crew c;

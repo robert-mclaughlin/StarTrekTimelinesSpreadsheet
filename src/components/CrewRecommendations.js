@@ -207,7 +207,8 @@ export class VoyageCrew extends React.Component {
 				engineering_skill: crew.engineering_skill,
 				diplomacy_skill: crew.diplomacy_skill,
 				medicine_skill: crew.medicine_skill,
-				iconUrl: crew.iconUrl
+				iconUrl: crew.iconUrl,
+				active_id: crew.active_id ? crew.active_id : 0
 			})),
 			voyage_skills: STTApi.playerData.character.voyage_descriptions[0].skills,
 			voyage_crew_slots: STTApi.playerData.character.voyage_descriptions[0].crew_slots,
@@ -217,11 +218,13 @@ export class VoyageCrew extends React.Component {
 			skillPrimaryMultiplier: 3.5,
 			skillSecondaryMultiplier: 2.5,
 			skillMatchingMultiplier: 1.1,
-			traitScoreBoost: 200
-		}
+			traitScoreBoost: 200,
+			includeAwayCrew: false,
+			includeFrozenCrew: false
+		};
 
 		//require('fs').writeFile('voyageRecommendations.json', JSON.stringify(dataToExport), function (err) {});
-		const NativeExtension = require('electron').remote.require('native');
+		const NativeExtension = require('electron').remote.require('stt-native');
 
 		function parseResults(result, state) {
 			let parsedResult = JSON.parse(result);

@@ -42,6 +42,8 @@ function createWindow() {
     width: 1200,
     height: 800,
     show: false,
+    contextIsolation: true,
+    icon: path.join(__dirname, 'src/assets/icons/ATFleet.ico'),
     webPreferences: {webSecurity: false}
 	});
 

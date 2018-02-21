@@ -77,7 +77,7 @@ module.exports = {
 			chunks: false,
 			children: false
 		},
-		setup() {
+		before() {
 			spawn(
 				'electron',
 				['.', '--remote-debugging-port=9222'],
