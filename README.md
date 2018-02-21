@@ -16,6 +16,25 @@ However, if you're only interested in installing and running the tool, head on t
 
 ## Features
 
+### TODO - based on user feedback
+
+- [ ] List all crew (even unowned one)
+- [ ] Voyage recommendations (this is actually in progress now, and an initial version will be included in the next release)
+- [ ] Dark mode (white is way too bright): I agree but HTML / CSS is not my cup of tea - any help from a frontend guy/girl would be welcome
+- [ ] Export (CSV or XLS) for item list
+- [ ] Gauntlet improvements (I know I left that half-done, sorry)
+- [ ] Export voyage log
+- [ ] Recommendations tab redesign (too messy, not user friendly)
+- [ ] Arena recommendations (? not sure what that means, maybe best crew for manning a ship)
+- [ ] Helper tools for items (what's most needed, where to find them, notification when replicator uses are about to go unused)
+- [ ] XP in the crew list (to know who can still earn XP)
+- [ ] Crew traits not readable on smaller screen resolutions
+
+#### Other popular feedback
+**Reload / refresh (or variants)**. I get asked for this a lot; unfortunately, DB didn't really design the game for that. You can see the same issue if you play on the phone and Facebook / Steam at the same time; things quickly go out-of-sync. However, I did add a "Refresh" button in the popout that shows up when you click on your captain name (upper-left). This will refresh everything (not just one tab), but it will be slightly faster than closing and reopening the app
+
+**Display 100 FF/FE stats for all crew**. For this to work, I'd need to depend on a different data source besides the game server itself (most popular recommendations in the stt.wiki). While I appreciate the stt.wiki and the work put into it, I don't believe that data is reliable (nor is it readily parsable / consistently formatted). In a very early version of my tool I depended on the stt.wiki for the crew portrait images (and my app became unusable when the wiki was down for a few days). I'll only trust the official game server for data (as that's the only reliable source).
+
 ### Crew management
 
 ![Screenshot tool](/docs/Screenshot-Tool.png "Tool screenshot")
