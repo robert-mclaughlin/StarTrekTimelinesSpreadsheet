@@ -9,7 +9,7 @@ public:
 	VoyageWorker(Nan::Callback *callback, Nan::Callback *progressCallback, const char *input)
 		: Nan::AsyncProgressWorker(callback), progressCallback(progressCallback)
 	{
-		voyageCalculator = std::make_unique<VoyageTools::VoyageCalculator>(input);
+		voyageCalculator = std::unique_ptr<VoyageTools::VoyageCalculator>(new VoyageTools::VoyageCalculator(input));
 	}
 
 	void Execute(const Nan::AsyncProgressWorker::ExecutionProgress &progress) override
@@ -30,7 +30,7 @@ public:
 		callback->Call(1, argv);
 	};
 
-	void HandleProgressCallback(const char *data, size_t size)
+	void HandleProgressCallback(const char *data, size_t size) override
 	{
 		Nan::HandleScope scope;
 		v8::Local<v8::Value> argv[] = { Nan::New(data, size).ToLocalChecked() };

@@ -8,9 +8,9 @@
     "test": "mocha"
   },
   "devDependencies": {
-    "nan": "latest",
     "mocha": "latest",
-    "node-gyp": "latest"
+    "nan": "latest",
+    "node-gyp": "^3.6.2"
   },
   "dependencies": {
     "bindings": "latest"

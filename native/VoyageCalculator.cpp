@@ -266,7 +266,10 @@ float VoyageCalculator::calculateDuration(std::array<const Crew *, SLOT_COUNT> c
 	totals.skills.fill(0);
 
 	std::array<unsigned int, SKILL_COUNT> totalProfRange;
-	totalProfRange.assign(0);
+	for (size_t iSkill = 0; iSkill < SKILL_COUNT; ++iSkill)
+	{
+		totalProfRange[iSkill] = 0;
+	}
 	unsigned int totalSkill = 0;
 
 	for (size_t iSlot = 0; iSlot < SLOT_COUNT; ++iSlot)

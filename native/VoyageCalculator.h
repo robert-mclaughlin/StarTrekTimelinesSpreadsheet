@@ -25,7 +25,7 @@ struct Timer
 	using duration = decltype(clock::now()-clock::now());
 
 	Timer() = delete;
-	Timer(std::string name = "", bool start = true) : name(name), running(start) {}
+	Timer(std::string name = "", bool start = true) : running(start), name(name) {}
 	~Timer() { if (running) Pause(); Print(); }
 
 	void Pause()
