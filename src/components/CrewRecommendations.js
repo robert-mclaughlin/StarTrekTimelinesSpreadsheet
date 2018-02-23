@@ -195,6 +195,22 @@ export class VoyageCrew extends React.Component {
 	}
 
 	_exportVoyageData() {
+		// See which crew is needed in the event to give the user a chance to remove them from consideration
+		if (STTApi.playerData.character.events && STTApi.playerData.character.events.length > 0) {
+			let activeEvent = STTApi.playerData.character.events[0];
+			console.log(activeEvent.name);
+			if (activeEvent.content && activeEvent.content.crew_bonuses) {
+				let eventCrew = [];
+				for (var symbol in activeEvent.content.crew_bonuses) {
+					let foundCrew = STTApi.roster.find((crew) => crew.symbol === symbol);
+					if (foundCrew) {
+						eventCrew.push(foundCrew);
+					}
+				}
+				console.log(eventCrew);
+			}
+		}
+
 		let dataToExport = {
 			crew: STTApi.roster.map(crew => new Object({
 				id: crew.id,
