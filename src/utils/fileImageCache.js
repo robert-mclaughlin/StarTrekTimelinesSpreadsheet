@@ -6,6 +6,10 @@ export class FileImageCache {
 	constructor() {
 		const app = electron.app || electron.remote.app;
 		this.basePath = app.getPath('userData') + '/imagecache/';
+
+		if (!fs.existsSync(this.basePath)) {
+			fs.mkdirSync(this.basePath);
+		}
 	}
 
 	formatUrl(url) {
@@ -45,22 +49,16 @@ export class FileImageCache {
 
 	saveImage(url, data) {
 		return new Promise((resolve, reject) => {
-			fs.exists(this.basePath, (exists) => {
-				if (!exists) {
-					fs.mkdirSync(this.basePath);
-				}
-
-				if (data.data.length > 0) {
-					this.bitmapToPng(data, (pngData) => {
-						fs.writeFile(this.formatUrl(url), pngData, (err) => {
-							resolve('file://' + this.formatUrl(url));
-						});
+			if (data.data.length > 0) {
+				this.bitmapToPng(data, (pngData) => {
+					fs.writeFile(this.formatUrl(url), pngData, (err) => {
+						resolve('file://' + this.formatUrl(url));
 					});
-				}
-				else {
-					reject('Invalid data');
-				}
-			});
+				});
+			}
+			else {
+				reject('Invalid data');
+			}
 		});
 	}
 }
