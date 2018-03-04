@@ -9,14 +9,15 @@
 #include <iostream>
 
 #include "Log.h"
+#include "ThreadPool.h"
 #include "json.hpp"
 
 namespace VoyageTools
 {
 extern Log log;
 
-constexpr unsigned int SLOT_COUNT = 12;
 constexpr unsigned int SKILL_COUNT = 6;
+constexpr unsigned int SLOT_COUNT = SKILL_COUNT*2;
 
 struct Timer
 {
@@ -64,7 +65,8 @@ struct Crew
 	std::array<unsigned int, SKILL_COUNT> skillMaxProfs;
 	std::array<unsigned int, SKILL_COUNT> skillMinProfs;
 	std::set<size_t> traits;
-	mutable bool considered{false};
+	// treated as a bool, but avoiding bit masking vector<bool> specialization for multithreading
+	mutable std::vector<int> considered;
 	const Crew *original{nullptr};
 	unsigned int score{0};
 };
@@ -103,8 +105,8 @@ public:
 
 private:
 	void calculate() noexcept;
-	void fillSlot(size_t slot, unsigned int minScore, size_t minDepth) noexcept;
-	float calculateDuration(std::array<const Crew *, SLOT_COUNT> complement, bool debug = false) noexcept;
+	void fillSlot(size_t slot, unsigned int minScore, size_t minDepth, size_t seedSlot, size_t thread = -1) noexcept;
+	float calculateDuration(const std::array<const Crew *, SLOT_COUNT> &complement, bool debug = false) noexcept;
 	unsigned int computeScore(const Crew& crew, size_t skill, size_t trait) const noexcept;
 
 	nlohmann::json j;
@@ -114,7 +116,6 @@ private:
 	std::array<size_t, SLOT_COUNT> slotSkills;
 	std::array<std::string, SLOT_COUNT> slotSkillNames;
 	std::array<size_t, SLOT_COUNT> slotTraits;
-	std::array<const Crew *, SLOT_COUNT> considered; // TODO: per-thread
 	size_t primarySkill;
 	size_t secondarySkill;
 	std::string primarySkillName;
@@ -122,6 +123,11 @@ private:
 	const int shipAntiMatter;
 	std::vector<Crew> roster;
 	SortedCrew sortedRoster;
+
+	std::vector<std::array<const Crew *, SLOT_COUNT>> considered; // fillSlot recursion working copy
+
+	ThreadPool threadPool;
+	std::mutex calcMutex;
 
 	const float config_skillPrimaryMultiplier{3.5};
 	const float config_skillSecondaryMultiplier{2.5};
@@ -136,7 +142,6 @@ private:
 	float bestscore{0.0};
 
 	Timer timer{"voyage calculation"};
-	Timer voyageCalcTime{"actual calc", false};
 };
 
 } //namespace VoyageTools
