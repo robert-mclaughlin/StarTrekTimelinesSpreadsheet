@@ -4,6 +4,10 @@
 #include <unordered_map>
 #include <map>
 
+#ifdef max
+#undef max // cstdlib included in json.hpp
+#endif
+
 using json = nlohmann::json;
 
 namespace VoyageTools
@@ -11,12 +15,12 @@ namespace VoyageTools
 #ifdef DEBUG
 Log log(true /*enabled*/);
 #else
-Log log(false /*enabled*/);
+Log log(true /*enabled*/);
 #endif
 
 constexpr unsigned int ANTIMATTER_FOR_SKILL_MATCH = 25;
 constexpr size_t MIN_SCAN_DEPTH = 2;
-constexpr size_t MAX_SCAN_DEPTH = 10;
+constexpr size_t MAX_SCAN_DEPTH = 10; // sanity
 
 // Various fields used in the duration estimation code
 constexpr unsigned int ticksPerCycle = 28;
@@ -187,41 +191,63 @@ void VoyageCalculator::calculate() noexcept
 	unsigned int minScore = slotCrewScores[std::min(slotCrewScores.size() - 1, sortedRoster.depth * SLOT_COUNT)];
 	size_t minDepth = MIN_SCAN_DEPTH; // ?
 
-	auto debugOuput = [&] {
-		for (size_t iSlot = 0; iSlot < SLOT_COUNT; ++iSlot)
+	// find the deepest slot
+	size_t deepSlot = 0;
+	size_t maxDepth = 0;
+	for (size_t iSlot = 0; iSlot < SLOT_COUNT; ++iSlot)
+	{
+		log << slotSkillNames[iSlot] << std::endl;
+		size_t iCrew;
+		for (iCrew = 0; iCrew < slotRoster[iSlot]->size(); ++iCrew)
 		{
-			log << slotSkillNames[iSlot];
-			for (size_t iCrew = 0; iCrew < slotRoster[iSlot]->size(); ++iCrew)
+			const auto &crew = slotRoster[iSlot]->at(iCrew);
+			if (iCrew >= minDepth && crew.score < minScore)
 			{
-				const auto &crew = slotRoster[iSlot]->at(iCrew);
-				if (iCrew >= minDepth && crew.score < minScore)
-				{
-					break;
-				}
-				log << "  " << crew.score << " - " << crew.name;
+				break;
 			}
-			log << std::endl;
+			log << "  " << crew.score << " - " << crew.name  << std::endl;
 		}
-	};
+		log << std::endl;
 
-	debugOuput();
+		if (iCrew > maxDepth) {
+			deepSlot = iSlot;
+			maxDepth = iCrew;
+		}
+	}
+
+	// initialize depth vectors
+	considered.resize(maxDepth);
+	for (const Crew &crew : roster) {
+		crew.considered.resize(maxDepth, false);
+	}
 
 	log << "minScore " << minScore << std::endl;
 	log << "primary " << primarySkillName << "(" << primarySkill << ")" << std::endl;
 	log << "secondary " << secondarySkillName << "(" << secondarySkill << ")" << std::endl;
-
-	Timer::Scope calcTimeScope(voyageCalcTime);
-
-	for (size_t iMinDepth = minDepth; iMinDepth < MAX_SCAN_DEPTH; ++iMinDepth)
-	{
-		fillSlot(0, minScore, iMinDepth);
-		if (bestscore > 0)
-			break;
+	
+	{ Timer voyageCalcTime{"actual calc"};
+		for (size_t iMinDepth = minDepth; iMinDepth < MAX_SCAN_DEPTH; ++iMinDepth)
+		{
+			log << "depth " << iMinDepth << std::endl;
+			fillSlot(0, minScore, iMinDepth, deepSlot);
+			threadPool.joinAll();
+			if (bestscore > 0)
+				break;
+		}
 	}
 }
 
-void VoyageCalculator::fillSlot(size_t slot, unsigned int minScore, size_t minDepth) noexcept
+void VoyageCalculator::fillSlot(size_t iSlot, unsigned int minScore, size_t minDepth, size_t seedSlot, size_t thread) noexcept
 {
+	size_t slot;
+	if (iSlot == 0) {
+		slot = seedSlot;
+	} else if (iSlot == seedSlot) {
+		slot = 0;
+	} else {
+		slot = iSlot;
+	}
+
 	for (size_t iCrew = 0; iCrew < slotRoster[slot]->size(); ++iCrew)
 	{
 		const auto &crew = slotRoster[slot]->at(iCrew);
@@ -230,36 +256,57 @@ void VoyageCalculator::fillSlot(size_t slot, unsigned int minScore, size_t minDe
 			break;
 		}
 
-		if (crew.original->considered)
+		if (slot == seedSlot) {
+			thread = iCrew;
+		} else 
+		if (crew.original->considered[thread])
 			continue;
 
-		considered[slot] = &crew;
-		crew.original->considered = true;
+		considered[thread][slot] = &crew;
+		crew.original->considered[thread] = true;
 
 		if (slot < SLOT_COUNT - 1)
 		{
-			fillSlot(slot + 1, minScore, minDepth);
+			auto fRecurse = [=]{fillSlot(iSlot + 1, minScore, minDepth, seedSlot, thread);};
+			if (slot == seedSlot) {
+				threadPool.add(fRecurse);
+			} else {
+				fRecurse();
+			}
 		}
 		else
 		{
+			auto crewToConsider = considered[thread];
 			// we have a complete crew complement, compute score
-			float score = calculateDuration(considered);
+			float score = calculateDuration(crewToConsider);
 
 			if (score > bestscore)
 			{
-				log << "new best found: " << score << std::endl;
-				bestconsidered = considered;
-				bestscore = score;
-				progressUpdate(bestconsidered, bestscore);
-				calculateDuration(considered, true); // debug
+				std::lock_guard<std::mutex> guard(calcMutex);
+				if (score > bestscore) { // check again within the lock to resolve race condition
+					log << "new best found: " << score << std::endl;
+					// sanity
+					for (size_t i = 0; i < crewToConsider.size(); ++i) {
+						for (size_t j = i+1; j < crewToConsider.size(); ++j) {
+							if (crewToConsider[i]->original == crewToConsider[j]->original) {
+								log << "ERROR - DUPE CREW IN RESULT" << std::endl;
+							}
+						}
+					}
+					bestconsidered = crewToConsider;
+					bestscore = score;
+					progressUpdate(bestconsidered, bestscore);
+					calculateDuration(crewToConsider, true); // debug
+				}
 			}
 		}
 
-		crew.original->considered = false;
+		if (slot != seedSlot)
+			crew.original->considered[thread] = false;
 	}
 }
 
-float VoyageCalculator::calculateDuration(std::array<const Crew *, SLOT_COUNT> complement, bool debug) noexcept
+float VoyageCalculator::calculateDuration(const std::array<const Crew *, SLOT_COUNT> &complement, bool debug) noexcept
 {
 	unsigned int shipAM = shipAntiMatter;
 	Crew totals;
