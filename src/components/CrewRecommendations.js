@@ -240,32 +240,32 @@ export class VoyageCrew extends React.Component {
 		};
 
 		//require('fs').writeFile('voyageRecommendations.json', JSON.stringify(dataToExport), function (err) {});
-		const NativeExtension = require('electron').remote.require('stt-native');
+		//const NativeExtension = require('electron').remote.require('stt-native');
 
 		function parseResults(result, state) {
-			let parsedResult = JSON.parse(result);
 			let entries = [];
-			for (var slotName in parsedResult.selection) {
+			for (let i = 0; i < result.bestCrew.length; i++) {
 				let entry = {
 					hasTrait: false,
-					slotName: slotName,
+					slotName: dataToExport.voyage_crew_slots[i].name,
 					score: 0,
-					choice: STTApi.roster.find((crew) => (crew.id == parsedResult.selection[slotName]))
+					choice: result.bestCrew[i]
 				};
 
 				entries.push(entry);
 			}
 			return {
 				crewSelection: entries,
-				estimatedDuration: parsedResult.score,
+				estimatedDuration: result.bestCrewTime,
 				state: state};
 		}
 
-		NativeExtension.calculateVoyageRecommendations(JSON.stringify(dataToExport), result => {
+		/*NativeExtension.calculateVoyageRecommendations(JSON.stringify(dataToExport), result => {
 			this.setState(parseResults(result, 'done'));
 		}, progressResult => {
 			this.setState(parseResults(progressResult, 'inprogress'));
-		});
+		});*/
+		this.setState(parseResults(calculateBestVoyage(dataToExport), 'done'));
 	}
 }
 
@@ -290,3 +290,258 @@ export class CrewRecommendations extends React.Component {
 		);
 	}
 }
+
+const calculateBestVoyage = (data) => {
+	let crewState = {
+		bestCrew: [ ],
+		bestCrewTime: 0,
+		// Array to be filled with states where there are multiple options for placing crew
+		decisionPoints: [ ]
+	};
+	let bestCrewTime = 0, bestCrew = [];
+	for (let i = 0; i < 12; i++) {
+		// Fill empty slots for crew
+		crewState.bestCrew.push({ traits: [] });
+	}
+	let tries = 0;
+	do {
+		crewState = calcVoyage(data, crewState);
+		if (crewState.bestCrewTime > bestCrewTime) {
+			bestCrewTime = crewState.bestCrewTime;
+			bestCrew = crewState.bestCrew;
+		}
+		tries++;
+	} while (crewState.decisionPoints.length > 0 && tries < 1000000)
+	console.log(crewState);
+	console.log(tries);
+	return { bestCrewTime, bestCrew };
+};
+
+const calcVoyage = (data, state) => {
+	if (state.decisionPoints.length > 0) {
+		const nextPoint = state.decisionPoints[0];
+		if (nextPoint.slots.length > 0) {
+			state = nextPoint.state;
+			state.bestCrew[nextPoint.slots[0]] = nextPoint.newCrew;
+			nextPoint.slots.shift();
+		} else {
+			state.decisionPoints.shift();
+			return state;
+		}
+	}
+	let nextState = Object.assign({}, state);
+	do {
+		nextState = placeCrew(nextState, data);
+	} while(isEmptySlot(nextState.bestCrew))
+	return nextState;
+};
+
+const placeCrew = (state, { crew, shipAM, voyage_crew_slots, voyage_skills }) => {
+	let bestTime = 0;
+	let voyageCrew = [].concat(state.bestCrew);
+	const { vCrew, slots, newCrew } = crew.reduce(({ vCrew, slots, newCrew }, c) => {
+		const slotNums = findSlots(c, voyage_crew_slots, voyageCrew),
+			slotNum = slotNums[0];
+		if (slotNums.length > 0 && !alreadyVoyager(c, voyageCrew)) {
+			// make a shallow copy of voyageCrew
+			let tempCrew = [].concat(voyageCrew);
+			tempCrew[slotNum] = c;
+			const voyageTime = calculateTime({ crew: tempCrew, shipAM, voyage_crew_slots, voyage_skills });
+			//console.log(voyageTime);
+			if (voyageTime > bestTime) {
+				bestTime = voyageTime;
+				vCrew = tempCrew;
+				slots = slotNums;
+				newCrew = c;
+				//console.log('Found better option:');
+				//console.log(vCrew);
+			}
+		}
+		return { vCrew, slots, newCrew };
+	}, { vCrew: [].concat(voyageCrew), slots: [], newCrew: {} });
+	//console.log(vCrew);
+	if (slots.length > 1) {
+		// Copy current crew & decision points to new arrays
+		const dpState = {
+			bestCrew: [].concat(state.bestCrew),
+			bestTime: state.bestTime,
+			decisionPoints: [].concat(state.decisionPoints)
+		};
+		// If there are more than one availble spots, add new decision point
+		state.decisionPoints.unshift({ state: dpState, newCrew, slots: slots.slice(1) });
+	}
+	return { bestCrew: vCrew, bestCrewTime: bestTime, decisionPoints: state.decisionPoints };
+};
+
+const alreadyVoyager = (crew, voyageCrew) => {
+	return voyageCrew.findIndex((c) => {
+		return c.id === crew.id;
+	}) > -1;
+};
+
+const findSlots = (crew, voyage_crew_slots, voyageCrew) => {
+	let regSlotNumbers = [];
+	let bonusSlotNumbers = []
+	for (let i = 0; i < voyage_crew_slots.length; i++) {
+		if (!voyageCrew[i].id && crew[voyage_crew_slots[i].skill].core > 0) {
+			regSlotNumbers.push(i);
+			if (crew.traits.indexOf(voyage_crew_slots[i].trait > -1)) {
+				bonusSlotNumbers.push(i);
+			}
+		}
+	}
+	return bonusSlotNumbers.length > 0 ? bonusSlotNumbers : regSlotNumbers;
+};
+
+const isEmptySlot = (voyageCrew) => {
+	for (var i = 0; i < voyageCrew.length; i++) {
+		if (!voyageCrew[i].id) {
+			return true;
+		}
+	}
+	return false;
+};
+
+const skillScore = (skill) => {
+	let score = 0
+	if (skill) {
+		score = skill.core + (skill.min + skill.max) / 2;
+	}
+	return score;
+}
+
+const calculateTime = ({ crew, shipAM, voyage_crew_slots, voyage_skills }) => {
+	
+	const skillNames = [
+		'command_skill',
+		'diplomacy_skill',
+		'security_skill',
+		'engineering_skill',
+		'science_skill',
+		'medicine_skill'
+	];
+	// variables
+	var ticksPerCycle = 28
+	var secondsPerTick = 20
+	var cycleSeconds = ticksPerCycle*secondsPerTick
+	var cyclesPerHour = 60*60/cycleSeconds
+	var hazPerCycle = 6
+	var activityPerCycle = 18
+	var dilemmasPerHour = 0.5
+	var hazPerHour = hazPerCycle*cyclesPerHour-dilemmasPerHour
+	var hazSkillPerHour = 1250
+	var hazSkillVariance = 0.15 // overwritten from input
+	var hazAmPass = 5
+	var hazAmFail = 30
+	var activityAmPerHour = activityPerCycle*cyclesPerHour
+	var minPerHour = 60
+	var psChance = 0.35
+	var ssChance = 0.25
+	var osChance = 0.1
+	var skillChances = [psChance,ssChance,osChance,osChance,osChance,osChance]
+	var dilPerMin = 5
+	
+
+	const crewTotals = crew.reduce((total, c) => {
+		for (let i = 0; i < skillNames.length; i++) {
+			total[skillNames[i]] = total[skillNames[i]] + skillScore(c[skillNames[i]]) || skillScore(c[skillNames[i]]);
+		}
+		return total;
+	}, {});
+	var ps = crewTotals[voyage_skills.primary_skill] || 0;
+	var ss = crewTotals[voyage_skills.secondary_skill] || 0;
+	// Remove the primary & secondary skills to add the rest to skills array
+	skillNames.splice(skillNames.indexOf(voyage_skills.primary_skill), 1);
+	skillNames.splice(skillNames.indexOf(voyage_skills.secondary_skill), 1);
+	var skills = [ps,ss]
+	for (var i = 0; i < skillNames.length; i++) {
+		skills.push(crewTotals[skillNames[i]] || 0);
+	}
+
+	const crewAM = crew.reduce((totalBonus, c, ind) => {
+		if (c.traits.indexOf(voyage_crew_slots[ind].trait) > -1) {
+			totalBonus = totalBonus + 25;
+		}
+		return totalBonus;
+	}, 0);
+	
+	var startAM = shipAM + crewAM
+	// Keeping this variable, not sure if it's necessary
+	var currentAM = startAM
+	// Keeping this as well, setting to 0 since assuming working from start
+	var elapsedHours = 0
+	
+	var ship = currentAM
+	
+	var elapsedHazSkill = elapsedHours*hazSkillPerHour
+	
+	var maxSkill = Math.max(...skills)
+	maxSkill = Math.max(0, maxSkill - elapsedHazSkill)
+	var endVoySkill = maxSkill*(1+hazSkillVariance)
+	
+
+	var tries = 0
+	while (1>0) {
+		tries++
+		if (tries == 100) {
+			setWarning(0,"Something went wrong! Check your inputs.")
+			break
+		}
+
+		//test.text += Math.floor(endVoySkill) + " "
+		var am = ship;
+		for (i = 0; i < 6; i++) {
+			var skill = skills[i]
+			skill = Math.max(0, skill-elapsedHazSkill)
+			var chance = skillChances[i]
+
+			// skill amount for 100% pass
+			var passSkill = Math.min(endVoySkill,skill*(1-hazSkillVariance))
+
+			// skill amount for RNG pass
+			// (compute passing proportion of triangular RNG area - integral of x)
+			var skillRngRange = skill*hazSkillVariance*2
+			var lostRngProportion = 0
+			if (skillRngRange > 0) { // avoid division by 0
+				lostRngProportion = Math.max(0, Math.min(1, (skill*(1+hazSkillVariance) - endVoySkill) / skillRngRange))
+			}
+			var skillPassRngProportion = 1 - lostRngProportion*lostRngProportion
+			passSkill += skillRngRange*skillPassRngProportion/2
+
+			//passSkill = Math.max(0, passSkill - elapsedHazSkill)
+			
+			//test.text += "+" + Math.floor(100*lostRngProportion)/100 + " "
+
+			// am gained for passing hazards
+			am += passSkill * chance / hazSkillPerHour * hazPerHour * hazAmPass
+
+			// skill amount for 100% hazard fail
+			var failSkill = Math.max(0, endVoySkill-skill*(1+hazSkillVariance))
+			// skill amount for RNG fail
+			var skillFailRngProportion = Math.pow(1-lostRngProportion, 2)
+			failSkill += skillRngRange*skillFailRngProportion/2
+			
+			//test.text += "-" + Math.floor(100*skillFailRngProportion)/100 + " "
+
+			// am lost for failing hazards
+			am -= failSkill * chance / hazSkillPerHour * hazPerHour * hazAmFail
+		}
+
+		//test.text += Math.floor(am) + " "
+
+		var amLeft = am - endVoySkill/hazSkillPerHour*activityAmPerHour
+		var timeLeft = amLeft / (hazPerHour*hazAmFail + activityAmPerHour)
+
+		var voyTime = endVoySkill/hazSkillPerHour + timeLeft + elapsedHours
+
+		if (Math.abs(timeLeft) > 0.0001) {
+			endVoySkill = (voyTime-elapsedHours)*hazSkillPerHour
+			continue
+		} else {
+			break
+		}
+	}
+
+	return voyTime;
+	
+  }
