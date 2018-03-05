@@ -116,8 +116,8 @@ VoyageCalculator::VoyageCalculator(const char* jsonInput) noexcept :
 		if (!config_includeFrozenCrew && crew["frozen"] != 0)
 			continue;
 
-		/*if (!config_includeAwayCrew && crew["active_id"] != 0)
-			continue;*/
+		if (!config_includeAwayCrew && crew["active_id"] != 0)
+			continue;
 
 		Crew c;
 		c.id = crew["id"];
