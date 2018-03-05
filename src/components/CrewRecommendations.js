@@ -5,6 +5,7 @@ import { Image, ImageFit } from 'office-ui-fabric-react/lib/Image';
 import { Persona, PersonaSize, PersonaPresence } from 'office-ui-fabric-react/lib/Persona';
 import { PrimaryButton, DefaultButton } from 'office-ui-fabric-react/lib/Button';
 import { SpinButton } from 'office-ui-fabric-react/lib/SpinButton';
+import { Toggle } from 'office-ui-fabric-react/lib/Toggle';
 
 import { CrewList } from './CrewList.js';
 import { CollapsibleSection } from './CollapsibleSection.js';
@@ -126,7 +127,8 @@ export class VoyageCrew extends React.Component {
 		else*/ {
 			this.state = {
 				bestShips: bestVoyageShip(),
-				searchDepth: 6,
+				includeFrozen: false,
+				includeActive: false,
 				state: 'calculating'
 			};
 		}
@@ -185,13 +187,22 @@ export class VoyageCrew extends React.Component {
 			</div>
 			{this.renderBestCrew()}
 			<div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'nowrap' }}>
-				<SpinButton className='autoWidth' value={this.state.searchDepth} label={ 'Search depth:' } min={ 2 } max={ 30 } step={ 1 }
-					onIncrement={(value) => { this.setState({ searchDepth: +value + 1}); }}
-					onDecrement={(value) => { this.setState({ searchDepth: +value - 1}); }}
+				<Toggle textLeft checked={this.state.includeFrozen} label="Include frozen?" name="includeFrozen"
+					onClick={(e) => { this.setState(this.changeToggle(this.state, e)) }}
+				/>
+				<Toggle textLeft checked={this.state.includeActive} label="Include active on shuttles?" name="includeActive"
+					onClick={(e) => { this.setState(this.changeToggle(this.state, e)) }}
 				/>
 				<PrimaryButton onClick={this._exportVoyageData} text='Calculate best crew selection' />
 			</div>
 		</CollapsibleSection>);
+	}
+
+	changeToggle(state, e) {
+		return {
+			...state,
+			[e.target.name]: !e.target.checked
+		};
 	}
 
 	_exportVoyageData() {
@@ -228,16 +239,21 @@ export class VoyageCrew extends React.Component {
 			})),
 			voyage_skills: STTApi.playerData.character.voyage_descriptions[0].skills,
 			voyage_crew_slots: STTApi.playerData.character.voyage_descriptions[0].crew_slots,
-			search_depth: this.state.searchDepth,
 			shipAM: this.state.bestShips[0].score,
 			// These values should be user-configurable to give folks a chance to tune the scoring function and provide feedback
 			skillPrimaryMultiplier: 3.5,
 			skillSecondaryMultiplier: 2.5,
 			skillMatchingMultiplier: 1.1,
-			traitScoreBoost: 200,
-			includeAwayCrew: false,
-			includeFrozenCrew: false
+			traitScoreBoost: 200
 		};
+
+		if (this.state.includeFrozen === false) {
+			dataToExport.crew = dataToExport.crew.filter(c => c.frozen !== 1);
+		}
+
+		if (this.state.includeActive === false) {
+			dataToExport.crew = dataToExport.crew.filter(c => c.active_id === 0);
+		}
 
 		//require('fs').writeFile('voyageRecommendations.json', JSON.stringify(dataToExport), function (err) {});
 		//const NativeExtension = require('electron').remote.require('stt-native');
