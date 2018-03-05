@@ -68,6 +68,7 @@ struct Crew
 	// treated as a bool, but avoiding bit masking vector<bool> specialization for multithreading
 	mutable std::vector<int> considered;
 	const Crew *original{nullptr};
+	std::array<const Crew*, SLOT_COUNT> slotCrew;
 	unsigned int score{0};
 };
 
@@ -105,6 +106,7 @@ public:
 
 private:
 	void calculate() noexcept;
+	void refine() noexcept;
 	void fillSlot(size_t slot, unsigned int minScore, size_t minDepth, size_t seedSlot, size_t thread = -1) noexcept;
 	float calculateDuration(const std::array<const Crew *, SLOT_COUNT> &complement, bool debug = false) noexcept;
 	unsigned int computeScore(const Crew& crew, size_t skill, size_t trait) const noexcept;

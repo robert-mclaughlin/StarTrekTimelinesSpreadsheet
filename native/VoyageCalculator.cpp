@@ -116,8 +116,8 @@ VoyageCalculator::VoyageCalculator(const char* jsonInput) noexcept :
 		if (!config_includeFrozenCrew && crew["frozen"] != 0)
 			continue;
 
-		if (!config_includeAwayCrew && crew["active_id"] != 0)
-			continue;
+		/*if (!config_includeAwayCrew && crew["active_id"] != 0)
+			continue;*/
 
 		Crew c;
 		c.id = crew["id"];
@@ -161,6 +161,7 @@ VoyageCalculator::VoyageCalculator(const char* jsonInput) noexcept :
 		{
 			slotRoster[iCrew] = roster[iCrew];
 			slotRoster[iCrew].original = &roster[iCrew];
+			roster[iCrew].slotCrew[iSlot] = &slotRoster[iCrew];
 
 			slotRoster[iCrew].score = computeScore(slotRoster[iCrew], slotSkills[iSlot], slotTraits[iSlot]);
 		}
@@ -235,6 +236,10 @@ void VoyageCalculator::calculate() noexcept
 				break;
 		}
 	}
+
+	{ Timer voyageCalcTime{"refine"};
+		refine();
+	}
 }
 
 void VoyageCalculator::fillSlot(size_t iSlot, unsigned int minScore, size_t minDepth, size_t seedSlot, size_t thread) noexcept
@@ -306,6 +311,91 @@ void VoyageCalculator::fillSlot(size_t iSlot, unsigned int minScore, size_t minD
 	}
 }
 
+void VoyageCalculator::refine() noexcept
+{
+	log << "refining" << std::endl;
+
+	// reset considered state
+	for (const Crew &crew : roster) {
+		std::fill(crew.considered.begin(), crew.considered.end(), false);
+	}
+	
+	auto considered = bestconsidered;
+	for (size_t iSlot = 0; iSlot < SLOT_COUNT; ++iSlot) {
+		considered[iSlot]->original->considered[0] = true;
+	}
+
+	// refinement loops
+	for (;;) {
+		bool refinementFound = false;
+		
+		auto fUpdateBest = [&,this]{
+			refinementFound = true;
+			float score = calculateDuration(considered);
+			log << "new best found: " << score << std::endl;
+			// sanity
+			for (size_t i = 0; i < considered.size(); ++i) {
+				for (size_t j = i+1; j < considered.size(); ++j) {
+					if (considered[i]->original == considered[j]->original) {
+						log << "ERROR - DUPE CREW IN RESULT" << std::endl;
+					}
+				}
+			}
+			bestconsidered = considered;
+			bestscore = score;
+			progressUpdate(bestconsidered, bestscore);
+			calculateDuration(bestconsidered, true); // log details
+		};
+
+		for (size_t iSlot = 0; iSlot < SLOT_COUNT; ++iSlot) {
+			// slotted vs unslotted
+			for (const Crew &crew : *slotRoster[iSlot]) {
+				if (crew.original->considered[0])
+					continue;
+				/*if (crew.score < considered[iSlot]->score/2)
+					break;*/
+				
+				// try swapping
+				const Crew *prevCrew = considered[iSlot];
+				considered[iSlot] = &crew;
+				float score = calculateDuration(considered, false);
+
+				if (score <= bestscore) {
+					considered[iSlot] = prevCrew;
+					continue;
+				}
+
+				// found a better result!
+				fUpdateBest();
+
+				prevCrew->original->considered[0] = false;
+				crew.original->considered[0] = true;
+			}
+
+			// slotted vs slotted
+			for (size_t jSlot = 0; jSlot < SLOT_COUNT; ++jSlot) {
+				if (jSlot == iSlot)
+					continue;
+
+				// slot differences are only due to trait bonuses, so if the crew
+				//	score improves, then the duration is guaranteed to improve
+				if (considered[iSlot]->score + considered[jSlot]->score
+					< considered[iSlot]->original->slotCrew[jSlot]->score
+						+ considered[jSlot]->original->slotCrew[iSlot]->score)
+				{
+					const Crew *prevI = considered[iSlot];
+					considered[iSlot] = considered[jSlot]->original->slotCrew[iSlot];
+					considered[jSlot] = prevI->original->slotCrew[jSlot];
+
+					fUpdateBest();
+				}
+			}
+		}
+		if (!refinementFound)
+			break;
+	}
+}
+
 float VoyageCalculator::calculateDuration(const std::array<const Crew *, SLOT_COUNT> &complement, bool debug) noexcept
 {
 	unsigned int shipAM = shipAntiMatter;
@@ -358,6 +448,8 @@ float VoyageCalculator::calculateDuration(const std::array<const Crew *, SLOT_CO
 	for (size_t iSkill = 0; iSkill < SKILL_COUNT; ++iSkill)
 	{
 		hazSkillVariance[iSkill] = ((float)totalProfRange[iSkill]) / 2 / totals.skills[iSkill];
+		if (totals.skills[iSkill] == 0)
+			hazSkillVariance[iSkill] = 0;
 		if (totals.skills[iSkill] > MaxSkill)
 			MaxSkill = totals.skills[iSkill];
 	}
@@ -503,6 +595,7 @@ float VoyageCalculator::calculateDuration(const std::array<const Crew *, SLOT_CO
 			break
 		}*/
 
+		assert(isfinite(voyTime));
 		return voyTime;
 	}
 
