@@ -81,8 +81,11 @@ VoyageCalculator::VoyageCalculator(const char* jsonInput) noexcept :
 		config_skillMatchingMultiplier(j["skillMatchingMultiplier"]),
 		config_traitScoreBoost(j["traitScoreBoost"]),
 		config_includeAwayCrew(j["includeAwayCrew"]),
-		config_includeFrozenCrew(j["includeFrozenCrew"])
+		config_includeFrozenCrew(j["includeFrozenCrew"]),
+		config_searchDepth(j["search_depth"])
 {
+	bestconsidered.fill(nullptr);
+
 	std::map<std::string, size_t> skillMap;
 	skillMap.insert({"command_skill",0});
 	skillMap.insert({"science_skill",1});
@@ -151,46 +154,106 @@ VoyageCalculator::VoyageCalculator(const char* jsonInput) noexcept :
 
 	log << "encountered " << traitId << " traits" << std::endl;
 
-	sortedRoster.setSearchDepth(j["search_depth"]);
-
 	for (size_t iSlot = 0; iSlot < SLOT_COUNT; iSlot++)
 	{
-		auto &slotRoster = sortedRoster.slotRosters[iSlot];
+		// populate per slot rosters with copies of the crew
+		auto &slotRoster = slotRosters[iSlot];
 		slotRoster.resize(roster.size());
 		for (size_t iCrew = 0; iCrew < roster.size(); ++iCrew)
 		{
+			// copy
 			slotRoster[iCrew] = roster[iCrew];
+
+			// compute score - not really used anymore except for checking whether
+			//	crew can fit in slot (score > 0), and perhaps for troubleshooting
+			slotRoster[iCrew].score = 
+				computeScore(slotRoster[iCrew], slotSkills[iSlot], slotTraits[iSlot]);
+
+			// set references
 			slotRoster[iCrew].original = &roster[iCrew];
 			roster[iCrew].slotCrew[iSlot] = &slotRoster[iCrew];
-
-			slotRoster[iCrew].score = computeScore(slotRoster[iCrew], slotSkills[iSlot], slotTraits[iSlot]);
+			sortedSlotRosters[iSlot].push_back(&slotRoster[iCrew]);
 		}
-		std::sort(slotRoster.begin(), slotRoster.end(),
-			[&](const Crew &left, const Crew &right) {
-			return (left.score > right.score);
-		});
 
-		this->slotRoster[iSlot] = &sortedRoster.slotRosters[iSlot];
+		// this presort is irrelevant now except perhaps for troubleshooting
+		std::sort(sortedSlotRosters[iSlot].begin(), sortedSlotRosters[iSlot].end(),
+			[&](const Crew *left, const Crew *right) {
+			return (left->score > right->score);
+		});
 	}
 }
 
 void VoyageCalculator::calculate() noexcept
 {
+	for (unsigned int iteration = 1;;++iteration) {
+		log << "iteration " << iteration << std::endl;
+		
+		float prevBest = bestscore;
+
+		resetRosters();
+		updateSlotRosterScores();
+		findBest();
+
+		if (bestscore > prevBest) {
+			continue;
+		} else {
+			log << "final result:" << std::endl;
+			calculateDuration(bestconsidered, true);
+			log << "stopping after " << iteration << " iterations" << std::endl;
+			break;
+		}
+	}
+}
+
+void VoyageCalculator::resetRosters() noexcept
+{
+	for (Crew &crew : roster) {
+		std::fill(crew.considered.begin(), crew.considered.end(), false);
+	}
+}
+
+void VoyageCalculator::updateSlotRosterScores() noexcept
+{
+	// This could be more efficient, but it's not a bottleneck
+	Timer::Scope timer(scoreUpdateTime);
+	for (size_t iSlot = 0; iSlot < SLOT_COUNT; ++iSlot) {
+		auto &slotRoster = slotRosters[iSlot];
+		for (Crew &crew : slotRoster) {
+			if (crew.score == 0)
+				continue;
+			if (std::find(bestconsidered.begin(), bestconsidered.end(), &crew) != bestconsidered.end()) {
+				crew.score = std::numeric_limits<decltype(crew.score)>::max();
+				continue;
+			}
+			const Crew *prevCrew = bestconsidered[iSlot];
+			bestconsidered[iSlot] = &crew;
+			// HACK: keep using an integer score for now. Express duration estimate in seconds
+			crew.score = (unsigned int)(calculateDuration(bestconsidered)*60*60);
+			bestconsidered[iSlot] = prevCrew;
+		}
+		std::sort(sortedSlotRosters[iSlot].begin(), sortedSlotRosters[iSlot].end(),
+			[&](const Crew *left, const Crew *right) {
+			return (left->score > right->score);
+		});
+	}
+}
+
+void VoyageCalculator::findBest() noexcept
+{
 	// find the nth highest crew score
 	std::vector<unsigned int> slotCrewScores;
-	for (size_t iSlot = 0; iSlot < SLOT_COUNT; ++iSlot)
-	{
-		const std::vector<Crew> *slot = slotRoster[iSlot];
-		for (const Crew &crew : *slot)
+	for (size_t iSlot = 0; iSlot < SLOT_COUNT; ++iSlot) {
+		for (const Crew *crew : sortedSlotRosters[iSlot])
 		{
-			slotCrewScores.emplace_back(crew.score);
+			slotCrewScores.emplace_back(crew->score);
 		}
 	}
 
 	std::sort(slotCrewScores.begin(), slotCrewScores.end(), std::greater<unsigned int>());
 
-	unsigned int minScore = slotCrewScores[std::min(slotCrewScores.size() - 1, sortedRoster.depth * SLOT_COUNT)];
-	size_t minDepth = MIN_SCAN_DEPTH; // ?
+	unsigned int minScore = slotCrewScores[
+		std::min(slotCrewScores.size() - 1, config_searchDepth * SLOT_COUNT)];
+	size_t minDepth = MIN_SCAN_DEPTH;
 
 	// find the deepest slot
 	size_t deepSlot = 0;
@@ -199,9 +262,9 @@ void VoyageCalculator::calculate() noexcept
 	{
 		log << slotSkillNames[iSlot] << std::endl;
 		size_t iCrew;
-		for (iCrew = 0; iCrew < slotRoster[iSlot]->size(); ++iCrew)
+		for (iCrew = 0; iCrew < sortedSlotRosters[iSlot].size(); ++iCrew)
 		{
-			const auto &crew = slotRoster[iSlot]->at(iCrew);
+			const auto &crew = *sortedSlotRosters[iSlot][iCrew];
 			if (iCrew >= minDepth && crew.score < minScore)
 			{
 				break;
@@ -216,29 +279,28 @@ void VoyageCalculator::calculate() noexcept
 		}
 	}
 
-	// initialize depth vectors
-	considered.resize(maxDepth);
-	for (const Crew &crew : roster) {
-		crew.considered.resize(maxDepth, false);
-	}
-
 	log << "minScore " << minScore << std::endl;
 	log << "primary " << primarySkillName << "(" << primarySkill << ")" << std::endl;
 	log << "secondary " << secondarySkillName << "(" << secondarySkill << ")" << std::endl;
 	
-	{ Timer voyageCalcTime{"actual calc"};
+	{ Timer::Scope timer(voyageCalcTime);
 		for (size_t iMinDepth = minDepth; iMinDepth < MAX_SCAN_DEPTH; ++iMinDepth)
 		{
 			log << "depth " << iMinDepth << std::endl;
+
+			if (maxDepth < iMinDepth)
+				maxDepth = iMinDepth;
+			// initialize depth vectors
+			considered.resize(maxDepth);
+			for (const Crew &crew : roster) {
+				crew.considered.resize(maxDepth, false);
+			}
+
 			fillSlot(0, minScore, iMinDepth, deepSlot);
 			threadPool.joinAll();
 			if (bestscore > 0)
 				break;
 		}
-	}
-
-	{ Timer voyageCalcTime{"refine"};
-		refine();
 	}
 }
 
@@ -253,9 +315,9 @@ void VoyageCalculator::fillSlot(size_t iSlot, unsigned int minScore, size_t minD
 		slot = iSlot;
 	}
 
-	for (size_t iCrew = 0; iCrew < slotRoster[slot]->size(); ++iCrew)
+	for (size_t iCrew = 0; iCrew < sortedSlotRosters[slot].size(); ++iCrew)
 	{
-		const auto &crew = slotRoster[slot]->at(iCrew);
+		const auto &crew = *sortedSlotRosters[slot][iCrew];
 		if (iCrew >= minDepth && minScore > crew.score)
 		{
 			break;
@@ -349,15 +411,15 @@ void VoyageCalculator::refine() noexcept
 
 		for (size_t iSlot = 0; iSlot < SLOT_COUNT; ++iSlot) {
 			// slotted vs unslotted
-			for (const Crew &crew : *slotRoster[iSlot]) {
-				if (crew.original->considered[0])
+			for (const Crew *crew : sortedSlotRosters[iSlot]) {
+				if (crew->original->considered[0])
 					continue;
 				/*if (crew.score < considered[iSlot]->score/2)
 					break;*/
 				
 				// try swapping
 				const Crew *prevCrew = considered[iSlot];
-				considered[iSlot] = &crew;
+				considered[iSlot] = crew;
 				float score = calculateDuration(considered, false);
 
 				if (score <= bestscore) {
@@ -369,7 +431,7 @@ void VoyageCalculator::refine() noexcept
 				fUpdateBest();
 
 				prevCrew->original->considered[0] = false;
-				crew.original->considered[0] = true;
+				crew->original->considered[0] = true;
 			}
 
 			// slotted vs slotted
@@ -411,6 +473,9 @@ float VoyageCalculator::calculateDuration(const std::array<const Crew *, SLOT_CO
 
 	for (size_t iSlot = 0; iSlot < SLOT_COUNT; ++iSlot)
 	{
+		if (!complement[iSlot])
+			continue;
+
 		const auto &crew = complement[iSlot];
 
 		// NOTE: this is not how the game client displays totals
@@ -419,7 +484,11 @@ float VoyageCalculator::calculateDuration(const std::array<const Crew *, SLOT_CO
 		for (size_t iSkill = 0; iSkill < SKILL_COUNT; ++iSkill)
 		{
 			totals.skills[iSkill] += crew->skills[iSkill];
-			totalProfRange[iSkill] += crew->skillMaxProfs[iSkill] - crew->skillMinProfs[iSkill];
+			// apparently it's possible for min to be higher than max:
+			// https://forum.disruptorbeam.com/stt/discussion/4078/guinan-is-so-awesome-her-min-prof-roll-is-higher-than-her-max-prof-roll
+			totalProfRange[iSkill] += 
+				std::max(crew->skillMaxProfs[iSkill], crew->skillMinProfs[iSkill]) -
+				crew->skillMinProfs[iSkill];
 		}
 
 		if (crew->traits.find(slotTraits[iSlot]) != crew->traits.end())
@@ -507,7 +576,7 @@ float VoyageCalculator::calculateDuration(const std::array<const Crew *, SLOT_CO
 			if (tries == 100)
 			{
 				log << "something went wrong!" << std::endl;
-				//console.error("Something went wrong! Check your inputs.")
+				assert(false);
 				break;
 			}
 
