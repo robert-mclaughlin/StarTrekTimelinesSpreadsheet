@@ -30,7 +30,7 @@ private:
 	size_t maxThreads;
 	std::mutex lock;
 	using lockScope = std::lock_guard<std::mutex>;
-    std::list<std::thread> threads;
+    std::list<std::shared_ptr<std::thread>> threads;
 	std::vector<task> tasks;
 };
 

@@ -68,19 +68,8 @@ struct Crew
 	// treated as a bool, but avoiding bit masking vector<bool> specialization for multithreading
 	mutable std::vector<int> considered;
 	const Crew *original{nullptr};
+	std::array<const Crew*, SLOT_COUNT> slotCrew;
 	unsigned int score{0};
-};
-
-struct SortedCrew
-{
-	std::array<std::vector<Crew>, SLOT_COUNT> slotRosters;
-
-	void setSearchDepth(size_t depth) noexcept
-	{
-		this->depth = depth;
-	}
-
-	size_t depth = 0;
 };
 
 class VoyageCalculator
@@ -105,8 +94,14 @@ public:
 
 private:
 	void calculate() noexcept;
+	void findBest() noexcept;
 	void fillSlot(size_t slot, unsigned int minScore, size_t minDepth, size_t seedSlot, size_t thread = -1) noexcept;
+	void updateSlotRosterScores() noexcept;
+	void resetRosters() noexcept;
 	float calculateDuration(const std::array<const Crew *, SLOT_COUNT> &complement, bool debug = false) noexcept;
+	
+	// old disused functions
+	void refine() noexcept;
 	unsigned int computeScore(const Crew& crew, size_t skill, size_t trait) const noexcept;
 
 	nlohmann::json j;
@@ -122,13 +117,14 @@ private:
 	std::string secondarySkillName;
 	const int shipAntiMatter;
 	std::vector<Crew> roster;
-	SortedCrew sortedRoster;
+	std::array<std::vector<Crew>, SLOT_COUNT> slotRosters;
 
 	std::vector<std::array<const Crew *, SLOT_COUNT>> considered; // fillSlot recursion working copy
 
 	ThreadPool threadPool;
 	std::mutex calcMutex;
 
+	const size_t config_searchDepth{6};
 	const float config_skillPrimaryMultiplier{3.5};
 	const float config_skillSecondaryMultiplier{2.5};
 	const float config_skillMatchingMultiplier{1.0};
@@ -136,12 +132,14 @@ private:
 	const bool config_includeAwayCrew{false};
 	const bool config_includeFrozenCrew{false};
 
-	std::array<const std::vector<Crew> *, SLOT_COUNT> slotRoster;
+	std::array<std::vector<const Crew*>, SLOT_COUNT> sortedSlotRosters;
 
 	std::array<const Crew *, SLOT_COUNT> bestconsidered;
 	float bestscore{0.0};
 
-	Timer timer{"voyage calculation"};
+	Timer totalTime{"voyage calculation"};
+	Timer voyageCalcTime{"actual calc", false};
+	Timer scoreUpdateTime{"score update", false};
 };
 
 } //namespace VoyageTools
