@@ -35,14 +35,17 @@ void ThreadPool::add(task f)
 		}
 
 		// if no more tasks, clean up and exit
-		threads.erase(std::find_if(threads.begin(), threads.end(), [](const std::thread &thatThread) {
-			return thatThread.get_id() == std::this_thread::get_id();
+		lockScope ls(lock);
+		threads.erase(std::find_if(threads.begin(), threads.end(),
+			[](const std::shared_ptr<std::thread> &thatThread)
+		{
+			return thatThread->get_id() == std::this_thread::get_id();
 		}));
 	};
 
 	lockScope ls(lock);
 	if (threads.size() < maxThreads) {
-		threads.emplace_back(threadFunc);
+		threads.emplace_back(std::make_shared<std::thread>(threadFunc));
 	} else {
 		tasks.emplace_back(f);
 	}
@@ -52,10 +55,10 @@ void ThreadPool::add(task f)
 void ThreadPool::joinAll()
 {
 	for (;;) {
-		std::thread *thread = nullptr;
+		std::shared_ptr<std::thread> thread;
 		lock.lock();
 		if (!threads.empty())
-			thread = &threads.back();
+			thread = threads.back();
 		lock.unlock();
 		if (thread) {
 			thread->join();
