@@ -396,17 +396,13 @@ const alreadyVoyager = (crew, voyageCrew) => {
 };
 
 const findSlots = (crew, voyage_crew_slots, voyageCrew) => {
-	let regSlotNumbers = [];
-	let bonusSlotNumbers = []
+	let slotNumbers = [];
 	for (let i = 0; i < voyage_crew_slots.length; i++) {
 		if (!voyageCrew[i].id && crew[voyage_crew_slots[i].skill].core > 0) {
-			regSlotNumbers.push(i);
-			if (crew.traits.indexOf(voyage_crew_slots[i].trait > -1)) {
-				bonusSlotNumbers.push(i);
-			}
+			slotNumbers.push(i);
 		}
 	}
-	return bonusSlotNumbers.length > 0 ? bonusSlotNumbers : regSlotNumbers;
+	return slotNumbers;
 };
 
 const isEmptySlot = (voyageCrew) => {
