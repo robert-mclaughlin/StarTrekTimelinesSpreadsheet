@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { Spinner, SpinnerSize } from 'office-ui-fabric-react/lib/Spinner';
+import { Dropdown } from 'office-ui-fabric-react/lib/Dropdown';
 import { Icon } from 'office-ui-fabric-react/lib/Icon';
 import { Image, ImageFit } from 'office-ui-fabric-react/lib/Image';
 import { Persona, PersonaSize, PersonaPresence } from 'office-ui-fabric-react/lib/Persona';
@@ -129,7 +130,9 @@ export class VoyageCrew extends React.Component {
 				bestShips: bestVoyageShip(),
 				includeFrozen: false,
 				includeActive: false,
-				state: 'calculating'
+				state: 'calculating',
+				searchDepth: 6,
+				selectedVoyageMethod: { key: 0, text: 'Thorough', val: true }
 			};
 		}
 
@@ -180,12 +183,27 @@ export class VoyageCrew extends React.Component {
 		});
 
 		return (<CollapsibleSection title='Recommendations for next voyage'>
-			<p><b>NOTE: </b>This algorithm is poor and a work in progress. Please only use these as rough guidelines.</p>
+			<p><b>NOTE: </b>Algorithms are a work in progress. Please only use these as rough guidelines.</p>
+			<div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'nowrap' }}>
+				<Dropdown
+					style={{ minWidth: '150px' }}
+					selectedKey={this.state.selectedVoyageMethod.key}
+					onChanged={item => this.setState({ selectedVoyageMethod: item })}
+					placeHolder='Select an optimization method'
+					options={[ { key: 0, text: 'Thorough', val: true }, { key: 1, text: 'Fast', val: false } ]}
+				/>
+			</div>
 			<p>Best ship(s)</p>
 			<div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap' }}>
 				{shipSpans}
 			</div>
 			{this.renderBestCrew()}
+			<div style={{ display: this.state.selectedVoyageMethod.val ? 'flex' : 'none', flexDirection: 'row', flexWrap: 'nowrap' }}>
+				<SpinButton className='autoWidth' value={this.state.searchDepth} label={ 'Search depth:' } min={ 2 } max={ 30 } step={ 1 }
+					onIncrement={(value) => { this.setState({ searchDepth: +value + 1}); }}
+					onDecrement={(value) => { this.setState({ searchDepth: +value - 1}); }}
+				/>
+			</div>
 			<div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'nowrap' }}>
 				<Toggle textLeft checked={this.state.includeFrozen} label="Include frozen?" name="includeFrozen"
 					onClick={(e) => { this.setState(this.changeToggle(this.state, e)) }}
@@ -206,6 +224,7 @@ export class VoyageCrew extends React.Component {
 	}
 
 	_exportVoyageData() {
+		const NativeExtension = require('electron').remote.require('stt-native');
 		// See which crew is needed in the event to give the user a chance to remove them from consideration
 		if (STTApi.playerData.character.events && STTApi.playerData.character.events.length > 0) {
 			let activeEvent = STTApi.playerData.character.events[0];
@@ -239,26 +258,33 @@ export class VoyageCrew extends React.Component {
 			})),
 			voyage_skills: STTApi.playerData.character.voyage_descriptions[0].skills,
 			voyage_crew_slots: STTApi.playerData.character.voyage_descriptions[0].crew_slots,
+			search_depth: this.state.searchDepth,
 			shipAM: this.state.bestShips[0].score,
 			// These values should be user-configurable to give folks a chance to tune the scoring function and provide feedback
 			skillPrimaryMultiplier: 3.5,
 			skillSecondaryMultiplier: 2.5,
 			skillMatchingMultiplier: 1.1,
-			traitScoreBoost: 200
+			traitScoreBoost: 200,
+			includeAwayCrew: this.state.includeActive,
+			includeFrozenCrew: this.state.includeFrozen
 		};
 
-		if (this.state.includeFrozen === false) {
-			dataToExport.crew = dataToExport.crew.filter(c => c.frozen !== 1);
+		function cppEntries(result) {
+			let entries = [];
+			for (var slotName in result.selection) {
+				let entry = {
+					hasTrait: false,
+					slotName: slotName,
+					score: 0,
+					choice: STTApi.roster.find((crew) => (crew.id == result.selection[slotName]))
+				};
+
+				entries.push(entry);
+			}
+			return entries;
 		}
 
-		if (this.state.includeActive === false) {
-			dataToExport.crew = dataToExport.crew.filter(c => c.active_id === 0);
-		}
-
-		//require('fs').writeFile('voyageRecommendations.json', JSON.stringify(dataToExport), function (err) {});
-		//const NativeExtension = require('electron').remote.require('stt-native');
-
-		function parseResults(result, state) {
+		function jsEntries(result) {
 			let entries = [];
 			for (let i = 0; i < result.bestCrew.length; i++) {
 				let entry = {
@@ -270,18 +296,31 @@ export class VoyageCrew extends React.Component {
 
 				entries.push(entry);
 			}
+			return entries;
+		}
+
+		const parseResults = (result, state) => {
 			return {
-				crewSelection: entries,
-				estimatedDuration: result.bestCrewTime,
+				crewSelection: this.state.selectedVoyageMethod.val ? cppEntries(result) : jsEntries(result),
+				estimatedDuration: result.bestCrewTime || result.score || 0,
 				state: state};
 		}
 
-		/*NativeExtension.calculateVoyageRecommendations(JSON.stringify(dataToExport), result => {
-			this.setState(parseResults(result, 'done'));
-		}, progressResult => {
-			this.setState(parseResults(progressResult, 'inprogress'));
-		});*/
-		this.setState(parseResults(calculateBestVoyage(dataToExport), 'done'));
+		if (this.state.selectedVoyageMethod.val) {
+			NativeExtension.calculateVoyageRecommendations(JSON.stringify(dataToExport), result => {
+				this.setState(parseResults(JSON.parse(result), 'done'));
+			}, progressResult => {
+				this.setState(parseResults(JSON.parse(progressResult), 'inprogress'));
+			});
+		} else {
+			if (this.state.includeFrozen === false) {
+				dataToExport.crew = dataToExport.crew.filter(c => c.frozen !== 1);
+			}
+			if (this.state.includeActive === false) {
+				dataToExport.crew = dataToExport.crew.filter(c => c.active_id === 0);
+			}
+			this.setState(parseResults(calculateBestVoyage(dataToExport), 'done'));
+		}
 	}
 }
 
@@ -442,7 +481,6 @@ const calculateTime = ({ crew, shipAM, voyage_crew_slots, voyage_skills }) => {
 	var dilemmasPerHour = 0.5
 	var hazPerHour = hazPerCycle*cyclesPerHour-dilemmasPerHour
 	var hazSkillPerHour = 1250
-	var hazSkillVariance = 0.15 // overwritten from input
 	var hazAmPass = 5
 	var hazAmFail = 30
 	var activityAmPerHour = activityPerCycle*cyclesPerHour
@@ -454,20 +492,38 @@ const calculateTime = ({ crew, shipAM, voyage_crew_slots, voyage_skills }) => {
 	var dilPerMin = 5
 	
 
-	const crewTotals = crew.reduce((total, c) => {
+	const crewTotalsAndProfs = crew.reduce((total, c) => {
 		for (let i = 0; i < skillNames.length; i++) {
-			total[skillNames[i]] = total[skillNames[i]] + skillScore(c[skillNames[i]]) || skillScore(c[skillNames[i]]);
+			const skillName = skillNames[i];
+			total.totalSkills[skillName] = total.totalSkills[skillName] + skillScore(c[skillName]) || skillScore(c[skillName]);
+			const profRange = c[skillName] ? Math.max(c[skillName].max,c[skillName].min) - c[skillName].min : 0;
+			total.totalProfs[skillName] = total.totalProfs[skillName] + profRange || profRange;
 		}
 		return total;
-	}, {});
+	}, { totalSkills: {}, totalProfs: {}}),
+		crewTotals = crewTotalsAndProfs.totalSkills,
+		totalProfRange = crewTotalsAndProfs.totalProfs;
+	let skillVariances = {};
+	// Calculate variance for all skills
+	for (var i = 0; i < skillNames.length; i++) {
+		let skillName = skillNames[i];
+		skillVariances[skillName] = 0;
+		if (crewTotals[skillName] > 0) {
+			skillVariances[skillName] = totalProfRange[skillName] / 2 / crewTotals[skillName];
+		}
+	}
 	var ps = crewTotals[voyage_skills.primary_skill] || 0;
 	var ss = crewTotals[voyage_skills.secondary_skill] || 0;
+	var psv = skillVariances[voyage_skills.primary_skill] || 0;
+	var ssv = skillVariances[voyage_skills.secondary_skill] || 0;
 	// Remove the primary & secondary skills to add the rest to skills array
 	skillNames.splice(skillNames.indexOf(voyage_skills.primary_skill), 1);
 	skillNames.splice(skillNames.indexOf(voyage_skills.secondary_skill), 1);
-	var skills = [ps,ss]
+	var skills = [ps,ss];
+	let hazSkillVariances = [psv, ssv];
 	for (var i = 0; i < skillNames.length; i++) {
 		skills.push(crewTotals[skillNames[i]] || 0);
+		hazSkillVariances.push(skillVariances[skillNames[i]] || 0);
 	}
 
 	const crewAM = crew.reduce((totalBonus, c, ind) => {
@@ -489,7 +545,7 @@ const calculateTime = ({ crew, shipAM, voyage_crew_slots, voyage_skills }) => {
 	
 	var maxSkill = Math.max(...skills)
 	maxSkill = Math.max(0, maxSkill - elapsedHazSkill)
-	var endVoySkill = maxSkill*(1+hazSkillVariance)
+	var endVoySkill = maxSkill*(1+hazSkillVariances[0])
 	
 
 	var tries = 0
@@ -502,8 +558,9 @@ const calculateTime = ({ crew, shipAM, voyage_crew_slots, voyage_skills }) => {
 
 		//test.text += Math.floor(endVoySkill) + " "
 		var am = ship;
-		for (i = 0; i < 6; i++) {
-			var skill = skills[i]
+		for (i = 0; i < skills.length; i++) {
+			var skill = skills[i];
+			const hazSkillVariance = hazSkillVariances[i];
 			skill = Math.max(0, skill-elapsedHazSkill)
 			var chance = skillChances[i]
 
