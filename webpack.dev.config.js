@@ -16,7 +16,8 @@ module.exports = {
 	output: {
 		path: OUTPUT_DIR,
 		publicPath: '',
-		filename: 'bundle.js'
+		filename: 'bundle.js',
+		globalObject: 'this'
 	},
 	module: {
 		rules: [
