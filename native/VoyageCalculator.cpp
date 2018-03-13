@@ -83,7 +83,7 @@ VoyageCalculator::VoyageCalculator(const char* jsonInput) noexcept :
 		config_includeAwayCrew(j["includeAwayCrew"]),
 		config_includeFrozenCrew(j["includeFrozenCrew"]),
 		config_searchDepth(j["search_depth"]),
-		config_extendsTarget(j["extendsTarget"])
+		config_extendsTarget(j["extends_target"])
 {
 	bestconsidered.fill(nullptr);
 
@@ -527,9 +527,6 @@ float VoyageCalculator::calculateDuration(const std::array<const Crew *, SLOT_CO
 	// Code translated from Chewable C++'s JS implementation from https://codepen.io/somnivore/pen/Nabyzw
 	// TODO: make this prettier
 
-	//let maxExtends = 100000
-	unsigned int maxExtends = 0; // we only care about the first one atm
-
 	if (debug)
 	{
 		log << "primary skill prof variance: " << hazSkillVariance[primarySkill] << std::endl;
@@ -567,109 +564,78 @@ float VoyageCalculator::calculateDuration(const std::array<const Crew *, SLOT_CO
 
 	float totalRefillCost = 0;
 	float voyTime = 0;
-	for (size_t extend = 0; extend <= maxExtends; extend++)
+
+	// converging loop - refine calculation based on voyage time every iteration
+	unsigned int tries = 0;
+	for (;;)
 	{
-		// converging loop - refine calculation based on voyage time every iteration
-		unsigned int tries = 0;
-		for (;;)
+		tries++;
+		if (tries == 100)
 		{
-			tries++;
-			if (tries == 100)
-			{
-				log << "something went wrong!" << std::endl;
-				assert(false);
-				break;
-			}
-
-			//test.text += Math.floor(endVoySkill) + " "
-			float am = (float)(shipAM + shipAM * extend);
-			for (size_t iSkill = 0; iSkill < SKILL_COUNT; iSkill++)
-			{
-				unsigned int skill = skills[iSkill];
-				skill = std::max((unsigned int)0, skill - elapsedHazSkill);
-				float chance = skillChances[iSkill];
-
-				// skill amount for 100% pass
-				float passSkill = std::min(endVoySkill, skill*(1 - hazSkillVariance[iSkill]));
-
-				// skill amount for RNG pass
-				// (compute passing proportion of triangular RNG area - integral of x)
-				float skillRngRange = skill * hazSkillVariance[iSkill] * 2;
-				float lostRngProportion = 0;
-				if (skillRngRange > 0)
-				{ // avoid division by 0
-					lostRngProportion = std::max(0.0f, std::min(1.0f, (skill*(1 + hazSkillVariance[iSkill]) - endVoySkill) / skillRngRange));
-				}
-				float skillPassRngProportion = 1 - lostRngProportion * lostRngProportion;
-				passSkill += skillRngRange * skillPassRngProportion / 2;
-
-				// am gained for passing hazards
-				am += passSkill * chance / hazSkillPerHour * hazPerHour * hazAmPass;
-
-				// skill amount for 100% hazard fail
-				float failSkill = std::max(0.0f, endVoySkill - skill * (1 + hazSkillVariance[iSkill]));
-				// skill amount for RNG fail
-				float skillFailRngProportion = (1 - lostRngProportion)*(1 - lostRngProportion);
-				failSkill += skillRngRange * skillFailRngProportion / 2;
-
-				// am lost for failing hazards
-				am -= failSkill * chance / hazSkillPerHour * hazPerHour * hazAmFail;
-			}
-
-			float amLeft = am - endVoySkill / hazSkillPerHour * activityAmPerHour;
-			float timeLeft = amLeft / (hazPerHour*hazAmFail + activityAmPerHour);
-
-			voyTime = endVoySkill / hazSkillPerHour + timeLeft + elapsedHours;
-
-			if (std::abs(timeLeft) > 0.001f)
-			{
-				endVoySkill = (voyTime - elapsedHours)*hazSkillPerHour;
-				continue;
-			}
-			else
-			{
-				break;
-			}
+			log << "something went wrong!" << std::endl;
+			assert(false);
+			break;
 		}
 
-		// compute other results
-	/*	float safeTime = voyTime*0.95f;
-		float saferTime = voyTime*0.90f;
-		float refillTime = shipAM / (hazPerHour*hazAmFail + activityAmPerHour);
-		float refillCost = std::ceil(voyTime*60/dilPerMin);*/
-
-		// display results
-		/*if (extend < 3)
+		//test.text += Math.floor(endVoySkill) + " "
+		float am = (float)(shipAM + shipAM * config_extendsTarget);
+		for (size_t iSkill = 0; iSkill < SKILL_COUNT; iSkill++)
 		{
-			//window['result'+extend].value = timeToString(voyTime)
-			//window['safeResult'+extend].value = timeToString(safeTime)
-			//window['saferResult'+extend].value = timeToString(saferTime)
-			if (extend > 0)
-				window['refillCostResult'+extend].value = totalRefillCost
-			//test.text = MaxSkill*(1+hazSkillVariance)/hazSkillPerHour
-			// the threshold here is just a guess
-			if (MaxSkill/hazSkillPerHour > voyTime) {
-				let tp = Math.floor(voyTime*hazSkillPerHour)
-				// TODO: warn somehow
-				//setWarning(extend, "Your highest skill is too high by about " + Math.floor(MaxSkill - voyTime*hazSkillPerHour) + ". To maximize voyage time, redistribute more like this: " + tp + "/" + tp + "/" + tp/4 + "/" + tp/4 + "/" + tp/4 + "/" + tp/4 + ".")
+			unsigned int skill = skills[iSkill];
+			skill = std::max((unsigned int)0, skill - elapsedHazSkill);
+			float chance = skillChances[iSkill];
+
+			// skill amount for 100% pass
+			float passSkill = std::min(endVoySkill, skill*(1 - hazSkillVariance[iSkill]));
+
+			// skill amount for RNG pass
+			// (compute passing proportion of triangular RNG area - integral of x)
+			float skillRngRange = skill * hazSkillVariance[iSkill] * 2;
+			float lostRngProportion = 0;
+			if (skillRngRange > 0)
+			{ // avoid division by 0
+				lostRngProportion = std::max(0.0f, std::min(1.0f, (skill*(1 + hazSkillVariance[iSkill]) - endVoySkill) / skillRngRange));
 			}
+			float skillPassRngProportion = 1 - lostRngProportion * lostRngProportion;
+			passSkill += skillRngRange * skillPassRngProportion / 2;
+
+			// am gained for passing hazards
+			am += passSkill * chance / hazSkillPerHour * hazPerHour * hazAmPass;
+
+			// skill amount for 100% hazard fail
+			float failSkill = std::max(0.0f, endVoySkill - skill * (1 + hazSkillVariance[iSkill]));
+			// skill amount for RNG fail
+			float skillFailRngProportion = (1 - lostRngProportion)*(1 - lostRngProportion);
+			failSkill += skillRngRange * skillFailRngProportion / 2;
+
+			// am lost for failing hazards
+			am -= failSkill * chance / hazSkillPerHour * hazPerHour * hazAmFail;
 		}
 
-		totalRefillCost += refillCost
+		float amLeft = am - endVoySkill / hazSkillPerHour * activityAmPerHour;
+		float timeLeft = amLeft / (hazPerHour*hazAmFail + activityAmPerHour);
 
-		if (voyTime >= 20) {
-			//test.text += "hi"
-			// TODO: show 20 hr?
-			//window['20hrdil'].value = totalRefillCost
-			//window['20hrrefills'].value = extend
-			break
-		}*/
+		voyTime = endVoySkill / hazSkillPerHour + timeLeft + elapsedHours;
 
-		assert(isfinite(voyTime));
-		return voyTime;
+		if (std::abs(timeLeft) > 0.001f)
+		{
+			endVoySkill = (voyTime - elapsedHours)*hazSkillPerHour;
+			continue;
+		}
+		else
+		{
+			break;
+		}
 	}
 
-	return 0;
+	// compute other results
+/*	float safeTime = voyTime*0.95f;
+	float saferTime = voyTime*0.90f;
+	float refillTime = shipAM / (hazPerHour*hazAmFail + activityAmPerHour);
+	float refillCost = std::ceil(voyTime*60/dilPerMin);*/
+
+	assert(isfinite(voyTime));
+	return voyTime;
 }
 
 } // namespace VoyageTools
