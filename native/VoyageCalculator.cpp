@@ -82,7 +82,8 @@ VoyageCalculator::VoyageCalculator(const char* jsonInput) noexcept :
 		config_traitScoreBoost(j["traitScoreBoost"]),
 		config_includeAwayCrew(j["includeAwayCrew"]),
 		config_includeFrozenCrew(j["includeFrozenCrew"]),
-		config_searchDepth(j["search_depth"])
+		config_searchDepth(j["search_depth"]),
+		config_extendsTarget(j["extendsTarget"])
 {
 	bestconsidered.fill(nullptr);
 

@@ -6,7 +6,8 @@ import { Image, ImageFit } from 'office-ui-fabric-react/lib/Image';
 import { Persona, PersonaSize, PersonaPresence } from 'office-ui-fabric-react/lib/Persona';
 import { PrimaryButton, DefaultButton } from 'office-ui-fabric-react/lib/Button';
 import { SpinButton } from 'office-ui-fabric-react/lib/SpinButton';
-import { Toggle } from 'office-ui-fabric-react/lib/Toggle';
+import { Checkbox } from 'office-ui-fabric-react/lib/Checkbox';
+import { Slider } from 'office-ui-fabric-react/lib/Slider';
 
 import { CrewList } from './CrewList.js';
 import { CollapsibleSection } from './CollapsibleSection.js';
@@ -132,6 +133,7 @@ export class VoyageCrew extends React.Component {
 				includeActive: false,
 				state: 'calculating',
 				searchDepth: 6,
+				extendsTarget: 2,
 				selectedVoyageMethod: { key: 0, text: 'Thorough', val: true }
 			};
 		}
@@ -183,7 +185,7 @@ export class VoyageCrew extends React.Component {
 		});
 
 		return (<CollapsibleSection title='Recommendations for next voyage'>
-			<p><b>NOTE: </b>Algorithms are a work in progress. Please only use these as rough guidelines.</p>
+			<p><b>NOTE: </b>Algorithms are still a work in progress. Please provide feedback on your recommendations and voyage results!</p>
 			<div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'nowrap' }}>
 				<Dropdown
 					style={{ minWidth: '150px' }}
@@ -198,29 +200,25 @@ export class VoyageCrew extends React.Component {
 				{shipSpans}
 			</div>
 			{this.renderBestCrew()}
-			<div style={{ display: this.state.selectedVoyageMethod.val ? 'flex' : 'none', flexDirection: 'row', flexWrap: 'nowrap' }}>
-				<SpinButton className='autoWidth' value={this.state.searchDepth} label={ 'Search depth:' } min={ 2 } max={ 30 } step={ 1 }
-					onIncrement={(value) => { this.setState({ searchDepth: +value + 1}); }}
-					onDecrement={(value) => { this.setState({ searchDepth: +value - 1}); }}
-				/>
-			</div>
 			<div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'nowrap' }}>
-				<Toggle textLeft checked={this.state.includeFrozen} label="Include frozen?" name="includeFrozen"
-					onClick={(e) => { this.setState(this.changeToggle(this.state, e)) }}
+				<div style={{ display: this.state.selectedVoyageMethod.val ? 'inline-block' : 'none' }}>
+					<SpinButton className='autoWidth' value={this.state.searchDepth} label={ 'Search depth:' } min={ 2 } max={ 30 } step={ 1 }
+						onIncrement={(value) => { this.setState({ searchDepth: +value + 1}); }}
+						onDecrement={(value) => { this.setState({ searchDepth: +value - 1}); }}
+					/>
+				</div>
+				<Checkbox checked={this.state.includeFrozen} label="Include frozen?"
+					onChange={(e, isChecked) => { this.setState({ includeFrozen: isChecked }); }}
 				/>
-				<Toggle textLeft checked={this.state.includeActive} label="Include active on shuttles?" name="includeActive"
-					onClick={(e) => { this.setState(this.changeToggle(this.state, e)) }}
+				<Checkbox checked={this.state.includeActive} label="Include active on shuttles?"
+					onChange={(e, isChecked) => { this.setState({ includeActive: isChecked }); }}
 				/>
-				<PrimaryButton onClick={this._exportVoyageData} text='Calculate best crew selection' />
+				<Slider label='Extends (target):' min={ 1 } max={ 5 } step={ 1 } defaultValue={ 2 } showValue={ true }
+            		onChange={ (value) => this.setState({extendsTarget: value}) }
+          		/>
+				<PrimaryButton onClick={this._exportVoyageData} text='Calculate best crew selection' disabled={this.state.state === 'inprogress'} />
 			</div>
 		</CollapsibleSection>);
-	}
-
-	changeToggle(state, e) {
-		return {
-			...state,
-			[e.target.name]: !e.target.checked
-		};
 	}
 
 	_exportVoyageData() {
@@ -266,7 +264,8 @@ export class VoyageCrew extends React.Component {
 			skillMatchingMultiplier: 1.1,
 			traitScoreBoost: 200,
 			includeAwayCrew: this.state.includeActive,
-			includeFrozenCrew: this.state.includeFrozen
+			includeFrozenCrew: this.state.includeFrozen,
+			extendsTarget: this.state.extendsTarget
 		};
 
 		function cppEntries(result) {

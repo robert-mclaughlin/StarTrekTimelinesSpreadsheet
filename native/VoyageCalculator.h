@@ -125,6 +125,7 @@ private:
 	std::mutex calcMutex;
 
 	const size_t config_searchDepth{6};
+	const size_t config_extendsTarget{2};
 	const float config_skillPrimaryMultiplier{3.5};
 	const float config_skillSecondaryMultiplier{2.5};
 	const float config_skillMatchingMultiplier{1.0};
