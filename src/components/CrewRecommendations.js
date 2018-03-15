@@ -133,7 +133,7 @@ export class VoyageCrew extends React.Component {
 				includeActive: false,
 				state: 'calculating',
 				searchDepth: 6,
-				extendsTarget: 2,
+				extendsTarget: 0,
 				selectedVoyageMethod: { key: 0, text: 'Thorough', val: true }
 			};
 		}
@@ -207,15 +207,17 @@ export class VoyageCrew extends React.Component {
 						onDecrement={(value) => { this.setState({ searchDepth: +value - 1}); }}
 					/>
 				</div>
+				<div style={{ display: this.state.selectedVoyageMethod.val ? 'inline-block' : 'none' }}>
+					<Slider label='Extends (target):' min={ 0 } max={ 10 } step={ 1 } defaultValue={ 0 } showValue={ true }
+						onChange={ (value) => this.setState({extendsTarget: value}) }
+					/>
+				</div>
 				<Checkbox checked={this.state.includeFrozen} label="Include frozen?"
 					onChange={(e, isChecked) => { this.setState({ includeFrozen: isChecked }); }}
 				/>
 				<Checkbox checked={this.state.includeActive} label="Include active on shuttles?"
 					onChange={(e, isChecked) => { this.setState({ includeActive: isChecked }); }}
 				/>
-				<Slider label='Extends (target):' min={ 1 } max={ 5 } step={ 1 } defaultValue={ 2 } showValue={ true }
-            		onChange={ (value) => this.setState({extendsTarget: value}) }
-          		/>
 				<PrimaryButton onClick={this._exportVoyageData} text='Calculate best crew selection' disabled={this.state.state === 'inprogress'} />
 			</div>
 		</CollapsibleSection>);
@@ -257,6 +259,7 @@ export class VoyageCrew extends React.Component {
 			voyage_skills: STTApi.playerData.character.voyage_descriptions[0].skills,
 			voyage_crew_slots: STTApi.playerData.character.voyage_descriptions[0].crew_slots,
 			search_depth: this.state.searchDepth,
+			extends_target: this.state.extendsTarget,
 			shipAM: this.state.bestShips[0].score,
 			// These values should be user-configurable to give folks a chance to tune the scoring function and provide feedback
 			skillPrimaryMultiplier: 3.5,
@@ -264,8 +267,7 @@ export class VoyageCrew extends React.Component {
 			skillMatchingMultiplier: 1.1,
 			traitScoreBoost: 200,
 			includeAwayCrew: this.state.includeActive,
-			includeFrozenCrew: this.state.includeFrozen,
-			extendsTarget: this.state.extendsTarget
+			includeFrozenCrew: this.state.includeFrozen
 		};
 
 		function cppEntries(result) {
