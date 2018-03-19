@@ -97,7 +97,7 @@ You can inspect the active state of crew by clicking on the little "baloon" icon
 ## Development environment
 
 ### To get started:
-* Initialize the submodules with `git submodule init` and `git submodule update`
+* Initialize the submodules with `git submodule update --init --recursive`
 * Run `npm install`
 
 #### Manual hacks required
