@@ -40,8 +40,6 @@
 
 .activedialogMainOverride {
     max-width: 700px !important;
-    color: white !important;
-    background: black !important;
 }
 
 .equipment-slot {
@@ -89,7 +87,6 @@
 
 .rarity-stars {
     font-size: medium;
-    color: black;
 }
 
 .autoWidth {

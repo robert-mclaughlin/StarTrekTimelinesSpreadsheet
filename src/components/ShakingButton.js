@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import { IconButton, IButtonProps } from 'office-ui-fabric-react/lib/Button';
 
+import { ColorClassNames } from '@uifabric/styling';
+
 export class ShakingButton extends React.Component {
 	constructor(props) {
         super(props);
@@ -39,7 +41,7 @@ export class ShakingButton extends React.Component {
 	render() {
         return (
             <div ref={(feedbackButton) => this._feedbackButton = feedbackButton}>
-                <IconButton iconProps={{ iconName: this.props.iconName }} title={this.props.title} onClick={this.props.onClick} />
+                <IconButton iconProps={{ iconName: this.props.iconName }} title={this.props.title} onClick={this.props.onClick} className={ColorClassNames.neutralDark} />
             </div>
         );
 	}

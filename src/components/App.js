@@ -26,6 +26,7 @@ import { Pivot, PivotItem, PivotLinkFormat, PivotLinkSize } from 'office-ui-fabr
 import { Image, ImageFit } from 'office-ui-fabric-react/lib/Image';
 import { Callout } from 'office-ui-fabric-react/lib/Callout';
 import { SearchBox } from 'office-ui-fabric-react/lib/SearchBox';
+import { IconButton } from 'office-ui-fabric-react/lib/Button';
 
 //import { exportExcel } from '../utils/excelExporter.js';
 import { exportCsv } from '../utils/csvExporter.js';
@@ -50,6 +51,8 @@ import { ShakingButton } from './ShakingButton.js';
 import STTApi from 'sttapi';
 import { loginSequence } from 'sttapi';
 
+import { loadTheme, ColorClassNames, FontClassNames } from '@uifabric/styling';
+
 const compareSemver = require('compare-semver');
 const electron = require('electron');
 const app = electron.app || electron.remote.app;
@@ -68,7 +71,8 @@ class App extends React.Component {
 			secondLine: '',
 			captainAvatarUrl: '',
 			captainAvatarBodyUrl: '',
-			spinnerLabel: 'Loading...'
+			spinnerLabel: 'Loading...',
+			darkTheme: true
 		};
 
 		this._captainButtonElement = null;
@@ -82,6 +86,7 @@ class App extends React.Component {
 		this._onDataFinished = this._onDataFinished.bind(this);
 		this._onDataError = this._onDataError.bind(this);
 		this._playerResync = this._playerResync.bind(this);
+		this._onSwitchTheme = this._onSwitchTheme.bind(this);
 
 		STTApi.setImageProvider(true, new FileImageCache());
 
@@ -94,6 +99,85 @@ class App extends React.Component {
 				this.setState({ showLoginDialog: true });
 			}
 		});
+
+		this._onSwitchTheme();
+	}
+
+	_onSwitchTheme() {
+		// Current theme
+		if (this.state.darkTheme) {
+			loadTheme({
+				palette: {
+					"themePrimary": "#0078d7",
+					"themeLighterAlt": "#eff6fc",
+					"themeLighter": "#deecf9",
+					"themeLight": "#c7e0f4",
+					"themeTertiary": "#71afe5",
+					"themeSecondary": "#2b88d8",
+					"themeDarkAlt": "#106ebe",
+					"themeDark": "#005a9e",
+					"themeDarker": "#004578",
+					"neutralLighterAlt": "#f8f8f8",
+					"neutralLighter": "#f4f4f4",
+					"neutralLight": "#eaeaea",
+					"neutralQuaternaryAlt": "#dadada",
+					"neutralQuaternary": "#d0d0d0",
+					"neutralTertiaryAlt": "#c8c8c8",
+					"neutralTertiary": "#a6a6a6",
+					"neutralSecondary": "#666666",
+					"neutralPrimaryAlt": "#3c3c3c",
+					"neutralPrimary": "#333",
+					"neutralDark": "#212121",
+					"black": "#1c1c1c",
+					"white": "#fff",
+					"primaryBackground": "#fff",
+					"primaryText": "#333",
+					"bodyBackground": "#fff",
+					"bodyText": "#333",
+					"disabledBackground": "#f4f4f4",
+					"disabledText": "#c8c8c8"
+				}
+			});
+		} else {
+			loadTheme({
+				palette: {
+					"themePrimary": "#0078d7",
+					"themeLighterAlt": "#00080f",
+					"themeLighter": "#001527",
+					"themeLight": "#00335d",
+					"themeTertiary": "#0058a1",
+					"themeSecondary": "#0071cd",
+					"themeDarkAlt": "#0086f4",
+					"themeDark": "#42aaff",
+					"themeDarker": "#5cb6ff",
+					"neutralLighterAlt": "#001222",
+					"neutralLighter": "#001d36",
+					"neutralLight": "#002d55",
+					"neutralQuaternaryAlt": "#003868",
+					"neutralQuaternary": "#004078",
+					"neutralTertiaryAlt": "#0063ba",
+					"neutralTertiary": "#dee1e4",
+					"neutralSecondary": "#e3e6e8",
+					"neutralPrimaryAlt": "#e9ebed",
+					"neutralPrimary": "#ced3d7",
+					"neutralDark": "#f4f5f6",
+					"black": "#f9fafa",
+					"white": "#00070d",
+					"primaryBackground": "#00070d",
+					"primaryText": "#ced3d7",
+					"bodyBackground": "#00070d",
+					"bodyText": "#ced3d7",
+					"disabledBackground": "#001d36",
+					"disabledText": "#0063ba"
+				}
+			});
+		}
+
+		document.body.className = ColorClassNames.neutralLighterBackground + ' ' + ColorClassNames.neutralDark;
+
+		this.state.darkTheme = !this.state.darkTheme;
+
+		this.forceUpdate();
 	}
 
 	_onCaptainClicked() {
@@ -129,7 +213,7 @@ class App extends React.Component {
 
 	render() {
 		return (
-			<Fabric className='App'>
+			<Fabric className={'App ' + ColorClassNames.neutralLighterBackground + ' ' + ColorClassNames.neutralDark}>
 				<div className='lcars'>
 					<div className='lcars-corner-left' />
 					<div className='lcars-content'>
@@ -155,6 +239,10 @@ class App extends React.Component {
 						{this.state.secondLine}
 					</div>
 					<div className='lcars-box' />
+					<div className='lcars-content'>
+						<IconButton iconProps={{ iconName: 'Light' }} title='Switch theme' onClick={this._onSwitchTheme} className={ColorClassNames.neutralDark} />
+					</div>
+					<div className='lcars-ellipse' />
 					<div className='lcars-content'>
 						<ShakingButton iconName='Emoji2' title='Feedback' interval={10000} onClick={() => this.refs.feedbackPanel.show()} />
 					</div>
@@ -324,14 +412,14 @@ class App extends React.Component {
 	_onLogout() {
 		this.setState({ isCaptainCalloutVisible: false });
 		STTApi.refreshEverything(true);
-		this.setState({ showLoginDialog: true, dataLoaded: false, captainName: 'Welcome!', spinnerLabel: 'Loading...', secondLine: ''});
+		this.setState({ showLoginDialog: true, dataLoaded: false, captainName: 'Welcome!', spinnerLabel: 'Loading...', secondLine: '' });
 		this.refs.loginDialog._showDialog('');
 	}
 
 	_onRefresh() {
 		this.setState({ isCaptainCalloutVisible: false });
 		STTApi.refreshEverything(false);
-		this.setState({ dataLoaded: false, spinnerLabel: 'Refreshing...'});
+		this.setState({ dataLoaded: false, spinnerLabel: 'Refreshing...' });
 		this._onAccessToken();
 	}
 
