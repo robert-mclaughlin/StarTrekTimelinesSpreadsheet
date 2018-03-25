@@ -1,4 +1,4 @@
-const json2csv = require('json2csv');
+const json2csv = require('json2csv').parse;
 const fs = require('fs');
 import STTApi from 'sttapi';
 
@@ -8,7 +8,7 @@ export function exportCsv(fileName) {
 		'diplomacy_skill.min', 'diplomacy_skill.max', 'engineering_skill.core', 'engineering_skill.min', 'engineering_skill.max', 'medicine_skill.core', 'medicine_skill.min', 'medicine_skill.max',
 		'science_skill.core', 'science_skill.min', 'science_skill.max', 'security_skill.core', 'security_skill.min', 'security_skill.max', 'traits'];
 
-	var csv = json2csv({ data: STTApi.roster, fields: fields });
+	var csv = json2csv(STTApi.roster, {fields});
 
 	return new Promise(function (resolve, reject) {
 		fs.writeFile(fileName, csv, function (err) {
