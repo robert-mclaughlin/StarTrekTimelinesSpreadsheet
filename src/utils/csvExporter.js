@@ -17,3 +17,16 @@ export function exportCsv(fileName) {
 		});
 	});
 }
+
+export function exportItemsCsv(fileName) {
+	var fields = ['name','rarity','quantity','typeName','symbol','flavor'];
+
+	var csv = json2csv(STTApi.playerData.character.items, {fields});
+
+	return new Promise(function (resolve, reject) {
+		fs.writeFile(fileName, csv, function (err) {
+			if (err) { reject(err); }
+			else { resolve(fileName); }
+		});
+	});
+}
