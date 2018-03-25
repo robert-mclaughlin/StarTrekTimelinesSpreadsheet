@@ -23,6 +23,7 @@ However, if you're only interested in installing and running the tool, head on t
 - [ ] Dark mode (white is way too bright): I agree but HTML / CSS is not my cup of tea - any help from a frontend guy/girl would be welcome
 - [ ] Export (CSV or XLS) for item list
 - [ ] Gauntlet improvements (I know I left that half-done, sorry)
+- [ ] Show more details in the fleet table (like captain level)
 - [ ] Export voyage log
 - [ ] Recommendations tab redesign (too messy, not user friendly)
 - [ ] Arena recommendations (? not sure what that means, maybe best crew for manning a ship)
