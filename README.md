@@ -115,6 +115,7 @@ After running npm install, go into node_modules\binary-parser\lib\binary_parser.
 _You have two options, an automatic build or two manual steps_
 
 ###### One Shot
+* Set ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES=true and run "electron-builder" to build the native package
 * Run `npm run package` to have webpack compile your application into `dist/bundle.js` and `dist/index.html`, and then an electron-packager run will be triggered for the current platform/arch, outputting to `builds/`
 
 ###### Manual

@@ -2,7 +2,8 @@ const webpack = require('webpack');
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MinifyPlugin = require("babel-minify-webpack-plugin");
-const ExtractTextPlugin = require('extract-text-webpack-plugin');
+//const ExtractTextPlugin = require('extract-text-webpack-plugin');
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const PACKAGE = require('./package.json');
 
 // Config directories
@@ -18,17 +19,25 @@ module.exports = {
 	output: {
 		path: OUTPUT_DIR,
 		publicPath: './',
-		filename: 'bundle.js'
+		filename: 'bundle.js',
+		globalObject: 'this'
 	},
 	module: {
 		rules: [
-			{
+			/*{
 				test: /\.css$/,
 				use: ExtractTextPlugin.extract({
 					fallback: 'style-loader',
 					use: 'css-loader'
 				}),
 				include: defaultInclude
+			},*/
+			{
+				test: /\.css$/,
+				use: [
+					MiniCssExtractPlugin.loader,
+					"css-loader"
+				]
 			},
 			{
 				test: /\.jsx?$/,
@@ -65,7 +74,13 @@ module.exports = {
 	target: 'electron-renderer',
 	plugins: [
 		new HtmlWebpackPlugin({ title: 'Star Trek Timelines Crew Management v' + PACKAGE.version }),
-		new ExtractTextPlugin('bundle.css'),
+		//new ExtractTextPlugin('bundle.css'),
+		new MiniCssExtractPlugin({
+			// Options similar to the same options in webpackOptions.output
+			// both options are optional
+			filename: "[name].css",
+			chunkFilename: "[id].css"
+		}),
 		new webpack.DefinePlugin({
 			'process.env.NODE_ENV': JSON.stringify('production')
 		}),
