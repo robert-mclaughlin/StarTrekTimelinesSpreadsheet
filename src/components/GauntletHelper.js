@@ -93,6 +93,7 @@ export class GauntletHelper extends React.Component {
 		this.state = {
 			gauntlet: null,
 			lastResult: null,
+			rewards: null,
 			merits: null
 		};
 
@@ -184,12 +185,12 @@ export class GauntletHelper extends React.Component {
 		}
 
 		if (data.lastResult) {
-			{
-				this.setState({
-					lastResult: data.lastResult
-				});
-			}
+			this.setState({
+				lastResult: data.lastResult,
+				rewards: data.rewards
+			});
 		}
+
 		if (data.merits) {
 			this.setState({
 				merits: data.merits
@@ -254,6 +255,12 @@ export class GauntletHelper extends React.Component {
 							</tbody>
 						</table>)
 					}
+
+					{this.state.rewards && (
+						this.state.rewards.loot.map((loot, index) => {
+							return (<span key={index} style={{ color: loot.rarity && CONFIG.RARITIES[loot.rarity].color }}>{loot.quantity} {(loot.rarity == null) ? '' : CONFIG.RARITIES[loot.rarity].name} {loot.full_name}</span>);
+						}).reduce((prev, curr) => [prev, ', ', curr])
+					)}
 
 					{(this.state.roundOdds.matches.length > 0) &&
 						<DefaultButton onClick={this._payForNewOpponents} text='Pay merits for new opponents' iconProps={{ iconName: 'Money' }} />
