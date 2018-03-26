@@ -30,6 +30,7 @@ import { IconButton } from 'office-ui-fabric-react/lib/Button';
 
 //import { exportExcel } from '../utils/excelExporter.js';
 import { exportCsv } from '../utils/csvExporter.js';
+import { exportItemsCsv } from '../utils/csvExporter.js';
 import { shareCrew } from '../utils/pastebin.js';
 import { FileImageCache } from '../utils/fileImageCache.js';
 
@@ -80,6 +81,7 @@ class App extends React.Component {
 		this._onLogout = this._onLogout.bind(this);
 		this._onRefresh = this._onRefresh.bind(this);
 		this._getCommandItems = this._getCommandItems.bind(this);
+		this._getInventoryCommandItems = this._getInventoryCommandItems.bind(this);
 		this._onShare = this._onShare.bind(this);
 		this._onCaptainClicked = this._onCaptainClicked.bind(this);
 		this._onCaptainCalloutDismiss = this._onCaptainCalloutDismiss.bind(this);
@@ -266,6 +268,7 @@ class App extends React.Component {
 							<CrewList data={STTApi.roster} grouped={false} ref='crewList' />
 						</PivotItem>
 						<PivotItem linkText='Items' itemIcon='Boards'>
+							<CommandBar items={this._getInventoryCommandItems()} />
 							<SearchBox labelText='Search by name description...'
 								onChange={(newValue) => this.refs.itemList.filter(newValue)}
 								onSearch={(newValue) => this.refs.itemList.filter(newValue)}
@@ -391,6 +394,35 @@ class App extends React.Component {
 						}
 					]
 				}
+			}
+		];
+	}
+
+	_getInventoryCommandItems() {
+		return [
+			{
+				key: 'exportCsv',
+				name: 'Export CSV',
+				icon: 'ExcelDocument',
+				onClick: function () {
+					const { dialog } = require('electron').remote;
+
+					dialog.showSaveDialog(
+						{
+							filters: [{ name: 'Comma separated file (*.csv)', extensions: ['csv'] }],
+							title: 'Export Star Trek Timelines item inventory',
+							defaultPath: 'My Items.csv',
+							buttonLabel: 'Export'
+						},
+						function (fileName) {
+							if (fileName === undefined)
+								return;
+
+							exportItemsCsv(fileName).then((filePath) => {
+								shell.openItem(filePath);
+							});
+						}.bind(this));
+				}.bind(this)
 			}
 		];
 	}
