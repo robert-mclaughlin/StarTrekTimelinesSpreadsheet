@@ -333,7 +333,7 @@ void VoyageCalculator::fillSlot(size_t iSlot, unsigned int minScore, size_t minD
 		considered[thread][slot] = &crew;
 		crew.original->considered[thread] = true;
 
-		if (slot < SLOT_COUNT - 1)
+		if (iSlot < SLOT_COUNT - 1)
 		{
 			auto fRecurse = [=]{fillSlot(iSlot + 1, minScore, minDepth, seedSlot, thread);};
 			if (slot == seedSlot) {
