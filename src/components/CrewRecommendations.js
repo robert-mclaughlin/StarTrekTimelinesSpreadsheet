@@ -142,6 +142,16 @@ export class VoyageCrew extends React.Component {
 		this._startVoyage = this._startVoyage.bind(this);
 	}
 
+	getIndexBySlotName(slotName) {
+		const crewSlots = STTApi.playerData.character.voyage_descriptions[0].crew_slots;
+		for (let slotIndex = 0; slotIndex < crewSlots.length; slotIndex++) {
+			const slot = crewSlots[slotIndex];
+			if (slot.name == slotName) {
+				return slotIndex;
+			}
+		}
+	}
+
 	renderBestCrew() {
 		if (this.state.state === "nothingToDo") {
 			return <p>Can only show voyage recommendations if you didn't begin your voyage yet!</p>;
@@ -150,72 +160,26 @@ export class VoyageCrew extends React.Component {
 		}
 		else {
 			let crewSpans = [];
-			this.state.crewSelection.forEach(entry => {
-				crewSpans.push(<Persona
+			this.state.crewSelection.forEach(entry => {				
+				let crew = <Persona
 					key={entry.choice.name}
 					imageUrl={entry.choice.iconUrl}
 					primaryText={entry.choice.name}
 					secondaryText={entry.slotName}
 					tertiaryText={entry.score.toFixed(0)}
 					size={PersonaSize.large}
-					presence={entry.hasTrait ? PersonaPresence.online : PersonaPresence.away} />);
+					presence={entry.hasTrait ? PersonaPresence.online : PersonaPresence.away} />
+
+				crewSpans[this.getIndexBySlotName(crew.props.secondaryText)] = crew;
 			});
 
-			let sortedCrewSpans = [];
-			for (const key in crewSpans) {
-				if (crewSpans.hasOwnProperty(key)) {
-					const crew = crewSpans[key];
-					switch (crew.props.secondaryText) {
-						case "First Officer":
-							sortedCrewSpans[0] = crew;
-							break;
-						case "Helm Officer":
-							sortedCrewSpans[1] = crew;
-							break;
-						case "Communications Officer":
-							sortedCrewSpans[2] = crew;
-							break;
-						case "Diplomat":
-							sortedCrewSpans[3] = crew;
-							break;
-						case "Chief Security Officer":
-							sortedCrewSpans[4] = crew;
-							break;
-						case "Tactical Officer":
-							sortedCrewSpans[5] = crew;
-							break;
-						case "Chief Engineer":
-							sortedCrewSpans[6] = crew;
-							break;
-						case "Engineer":
-							sortedCrewSpans[7] = crew;
-							break;
-						case "Chief Science Officer":
-							sortedCrewSpans[8] = crew;
-							break;
-						case "Deputy Science Officer":
-							sortedCrewSpans[9] = crew;
-							break;
-						case "Chief Medical Officer":
-							sortedCrewSpans[10] = crew;
-							break;
-						case "Ship's Counselor":
-							sortedCrewSpans[11] = crew;
-							break;
-					}
-				}
-			}
-
-			console.log("Sorted recommended crew", sortedCrewSpans);
-
-			
 			return (<div>
 				<p>Crew</p>
 				{(this.state.state === "inprogress") && (
 					<Spinner size={SpinnerSize.small} label='Still calculating...' />
 				)}
 				<div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap' }}>
-					{sortedCrewSpans}
+					{crewSpans}
 				</div>
 				<p>Estimated duration: <b>{this.state.estimatedDuration.toFixed(2)} hours</b></p>
 			</div>);
