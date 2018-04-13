@@ -132,7 +132,7 @@ function shareCrewInternal(options, missionList) {
 		let exportedRoster = [];
 		let iconPromises = [];
 		STTApi.roster.forEach(rosterEntry => {
-			if (rosterEntry.buyback) {
+			if (rosterEntry.buyback && !options.exportBuyback) {
 				// Skip buy-back crew
 				return;
 			}

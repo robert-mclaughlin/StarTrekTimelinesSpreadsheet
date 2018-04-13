@@ -13,6 +13,7 @@ export class ShareDialog extends React.Component {
 		this.state = {
 			hideDialog: true,
 			shareMissions: false,
+			exportBuyback: false,
 			exportWhere: 'L',
 			exportType: 'html',
 			title: '',
@@ -122,6 +123,14 @@ export class ShareDialog extends React.Component {
 						}}
 					/>
 
+					<Checkbox
+						label='Export buyback (recently dismissed) crew'
+						checked={this.state.exportBuyback}
+						onChange={(ev, checked) => {
+							this.setState({ exportBuyback: checked });
+						}}
+					/>
+
 					<DialogFooter>
 						<PrimaryButton onClick={this._closeDialog} text='Share' />
 						<DefaultButton onClick={this._cancelDialog} text='Cancel' />
@@ -143,7 +152,8 @@ export class ShareDialog extends React.Component {
 			exportWhere: this.state.exportWhere,
 			exportType: this.state.exportType,
 			htmlColorTheme: this.state.htmlColorTheme,
-			shareMissions: this.state.shareMissions
+			shareMissions: this.state.shareMissions,
+			exportBuyback: this.state.exportBuyback,
 		});
 	}
 

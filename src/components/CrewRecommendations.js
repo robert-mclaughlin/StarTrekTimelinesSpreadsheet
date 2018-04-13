@@ -139,6 +139,7 @@ export class VoyageCrew extends React.Component {
 		}
 
 		this._exportVoyageData = this._exportVoyageData.bind(this);
+		this._startVoyage = this._startVoyage.bind(this);
 	}
 
 	renderBestCrew() {
@@ -219,8 +220,20 @@ export class VoyageCrew extends React.Component {
 					onChange={(e, isChecked) => { this.setState({ includeActive: isChecked }); }}
 				/>
 				<PrimaryButton onClick={this._exportVoyageData} text='Calculate best crew selection' disabled={this.state.state === 'inprogress'} />
+				<PrimaryButton onClick={this._startVoyage} text='Start voyage with selection' disabled={this.state.state !== 'done'} />
 			</div>
 		</CollapsibleSection>);
+	}
+
+	_startVoyage() {
+		let selectedCrewIds = [];
+		STTApi.playerData.character.voyage_descriptions[0].crew_slots.forEach(slot => {
+			let entry = this.state.crewSelection.find(entry => entry.slotName == slot.name);
+
+			selectedCrewIds.push(entry.choice.crew_id);
+		});
+
+		STTApi.startVoyage(STTApi.playerData.character.voyage_descriptions[0].symbol, this.state.bestShips[0].ship.id, "Ship Name", selectedCrewIds);
 	}
 
 	_exportVoyageData() {
