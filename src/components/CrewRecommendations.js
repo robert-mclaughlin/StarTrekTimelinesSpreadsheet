@@ -161,13 +161,61 @@ export class VoyageCrew extends React.Component {
 					presence={entry.hasTrait ? PersonaPresence.online : PersonaPresence.away} />);
 			});
 
+			let sortedCrewSpans = [];
+			for (const key in crewSpans) {
+				if (crewSpans.hasOwnProperty(key)) {
+					const crew = crewSpans[key];
+					switch (crew.props.secondaryText) {
+						case "First Officer":
+							sortedCrewSpans[0] = crew;
+							break;
+						case "Helm Officer":
+							sortedCrewSpans[1] = crew;
+							break;
+						case "Communications Officer":
+							sortedCrewSpans[2] = crew;
+							break;
+						case "Diplomat":
+							sortedCrewSpans[3] = crew;
+							break;
+						case "Chief Security Officer":
+							sortedCrewSpans[4] = crew;
+							break;
+						case "Tactical Officer":
+							sortedCrewSpans[5] = crew;
+							break;
+						case "Chief Engineer":
+							sortedCrewSpans[6] = crew;
+							break;
+						case "Engineer":
+							sortedCrewSpans[7] = crew;
+							break;
+						case "Chief Science Officer":
+							sortedCrewSpans[8] = crew;
+							break;
+						case "Deputy Science Officer":
+							sortedCrewSpans[9] = crew;
+							break;
+						case "Chief Medical Officer":
+							sortedCrewSpans[10] = crew;
+							break;
+						case "Ship's Counselor":
+							sortedCrewSpans[11] = crew;
+							break;
+					}
+				}
+			}
+
+			console.log("Sorted recommended crew", sortedCrewSpans);
+
+			
 			return (<div>
 				<p>Crew</p>
 				{(this.state.state === "inprogress") && (
 					<Spinner size={SpinnerSize.small} label='Still calculating...' />
 				)}
 				<div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap' }}>
-					{crewSpans}
+					{sortedCrewSpans}
 				</div>
 				<p>Estimated duration: <b>{this.state.estimatedDuration.toFixed(2)} hours</b></p>
 			</div>);
