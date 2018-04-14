@@ -142,6 +142,16 @@ export class VoyageCrew extends React.Component {
 		this._startVoyage = this._startVoyage.bind(this);
 	}
 
+	getIndexBySlotName(slotName) {
+		const crewSlots = STTApi.playerData.character.voyage_descriptions[0].crew_slots;
+		for (let slotIndex = 0; slotIndex < crewSlots.length; slotIndex++) {
+			const slot = crewSlots[slotIndex];
+			if (slot.name == slotName) {
+				return slotIndex;
+			}
+		}
+	}
+
 	renderBestCrew() {
 		if (this.state.state === "nothingToDo") {
 			return <p>Can only show voyage recommendations if you didn't begin your voyage yet!</p>;
@@ -150,15 +160,17 @@ export class VoyageCrew extends React.Component {
 		}
 		else {
 			let crewSpans = [];
-			this.state.crewSelection.forEach(entry => {
-				crewSpans.push(<Persona
+			this.state.crewSelection.forEach(entry => {				
+				let crew = <Persona
 					key={entry.choice.name}
 					imageUrl={entry.choice.iconUrl}
 					primaryText={entry.choice.name}
 					secondaryText={entry.slotName}
 					tertiaryText={entry.score.toFixed(0)}
 					size={PersonaSize.large}
-					presence={entry.hasTrait ? PersonaPresence.online : PersonaPresence.away} />);
+					presence={entry.hasTrait ? PersonaPresence.online : PersonaPresence.away} />
+
+				crewSpans[this.getIndexBySlotName(crew.props.secondaryText)] = crew;
 			});
 
 			return (<div>
