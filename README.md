@@ -105,12 +105,12 @@ Minimal set of steps required (on a Windows machine)
 * `cd StarTrekTimelinesSpreadsheet\sttapi`
 * `npm install`
 * `cd ..`
-* Apply manual hacks (see below)
 * `npm install`
 * `node_modules\.bin\electron-rebuild.cmd`
+* Apply manual hacks (see below)
 * `npm run dev`
 
-*Note*: if for some reason the above steps are not sufficient, you may also need to manually build in STTApi\AssetParser (with npm install)
+*Note*: if for some reason the above steps are not sufficient, you may need to manually build in STTApi\AssetParser (with npm install) before building STTApi.
 
 #### Manual hacks required
 After running npm install, go into node_modules\binary-parser\lib\binary_parser.js, at line 221, and comment out these 3 lines of code:
