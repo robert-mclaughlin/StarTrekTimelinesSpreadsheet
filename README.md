@@ -98,8 +98,19 @@ You can inspect the active state of crew by clicking on the little "baloon" icon
 ## Development environment
 
 ### To get started:
-* Initialize the submodules with `git submodule update --init --recursive`
-* Run `npm install`
+Clone the repo and build.
+
+Minimal set of steps required (on a Windows machine)
+* `git clone --recurse-submodules https://github.com/IAmPicard/StarTrekTimelinesSpreadsheet.git`
+* `cd StarTrekTimelinesSpreadsheet\sttapi`
+* `npm install`
+* `cd ..`
+* Apply manual hacks (see below)
+* `npm install`
+* `node_modules\.bin\electron-rebuild.cmd`
+* `npm run dev`
+
+*Note*: if for some reason the above steps are not sufficient, you may also need to manually build in STTApi\AssetParser (with npm install)
 
 #### Manual hacks required
 After running npm install, go into node_modules\binary-parser\lib\binary_parser.js, at line 221, and comment out these 3 lines of code:
