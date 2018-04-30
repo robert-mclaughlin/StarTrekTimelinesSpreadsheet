@@ -70,20 +70,34 @@ struct Crew
 	const Crew *original{nullptr};
 	std::array<const Crew*, SLOT_COUNT> slotCrew;
 	unsigned int score{0};
+	unsigned int max_rarity{0};
+	bool frozen;
+	bool ff100 = false;
 };
+using CrewArray = std::array<const Crew *, SLOT_COUNT>;
 
 class VoyageCalculator
 {
 public:
-	VoyageCalculator(const char* jsonInput) noexcept;
+	VoyageCalculator(const char* jsonInput, bool rankMode = false) noexcept;
+
+	void SetInput(size_t primarySkill, size_t secondarySkill) noexcept
+	{
+		this->primarySkill = primarySkill;
+		this->secondarySkill = secondarySkill;
+	}
+	void DisableTraits()
+	{
+		std::fill(slotTraits.begin(), slotTraits.end(), (size_t)-1);
+	}
 
 	const std::string& GetSlotName(size_t index) const noexcept
 	{
 		return slotNames[index];
 	}
 
-	std::array<const Crew *, SLOT_COUNT> Calculate(
-		std::function<void(const std::array<const Crew *, SLOT_COUNT>&, double)> progressCallback,
+	CrewArray Calculate(
+		std::function<void(const CrewArray&, double)> progressCallback,
 		double& score) noexcept
 	{
 		progressUpdate = progressCallback;
@@ -91,6 +105,10 @@ public:
 		score = bestscore;
 		return bestconsidered;
 	}
+
+	CrewArray GetAlternateCrew(unsigned int level) const noexcept;
+
+	const std::vector<Crew>& GetRoster() const noexcept { return roster; }
 
 private:
 	void calculate() noexcept;
@@ -105,6 +123,8 @@ private:
 	unsigned int computeScore(const Crew& crew, size_t skill, size_t trait) const noexcept;
 
 	nlohmann::json j;
+
+	bool rankMode; // in rank calculation mode, traits are ignored
 
 	std::function<void(const std::array<const Crew *, SLOT_COUNT>&, double)> progressUpdate;
 	std::array<std::string, SLOT_COUNT> slotNames;

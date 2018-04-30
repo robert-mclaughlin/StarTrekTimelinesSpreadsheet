@@ -74,8 +74,8 @@ unsigned int VoyageCalculator::computeScore(const Crew& crew, size_t skill, size
 	return score;
 }
 
-VoyageCalculator::VoyageCalculator(const char* jsonInput) noexcept :
-	j(json::parse(jsonInput)), shipAntiMatter(j["shipAM"]),
+VoyageCalculator::VoyageCalculator(const char* jsonInput, bool rankMode) noexcept :
+	j(json::parse(jsonInput)), rankMode(rankMode), shipAntiMatter(j["shipAM"]),
 		config_skillPrimaryMultiplier(j["skillPrimaryMultiplier"]),
 		config_skillSecondaryMultiplier(j["skillSecondaryMultiplier"]),
 		config_skillMatchingMultiplier(j["skillMatchingMultiplier"]),
@@ -117,7 +117,8 @@ VoyageCalculator::VoyageCalculator(const char* jsonInput) noexcept :
 
 	for (const auto &crew : j["crew"])
 	{
-		if (!config_includeFrozenCrew && crew["frozen"] != 0)
+		bool frozen = crew["frozen"] != 0;
+		if (!config_includeFrozenCrew && frozen != 0)
 			continue;
 
 		if (!config_includeAwayCrew && crew["active_id"] != 0)
@@ -126,6 +127,13 @@ VoyageCalculator::VoyageCalculator(const char* jsonInput) noexcept :
 		Crew c;
 		c.id = crew["id"];
 		c.name = crew["name"];
+		c.frozen = frozen;
+		if (crew.find("ff100") != crew.end()) {
+			c.ff100 = crew["ff100"] != 0;
+		}
+		if (crew.find("max_rarity") != crew.end()) {
+			c.max_rarity = crew["max_rarity"];
+		}
 		for (const auto &skill : skillMap)
 		{
 			c.skillMaxProfs[skill.second] = crew[skill.first]["max"].get<int16_t>();
@@ -182,6 +190,34 @@ VoyageCalculator::VoyageCalculator(const char* jsonInput) noexcept :
 			return (left->score > right->score);
 		});
 	}
+}
+
+CrewArray VoyageCalculator::GetAlternateCrew(unsigned int level) const noexcept
+{
+	CrewArray altCrew;
+
+	for (size_t slot = 0; slot < SLOT_COUNT; ++slot) {
+		altCrew[slot] = nullptr;
+		int currentLevel = 0;
+		for (const Crew *crew : sortedSlotRosters[slot]) {
+			bool best = false;
+			if (crew->max_rarity == 0) {
+				break;
+			}
+			for (size_t bestslot = 0; bestslot < SLOT_COUNT; ++bestslot) {
+				if (bestconsidered[slot]->id == crew->id) {
+					best = true;
+					break;
+				}
+			}
+			if (!best && (currentLevel++ == level)) {
+				altCrew[slot] = crew;
+				break;
+			}
+		}
+	}
+
+	return altCrew;
 }
 
 void VoyageCalculator::calculate() noexcept

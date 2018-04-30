@@ -9,5 +9,10 @@ describe('native extension', function() {
       console.log(testString);
     }), 'undefined');
     //assert.equal(typeof nativeExtension.calculateVoyageRecommendations(), 'string');
+    assert.equal(typeof nativeExtension.calculateVoyageCrewRank('{}', function(testString) {
+      console.log(testString);
+    }, function(testString) {
+      console.log(testString);
+    }), 'undefined');
   });
 });
