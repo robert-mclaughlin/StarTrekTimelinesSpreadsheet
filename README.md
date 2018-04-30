@@ -4,7 +4,7 @@ A tool to help with crew management in Star Trek Timelines
 **NOTE** This tool does not (and will never) automate any part of the game play; its sole purpose is to help players organize their crew using the functionality built within or with a spreadsheet application of their choice.
 
 **DISCLAIMER** This tool is provided "as is", without warranty of any kind. Use at your own risk!
-It should be understood that *Star Trek Timelines* content and materials are trademarks and copyrights of [Disruptor Beam, Inc.](https://www.disruptorbeam.com/tos/) or its licensors. All rights reserved. This tool is neither endorsed by nor affiliated with Disruptor Beam, Inc..
+It should be understood that *Star Trek Timelines* content and materials are trademarks and copyrights of [Disruptor Beam, Inc.](https://www.disruptorbeam.com/tos/) or its licensors. All rights reserved. This tool is neither endorsed by nor affiliated with Disruptor Beam, Inc. ( [more](/docs/DBSupport.png) )
 
 [More tools and information here](https://iampicard.github.io/)
 
@@ -98,8 +98,19 @@ You can inspect the active state of crew by clicking on the little "baloon" icon
 ## Development environment
 
 ### To get started:
-* Initialize the submodules with `git submodule update --init --recursive`
-* Run `npm install`
+Clone the repo and build.
+
+Minimal set of steps required (on a Windows machine)
+* `git clone --recurse-submodules https://github.com/IAmPicard/StarTrekTimelinesSpreadsheet.git`
+* `cd StarTrekTimelinesSpreadsheet\sttapi`
+* `npm install`
+* `cd ..`
+* `npm install`
+* `node_modules\.bin\electron-rebuild.cmd`
+* Apply manual hacks (see below)
+* `npm run dev`
+
+*Note*: if for some reason the above steps are not sufficient, you may need to manually build in STTApi\AssetParser (with npm install) before building STTApi.
 
 #### Manual hacks required
 After running npm install, go into node_modules\binary-parser\lib\binary_parser.js, at line 221, and comment out these 3 lines of code:
