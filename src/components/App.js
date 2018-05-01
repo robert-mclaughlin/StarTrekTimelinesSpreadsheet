@@ -27,6 +27,7 @@ import { Image, ImageFit } from 'office-ui-fabric-react/lib/Image';
 import { Callout } from 'office-ui-fabric-react/lib/Callout';
 import { SearchBox } from 'office-ui-fabric-react/lib/SearchBox';
 import { IconButton } from 'office-ui-fabric-react/lib/Button';
+import { initializeIcons } from 'office-ui-fabric-react/lib/Icons';
 
 //import { exportExcel } from '../utils/excelExporter.js';
 import { exportCsv } from '../utils/csvExporter.js';
@@ -89,6 +90,8 @@ class App extends React.Component {
 		this._onDataError = this._onDataError.bind(this);
 		this._playerResync = this._playerResync.bind(this);
 		this._onSwitchTheme = this._onSwitchTheme.bind(this);
+
+		initializeIcons(/* optional base url */);
 
 		STTApi.setImageProvider(true, new FileImageCache());
 

@@ -126,11 +126,11 @@ export class MemberList extends React.Component {
 				if (fileName === undefined)
 					return;
 
-				const json2csv = require('json2csv');
+				const json2csv = require('json2csv').parse;
 				const fs = require('fs');
 
 				var fields = ['display_name', 'rank', 'squad_name', 'squad_rank', 'last_active', 'event_rank', 'starbase_activity', 'daily_activity'];
-				var csv = json2csv({ data: this.state.members, fields: fields });
+				var csv = json2csv(this.state.members, { fields: fields });
 
 				fs.writeFile(fileName, csv, function (err) {
 					if (!err) {

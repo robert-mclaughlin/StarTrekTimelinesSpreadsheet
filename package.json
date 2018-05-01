@@ -51,18 +51,18 @@
     "worker-loader": "latest"
   },
   "dependencies": {
-    "@uifabric/styling": "^5.21.0",
+    "@uifabric/styling": "latest",
     "buffer": "^5.1.0",
     "compare-semver": "latest",
     "dexie": "latest",
     "fb": "latest",
     "json2csv": "^4.0.2",
-    "office-ui-fabric-react": "^4.0.0",
+    "office-ui-fabric-react": "latest",
     "pubnub": "latest",
     "stt-native": "file:native",
     "sttapi": "file:sttapi",
     "url-search-params-polyfill": "latest",
     "uuid": "latest",
-    "vis": "^4.21.0"
+    "vis": "latest"
   }
 }
