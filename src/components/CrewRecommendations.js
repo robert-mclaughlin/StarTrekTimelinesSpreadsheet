@@ -139,6 +139,7 @@ export class VoyageCrew extends React.Component {
 		}
 
 		this._exportVoyageData = this._exportVoyageData.bind(this);
+		this._generateVoyCrewRank = this._generateVoyCrewRank.bind(this);
 		this._startVoyage = this._startVoyage.bind(this);
 	}
 
@@ -233,6 +234,7 @@ export class VoyageCrew extends React.Component {
 				/>
 				<PrimaryButton onClick={this._exportVoyageData} text='Calculate best crew selection' disabled={this.state.state === 'inprogress'} />
 				<PrimaryButton onClick={this._startVoyage} text='Start voyage with selection' disabled={this.state.state !== 'done'} />
+				<PrimaryButton onClick={this._generateVoyCrewRank} text='Generate Crew Voyage Ranking' disabled={this.state.state === 'inprogress'} />
 			</div>
 		</CollapsibleSection>);
 	}
@@ -347,6 +349,98 @@ export class VoyageCrew extends React.Component {
 			}
 			this.setState(parseResults(calculateBestVoyage(dataToExport), 'done'));
 		}
+	}
+
+	_generateVoyCrewRank() {
+		const NativeExtension = require('electron').remote.require('stt-native');
+
+		let dataToExport = {
+			crew: STTApi.roster.map(crew => new Object({
+				id: crew.id,
+				name: crew.name,
+				frozen: crew.frozen,
+				ff100: (crew.level == 100 && crew.rarity == crew.max_rarity) ? 1 : 0,
+				max_rarity: crew.max_rarity,
+				traits: crew.rawTraits,
+				command_skill: crew.command_skill,
+				science_skill: crew.science_skill,
+				security_skill: crew.security_skill,
+				engineering_skill: crew.engineering_skill,
+				diplomacy_skill: crew.diplomacy_skill,
+				medicine_skill: crew.medicine_skill,
+				iconUrl: crew.iconUrl,
+				active_id: crew.active_id ? crew.active_id : 0
+			})),
+			voyage_skills: STTApi.playerData.character.voyage_descriptions[0].skills, // not used
+			voyage_crew_slots: STTApi.playerData.character.voyage_descriptions[0].crew_slots, // not used
+			search_depth: this.state.searchDepth, // TODO: it takes too long to use default search depth for this...
+			extends_target: this.state.extendsTarget, // used... for now
+			shipAM: this.state.bestShips[0].score,
+			// These values should be user-configurable to give folks a chance to tune the scoring function and provide feedback
+			skillPrimaryMultiplier: 3.5,
+			skillSecondaryMultiplier: 2.5,
+			skillMatchingMultiplier: 1.1,
+			traitScoreBoost: 200,
+			includeAwayCrew: this.state.includeActive, // used, but user should typically enable
+			includeFrozenCrew: this.state.includeFrozen // used, but user should typically enable
+		};
+
+		function cppEntries(result) {
+			let entries = [];
+			for (var slotName in result.selection) {
+				let entry = {
+					hasTrait: false,
+					slotName: slotName,
+					score: 0,
+					choice: STTApi.roster.find((crew) => (crew.id == result.selection[slotName]))
+				};
+
+				entries.push(entry);
+			}
+			return entries;
+		}
+
+		const parseResults = (result, state) => {
+			return {
+				crewSelection: cppEntries(result),
+				estimatedDuration: result.bestCrewTime || result.score || 0,
+				state: state};
+		}
+
+		NativeExtension.calculateVoyageCrewRank(JSON.stringify(dataToExport), result => {
+			console.log("done!");
+			console.log(result);
+			this.setState({state: 'calculating'});
+			const fs = require('fs');
+
+			const { dialog } = require('electron').remote;
+
+			dialog.showSaveDialog(
+				{
+					filters: [{ name: 'Comma separated file (*.csv)', extensions: ['csv'] }],
+					title: 'Export Star Trek Timelines voyage crew ranking',
+					defaultPath: 'My Voyage Crew.csv',
+					buttonLabel: 'Export'
+				},
+				function (fileName) {
+					if (fileName === undefined)
+						return;
+
+					let promose = new Promise(function (resolve, reject) {
+						fs.writeFile(fileName, result, function (err) {
+							if (err) { reject(err); }
+							else { resolve(fileName); }
+						});
+					});
+
+					promose.then((filePath) => {
+						shell.openItem(filePath);
+					});
+				}.bind(this));
+
+		}, progressResult => {
+			console.log("unexpected progress result!"); // not implemented yet..
+		});
 	}
 }
 
