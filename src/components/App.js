@@ -55,6 +55,7 @@ import { loginSequence } from 'sttapi';
 
 import { loadTheme, ColorClassNames, FontClassNames } from '@uifabric/styling';
 
+const settings = require('electron-settings');
 const compareSemver = require('compare-semver');
 const electron = require('electron');
 const app = electron.app || electron.remote.app;
@@ -74,7 +75,7 @@ class App extends React.Component {
 			captainAvatarUrl: '',
 			captainAvatarBodyUrl: '',
 			spinnerLabel: 'Loading...',
-			darkTheme: true
+			darkTheme: !settings.get('ui.darkTheme', false)
 		};
 
 		this._captainButtonElement = null;
@@ -181,6 +182,7 @@ class App extends React.Component {
 		document.body.className = ColorClassNames.neutralLighterBackground + ' ' + ColorClassNames.neutralDark;
 
 		this.state.darkTheme = !this.state.darkTheme;
+		settings.set('ui.darkTheme', this.state.darkTheme);
 
 		this.forceUpdate();
 	}

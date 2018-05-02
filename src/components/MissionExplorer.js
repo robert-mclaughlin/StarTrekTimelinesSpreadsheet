@@ -419,7 +419,8 @@ export class MissionExplorer extends React.Component {
         return options;
     }
 
-    _onRenderTitle(option) {
+    _onRenderTitle(options) {
+        let option = options[0];
         return (<div>
             <span><b>{option.data.mission} : </b></span>
             <span>{option.text}</span>

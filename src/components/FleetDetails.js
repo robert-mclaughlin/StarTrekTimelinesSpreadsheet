@@ -77,6 +77,14 @@ export class MemberList extends React.Component {
 					fieldName: 'last_active'
 				},
 				{
+					key: 'daily_activity',
+					name: 'Daily activity',
+					minWidth: 50,
+					maxWidth: 80,
+					isResizable: true,
+					fieldName: 'daily_activity'
+				},
+				{
 					key: 'event_rank',
 					name: 'Event rank',
 					minWidth: 50,
@@ -85,20 +93,28 @@ export class MemberList extends React.Component {
 					fieldName: 'event_rank'
 				},
 				{
-					key: 'starbase_activity',
-					name: 'Starbase activity',
+					key: 'level',
+					name: 'Level',
 					minWidth: 50,
 					maxWidth: 80,
 					isResizable: true,
-					fieldName: 'starbase_activity'
+					fieldName: 'level'
 				},
 				{
-					key: 'daily_activity',
-					name: 'Daily activity',
-					minWidth: 50,
-					maxWidth: 80,
+					key: 'location',
+					name: 'Location',
+					minWidth: 60,
+					maxWidth: 110,
 					isResizable: true,
-					fieldName: 'daily_activity'
+					fieldName: 'location'
+				},
+				{
+					key: 'currentShip',
+					name: 'Current Ship',
+					minWidth: 70,
+					maxWidth: 110,
+					isResizable: true,
+					fieldName: 'currentShip'
 				}
 			]
 		};
@@ -129,7 +145,7 @@ export class MemberList extends React.Component {
 				const json2csv = require('json2csv').parse;
 				const fs = require('fs');
 
-				var fields = ['display_name', 'rank', 'squad_name', 'squad_rank', 'last_active', 'event_rank', 'starbase_activity', 'daily_activity'];
+				var fields = ['display_name', 'rank', 'squad_name', 'squad_rank', 'last_active', 'event_rank', 'level', 'daily_activity', 'location', 'currentShip'];
 				var csv = json2csv(this.state.members, { fields: fields });
 
 				fs.writeFile(fileName, csv, function (err) {
@@ -158,20 +174,32 @@ export class MemberList extends React.Component {
 export class Starbase extends React.Component {
 	render() {
 		return (<CollapsibleSection title={this.props.title}>
-			<ul>
-				{STTApi.starbaseRooms.map(function (room) {
-					return <li key={room.id}>
-						<span className='starbase-room'><span className='starbase-room-name'>{room.name}</span><RarityStars min={1} max={room.max_level} value={(room.level > 0) ? room.level : null} /></span>
-						{(room.level > 0) &&
-							<ul>
-								{room.upgrades.slice(0, room.level + 1).map(function (upgrade) {
-									return <li key={upgrade.name}>{upgrade.name} {(upgrade.buffs && upgrade.buffs.length > 0) ? (' (' + upgrade.buffs[0].name + ' )') : ''} </li>
-								})}
-							</ul>}
-					</li>
-				})}
-			</ul>
+			{STTApi.starbaseRooms.map(function (room) {
+				return <li key={room.id}>
+					<span className='starbase-room'><span className='starbase-room-name'>{room.name}</span><RarityStars min={1} max={room.max_level} value={(room.level > 0) ? room.level : null} /></span>
+					{(room.level > 0) &&
+						<ul>
+							{room.upgrades.slice(0, room.level + 1).map(function (upgrade) {
+								return <li key={upgrade.name}>{upgrade.name} {(upgrade.buffs && upgrade.buffs.length > 0) ? (' (' + upgrade.buffs[0].name + ' )') : ''} </li>
+							})}
+						</ul>}
+				</li>
+			})}
 		</CollapsibleSection>);
+	}
+}
+
+export class ChatHistory extends React.Component {
+	render() {
+		if (!this.props.chatHistory) {
+			return <span/>;
+		} else {
+		return (<CollapsibleSection title={this.props.title}>
+			{this.props.chatHistory.map(function (message, idx) {
+				return <p key={idx}><b>{message.from}</b> ({message.timeSent}): {message.text}</p>
+			})}
+		</CollapsibleSection>);
+		}
 	}
 }
 
@@ -185,11 +213,14 @@ export class FleetDetails extends React.Component {
 			STTApi.fleetMembers.forEach(function (member) {
 				var newMember = {
 					dbid: member.dbid,
+					pid: member.pid,
+					level: 'unknown',
+					location: 'unknown',
+					currentShip: 'unknown',
 					display_name: member.display_name,
 					rank: member.rank,
 					last_active: Math.round(member.last_active / 60),
 					event_rank: member.event_rank,
-					starbase_activity: member.starbase_activity,
 					daily_activity: member.daily_activity,
 					iconUrl: null,
 					crew_avatar: member.crew_avatar
@@ -203,12 +234,13 @@ export class FleetDetails extends React.Component {
 					newMember.squad_name = squad.name;
 					newMember.squad_event_rank = squad.event_rank;
 				}
-					
+
 				members.push(newMember);
 			});
 
 			this.state = {
-				members: members
+				members: members,
+				chatHistory: undefined
 			};
 
 			let iconPromises = [];
@@ -223,17 +255,50 @@ export class FleetDetails extends React.Component {
 						return Promise.resolve();
 					}).catch((error) => { }));
 				}
+
+				// Load player details
+				iconPromises.push(STTApi.inspectPlayer(member.pid).then(memberData => {
+					member.level = memberData.character.level;
+					member.location = STTApi.playerData.character.navmap.places.find((place) => { return place.symbol == memberData.character.location.place; }).display_name;
+					member.currentShip = memberData.character.current_ship.name;
+				}));
 			});
 			Promise.all(iconPromises).then(() => this.forceUpdate());
 
-			/*loginPubNub().then(pubnub) => {
-				//
-			});*/
+			loginPubNub().then(data => {
+				// retrieve recent history of messages
+				data.pubnub.history(
+					{
+						channel: data.subscribedChannels.fleet,
+						reverse: true,
+						count: 30 // how many items to fetch
+					},
+					(status, response) => {
+						// handle status, response
+						if (response && response.messages) {
+							let msgs = [];
+							response.messages.forEach(function (message) {
+								var msg = JSON.parse(decodeURIComponent(message.entry));
+								msgs.push({
+									from: msg.sourceName.replace(/\+/g, ' '),
+									timeSent: new Date(msg.timeSent * 1000).toLocaleString(),
+									text: msg.message.replace(/\+/g, ' ')
+								});
+							});
+
+							this.setState({chatHistory: msgs});
+						}
+					}
+				);
+			}).catch(err => {
+				console.error(err);
+			});
 		}
 		else
 		{
 			this.state = {
-				members: null
+				members: null,
+				chatHistory: null
 			};
 		}
 	}
@@ -250,6 +315,8 @@ export class FleetDetails extends React.Component {
 				<MemberList title={'Members (' + STTApi.fleetData.cursize + ' / ' + STTApi.fleetData.maxsize + ')'} members={this.state.members} />
 
 				<Starbase title='Starbase rooms' />
+
+				<ChatHistory title='Fleet chat recent history' chatHistory={this.state.chatHistory} />
 			</div>;
 		}
 	}
