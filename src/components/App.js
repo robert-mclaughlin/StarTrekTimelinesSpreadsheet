@@ -29,7 +29,7 @@ import { SearchBox } from 'office-ui-fabric-react/lib/SearchBox';
 import { IconButton } from 'office-ui-fabric-react/lib/Button';
 import { initializeIcons } from 'office-ui-fabric-react/lib/Icons';
 
-//import { exportExcel } from '../utils/excelExporter.js';
+import { exportExcel } from '../utils/excelExporter.js';
 import { exportCsv } from '../utils/csvExporter.js';
 import { exportItemsCsv } from '../utils/csvExporter.js';
 import { shareCrew } from '../utils/pastebin.js';
@@ -49,6 +49,7 @@ import { EquipmentDetails } from './EquipmentDetails.js';
 import { CaptainCard } from './CaptainCard.js';
 import { FeedbackPanel } from './FeedbackPanel.js';
 import { ShakingButton } from './ShakingButton.js';
+import { VoyageTools } from './VoyageTools.js';
 
 import STTApi from 'sttapi';
 import { loginSequence } from 'sttapi';
@@ -79,6 +80,7 @@ class App extends React.Component {
 		};
 
 		this._captainButtonElement = null;
+		this._feedbackButtonElement = null;
 		this._onAccessToken = this._onAccessToken.bind(this);
 		this._onLogout = this._onLogout.bind(this);
 		this._onRefresh = this._onRefresh.bind(this);
@@ -250,13 +252,13 @@ class App extends React.Component {
 						<IconButton iconProps={{ iconName: 'Light' }} title='Switch theme' onClick={this._onSwitchTheme} className={ColorClassNames.neutralDark} />
 					</div>
 					<div className='lcars-ellipse' />
-					<div className='lcars-content'>
+					<div className='lcars-content' ref={(menuButton) => this._feedbackButtonElement = menuButton}>
 						<ShakingButton iconName='Emoji2' title='Feedback' interval={10000} onClick={() => this.refs.feedbackPanel.show()} />
 					</div>
 					<div className='lcars-corner-right' />
 				</div>
 
-				<FeedbackPanel ref='feedbackPanel' />
+				<FeedbackPanel ref='feedbackPanel' targetElement={this._feedbackButtonElement} />
 
 				{this.state.showSpinner && (
 					<Spinner size={SpinnerSize.large} label={this.state.spinnerLabel} />
@@ -292,6 +294,9 @@ class App extends React.Component {
 						<PivotItem linkText='Recommendations' itemIcon='Lightbulb'>
 							<CrewRecommendations />
 						</PivotItem>
+						<PivotItem linkText='Voyage' itemIcon='Rocket'>
+							<VoyageTools />
+						</PivotItem>
 						<PivotItem linkText='Gauntlet' itemIcon='DeveloperTools'>
 							<GauntletHelper />
 						</PivotItem>
@@ -312,7 +317,7 @@ class App extends React.Component {
 
 	_getCommandItems() {
 		return [
-			/*{
+			{
 				key: 'exportExcel',
 				name: 'Export Excel',
 				icon: 'ExcelLogo',
@@ -336,7 +341,7 @@ class App extends React.Component {
 						}.bind(this));
 
 				}.bind(this)
-			},*/
+			},
 			{
 				key: 'exportCsv',
 				name: 'Export CSV',

@@ -1,68 +1,101 @@
 ﻿import React, { Component } from 'react';
-import { Panel, PanelType } from 'office-ui-fabric-react/lib/Panel';
-import { TextField } from 'office-ui-fabric-react/lib/TextField';
-import { Spinner, SpinnerSize } from 'office-ui-fabric-react/lib/Spinner';
+import { Callout } from 'office-ui-fabric-react/lib/Callout';
 import { PrimaryButton } from 'office-ui-fabric-react/lib/Button';
 
 import STTApi from 'sttapi';
+
+const os = require('os');
+const electron = require('electron');
+const app = electron.app || electron.remote.app;
+const shell = electron.shell;
+
+const bugBody = `
+**Describe the bug**
+A clear and concise description of what the bug is.
+
+**To Reproduce**
+Steps to reproduce the behavior:
+
+**Expected behavior**
+A clear and concise description of what you expected to happen.
+
+**Screenshots**
+If applicable, add screenshots to help explain your problem.
+
+**Additional context**
+Add any other context about the problem here.`;
+
+const featureBody = `
+**Is your feature request related to a problem? Please describe.**
+A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
+
+**Describe the solution you'd like**
+A clear and concise description of what you want to happen.
+
+**Describe alternatives you've considered**
+A clear and concise description of any alternative solutions or features you've considered.
+
+**Additional context**
+Add any other context or screenshots about the feature request here.`;
 
 export class FeedbackPanel extends React.Component {
 	constructor(props) {
 		super(props);
 
 		this.state = {
-			showFeedbackPanel: false,
-			showSpinner: false
+			showFeedbackPanel: false
 		};
 
 		this.show = this.show.bind(this);
 		this._sendFeedback = this._sendFeedback.bind(this);
-
-		this.userFeedback = {
-			feature: '',
-			bug: '',
-			other: '',
-			nameSuggestion: '',
-			email: '',
-		};
 	}
 
 	show() {
-		this.setState({ showFeedbackPanel: true });
+		this.setState({ showFeedbackPanel: !this.state.showFeedbackPanel });
 	}
 
-	_sendFeedback() {
-		this.setState({ showSpinner: true });
+	_sendFeedback(isFeedback) {
+		let title = 'Bug report';
+		let labels = 'bug';
+		let body = bugBody;
+		if (isFeedback) {
+			title = 'Feature request';
+			labels = 'enhancement';
+			body = featureBody;
+		}
 
-		STTApi.submitUserFeedback(this.userFeedback).then(() => {
-			this.setState({ showSpinner: false, showFeedbackPanel: false });
-			var n = new Notification('Thank you for your feedback!', { body: 'All feedback helps me prioritize my work to deliver the most value.' });
-		})
-		.catch((error) => {
-			this.setState({ showSpinner: false, showFeedbackPanel: false });
-			var n = new Notification('Failed sending feedback', { body: 'Please use the GitHub issues page instead. Error:' + error });
-		});
+		body += `
+Tool version: **${app.getVersion()}**
+Operating system: **${os.platform()} ${os.arch()} (${os.release()})**
+`;
+
+		body = body.replace('\r\n', '\n');
+
+		let url = `https://github.com/IAmPicard/StarTrekTimelinesSpreadsheet/issues/new?labels=${encodeURIComponent(labels)}&title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}`;
+
+		shell.openItem(url);
 	}
 
 	render() {
 		return (
-			<Panel
-				isOpen={this.state.showFeedbackPanel}
-				type={PanelType.smallFixedFar}
-				onDismiss={() => this.setState({ showFeedbackPanel: false })}
-				headerText='I need your feedback!'
-			>
-				<h3>I need your feedback to better understand your needs and manage my time investment.</h3>
-				<TextField label='What would you like to see implemented next' placeholder='Your #1 feature reqest' multiline autoAdjustHeight onChanged={(text) => this.userFeedback.feature = text } />
-				<TextField label="Bug, or something you'd want to be implemented differently" placeholder='Your #1 annoyance' multiline autoAdjustHeight onChanged={(text) => this.userFeedback.bug = text} />
-				<TextField label='Any other feedback' multiline autoAdjustHeight onChanged={(text) => this.userFeedback.other = text} />
-				<TextField label='Do you have a name suggestion better than "Tool" ? 😁' onChanged={(text) => this.userFeedback.nameSuggestion = text} />
-				<TextField label='(Optional) Your e-mail address' onChanged={(text) => this.userFeedback.email = text} />
-				<i>I won't share this with anyone; I'll only use it to contact you if I have questions about your feedback</i><br />
-				<PrimaryButton text='Send feedback' onClick={this._sendFeedback} iconProps={{ iconName: 'ChatInviteFriend' }} style={{ width: '100%', marginBottom: '20px' }} />
-				{this.state.showSpinner && (
-					<Spinner size={SpinnerSize.small} label='Sending feedback...' />
-				)}
-			</Panel>);
+			<Callout
+				role={'alertdialog'}
+				gapSpace={1}
+				calloutWidth={220}
+				target={this.props.targetElement}
+				setInitialFocus={true}
+				hidden={!this.state.showFeedbackPanel}
+				onDismiss={() => this.setState({showFeedbackPanel: false}) }
+				>
+				<div style={{ padding: '15px', maxWidth: '300px' }}>
+					<p>Please submit feedback and bug reports on GitHub</p>
+					<PrimaryButton text='Send feedback' onClick={() => this._sendFeedback(true)} iconProps={{ iconName: 'Comment' }} />
+					<br/><br/>
+					<PrimaryButton text='Report bug' onClick={() => this._sendFeedback(false)} iconProps={{ iconName: 'Bug' }} />
+					<br/><br/>
+					<PrimaryButton text='Buy me a coffee' onClick={() => shell.openItem("https://www.buymeacoffee.com/Evbkf8yRT")} iconProps={{ iconName: 'CoffeeScript' }} />
+					<br/>
+				</div>
+			</Callout>);
 	}
 }

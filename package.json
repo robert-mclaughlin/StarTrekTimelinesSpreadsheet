@@ -1,7 +1,7 @@
 {
   "name": "startrektimelinestool",
   "productName": "Star Trek Timelines Crew Management",
-  "version": "0.6.6",
+  "version": "0.6.7",
   "description": "Tool for managing Star Trek Timelines crew",
   "author": "IAmPicard",
   "homepage": "https://github.com/IAmPicard/StarTrekTimelinesSpreadsheet",
@@ -63,6 +63,7 @@
     "sttapi": "file:sttapi",
     "url-search-params-polyfill": "latest",
     "uuid": "latest",
-    "vis": "latest"
+    "vis": "latest",
+    "xlsx-populate": "^1.14.1"
   }
 }
