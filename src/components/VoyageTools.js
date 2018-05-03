@@ -7,35 +7,35 @@ import { Dropdown } from 'office-ui-fabric-react/lib/Dropdown';
 import { PrimaryButton } from 'office-ui-fabric-react/lib/Button';
 import { Persona, PersonaSize, PersonaPresence } from 'office-ui-fabric-react/lib/Persona';
 import { NormalPeoplePicker } from 'office-ui-fabric-react/lib/Pickers';
+import { Image, ImageFit } from 'office-ui-fabric-react/lib/Image';
+import { Icon } from 'office-ui-fabric-react/lib/Icon';
+import { TextField } from 'office-ui-fabric-react/lib/TextField';
 
 import STTApi from 'sttapi';
 import { CONFIG, bestVoyageShip } from 'sttapi';
+
+const electron = require('electron');
+const shell = electron.shell;
 
 export class VoyageCrew extends React.Component {
 	constructor(props) {
 		super(props);
 
-		let voyage = STTApi.playerData.character.voyage[0];
-		/*if (!voyage || voyage.state == 'unstarted') {
-			this.state = {
-				state: 'nothingToDo'
-			};
-		}
-		else*/ {
-			this.state = {
-				bestShips: bestVoyageShip(),
-				includeFrozen: false,
-				includeActive: false,
-				state: 'calculating',
-				searchDepth: 6,
-                extendsTarget: 0,
-                activeEvent: undefined,
-                peopleList: [],
-                currentSelectedItems: [],
-                preselectedIgnored: [],
-				selectedVoyageMethod: { key: 0, text: 'Thorough', val: true }
-			};
-        }
+		let bestVoyageShips = bestVoyageShip();
+		this.state = {
+			bestShips: bestVoyageShips,
+			includeFrozen: false,
+			includeActive: false,
+			shipName: bestVoyageShips[0].ship.name,
+			state: 'calculating',
+			searchDepth: 6,
+			extendsTarget: 0,
+			activeEvent: undefined,
+			peopleList: [],
+			currentSelectedItems: [],
+			preselectedIgnored: [],
+			selectedVoyageMethod: { key: 0, text: 'Thorough', val: true }
+		};
         
         // See which crew is needed in the event to give the user a chance to remove them from consideration
 		if (STTApi.playerData.character.events && STTApi.playerData.character.events.length > 0) {
@@ -148,13 +148,16 @@ export class VoyageCrew extends React.Component {
 
 		return (<div>
 			<p><b>NOTE: </b>Algorithms are still a work in progress. Please provide feedback on your recommendations and voyage results!</p>
-            <Dropdown
-                label='Algorithm to use:'
-                selectedKey={this.state.selectedVoyageMethod.key}
-                onChanged={item => this.setState({ selectedVoyageMethod: item })}
-                placeHolder='Select an optimization method'
-                options={[ { key: 0, text: 'Thorough (best results)', val: true }, { key: 1, text: 'Fast (quick & dirty)', val: false } ]}
-            />
+
+			<div className='field-maxwidth'>
+				<Dropdown
+					label='Algorithm to use:'
+					selectedKey={this.state.selectedVoyageMethod.key}
+					onChanged={item => this.setState({ selectedVoyageMethod: item })}
+					placeHolder='Select an optimization method'
+					options={[ { key: 0, text: 'Thorough (best results)', val: true }, { key: 1, text: 'Fast (quick & dirty)', val: false } ]}
+				/>
+			</div>
 
 			<h3>Best ship(s)</h3>
 			<div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap' }}>
@@ -212,10 +215,20 @@ export class VoyageCrew extends React.Component {
             <br/>
 
             <PrimaryButton onClick={this._exportVoyageData} text='Calculate best crew selection' disabled={this.state.state === 'inprogress'} />
-            <span> </span>
-            <PrimaryButton onClick={this._startVoyage} text='Start voyage with selection' disabled={this.state.state !== 'done'} />
-            <span> </span>
+			<span> </span>
             <PrimaryButton onClick={this._generateVoyCrewRank} text='Export CSV with crew Voyage ranking...' disabled={this.state.state === 'inprogress'} />
+			<br/>
+
+			<div className='field-maxwidth'>
+				<TextField
+					label='Ship Name'
+					value={this.state.shipName}
+					onChanged={v => this.setState({ shipName: v })}
+				/>
+			</div>
+
+            <PrimaryButton onClick={this._startVoyage} text='Start voyage with recommendations' disabled={this.state.state !== 'done'} />
+            <br/>
 		</div>);
     }
     
@@ -258,7 +271,9 @@ export class VoyageCrew extends React.Component {
 			selectedCrewIds.push(entry.choice.crew_id);
 		});
 
-		STTApi.startVoyage(STTApi.playerData.character.voyage_descriptions[0].symbol, this.state.bestShips[0].ship.id, "Ship Name", selectedCrewIds);
+		STTApi.startVoyage(STTApi.playerData.character.voyage_descriptions[0].symbol, this.state.bestShips[0].ship.id, this.state.shipName, selectedCrewIds).then(() => {
+			this.props.onRefreshNeeded();
+		});
 	}
 
 	_exportVoyageData() {
@@ -426,14 +441,14 @@ export class VoyageCrew extends React.Component {
 					if (fileName === undefined)
 						return;
 
-					let promose = new Promise(function (resolve, reject) {
+					let promise = new Promise(function (resolve, reject) {
 						fs.writeFile(fileName, result, function (err) {
 							if (err) { reject(err); }
 							else { resolve(fileName); }
 						});
 					});
 
-					promose.then((filePath) => {
+					promise.then((filePath) => {
 						shell.openItem(filePath);
 					});
 				}.bind(this));
@@ -444,19 +459,159 @@ export class VoyageCrew extends React.Component {
 	}
 }
 
+export class VoyageLogEntry extends React.Component {
+	constructor(props) {
+        super(props);
+        
+        this.props.log.forEach(entry=> {
+            // TODO: some log entries have 2 crew 
+            if (entry.crew) {
+                let rc = STTApi.roster.find((rosterCrew) => rosterCrew.symbol == entry.crew[0]);
+                if (rc) entry.crewIconUrl = rc.iconUrl;
+            }
+        });
+	}
+
+	render() {
+		return (<ul>
+            {this.props.log.map((entry, index) =>
+                <li key={index}>
+                    <span className='quest-mastery'>
+                        {entry.skill_check && (
+                            <span className='quest-mastery'>
+                                <Image src={CONFIG.SPRITES['icon_' + entry.skill_check.skill].url} height={18} />
+                                {(entry.skill_check.passed == true)?<Icon iconName='Like' /> : <Icon iconName='Dislike' />} &nbsp;
+                            </span>
+                        )}
+                        {entry.crewIconUrl && (
+                            <Image src={entry.crewIconUrl} width={32} height={32} imageFit={ImageFit.contain} />
+                        )}
+                        <span dangerouslySetInnerHTML={{__html: entry.text}} />
+                    </span>
+                </li>
+            )}
+		</ul>);
+	}
+}
+
+export class VoyageLog extends React.Component {
+	constructor(props) {
+		super(props);
+
+		this.state = {
+			showSpinner: true
+		};
+
+		let voyage = STTApi.playerData.character.voyage[0];
+		if (voyage && voyage.id) {
+			STTApi.loadVoyage(voyage.id, false).then((voyageNarrative) => {
+
+				// Group by index
+				voyageNarrative = voyageNarrative.reduce(function (r, a) {
+					r[a.index] = r[a.index] || [];
+					r[a.index].push(a);
+					return r;
+				}, Object.create(null));
+
+				this.setState({
+					showSpinner: false,
+					ship_name: voyage.ship_name,
+					ship_id: voyage.ship_id,
+					created_at: voyage.created_at,
+					voyage_duration: voyage.voyage_duration,
+					seconds_since_last_dilemma: voyage.seconds_since_last_dilemma,
+					seconds_between_dilemmas: voyage.seconds_between_dilemmas,
+					skill_aggregates: voyage.skill_aggregates,
+					crew_slots: voyage.crew_slots,
+					voyage: voyage,
+					voyageNarrative: voyageNarrative
+				});
+			});
+		}
+	}
+
+	renderVoyageState() {
+        if (this.state.voyage.state == "recalled") {
+            return <p>Voyage has lasted for {Math.floor(this.state.voyage_duration / 60)} minutes and it's currently returning.</p>;
+        } else if (this.state.voyage.state == "failed") {
+            return <p>Voyage has run out of antimatter after {Math.floor(this.state.voyage_duration / 60)} minutes and it's waiting to be abandoned or replenished.</p>;
+        } else {
+            return <p>Voyage has been ongoing for {Math.floor(this.state.voyage_duration / 60)} minutes (new dilemma in {Math.floor((this.state.seconds_between_dilemmas - this.state.seconds_since_last_dilemma) / 60)} minutes).</p>;
+        }
+    }
+
+    render() {
+        if (this.state.showSpinner)
+            return <Spinner size={SpinnerSize.large} label='Loading voyage details...' />;
+
+        return (<div style={{ userSelect: 'initial' }}>
+            <h3>Voyage on the {this.state.ship_name}</h3>
+            {this.renderVoyageState()}
+            <p>Antimatter remaining: {this.state.voyage.hp} / {this.state.voyage.max_hp}.</p>
+            <table style={{ borderSpacing: '0' }}>
+                <tbody>
+                    <tr>
+                        <td>
+                            <section>
+                                <h4>Full crew complement and skill aggregates</h4>
+                                <ul>
+                                    {this.state.crew_slots.map((slot) => {
+                                        return (<li key={slot.symbol}><span className='quest-mastery'>
+                                            {slot.name} &nbsp; <Image src={ STTApi.roster.find((rosterCrew) => rosterCrew.id == slot.crew.archetype_id).iconUrl} width={20} height={20} imageFit={ImageFit.contain} /> &nbsp; {slot.crew.name}
+                                            </span>
+                                        </li>);
+                                    })}
+                                </ul>
+                            </section>
+                        </td>
+                        <td>
+                            <ul>
+                                {Object.values(this.state.voyage.skill_aggregates).map((skill) => {
+                                    return (<li key={skill.skill}>
+                                        <span className='quest-mastery'>
+                                            <Image src={CONFIG.SPRITES['icon_' + skill.skill].url} height={18} /> &nbsp; {skill.core} ({skill.range_min}-{skill.range_max})
+                                        </span>
+                                    </li>);
+                                })}
+                            </ul>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <h3>{'Pending rewards (' + this.state.voyage.pending_rewards.loot.length + ')'}</h3>
+			{(this.state.voyage.pending_rewards.loot.length > 0) && this.state.voyage.pending_rewards.loot.map((loot, index) => {
+				return (<span key={index} style={{ color: loot.rarity && CONFIG.RARITIES[loot.rarity].color }}>{loot.quantity} {(loot.rarity == null) ? '' : CONFIG.RARITIES[loot.rarity].name} {loot.full_name}</span>);
+			}).reduce((prev, curr) => [prev, ', ', curr])}
+
+            <h3>{'Complete Captain\'s Log (' + Object.keys(this.state.voyageNarrative).length + ')'}</h3>
+			{Object.keys(this.state.voyageNarrative).map((key) => {
+				return <VoyageLogEntry key={key} log={this.state.voyageNarrative[key]}/>;
+			})}
+        </div>);
+    }
+}
+
 export class VoyageTools extends React.Component {
 	constructor(props) {
 		super(props);
 
 		this.state = {
-			showDetails: false
+			showCalcAnyway: false
 		};
 	}
 
+	_onRefreshNeeded() {
+		this.forceUpdate();
+	}
+
 	render() {
+		let activeVoyage = STTApi.playerData.character.voyage.length > 0;
+
 		return (
 			<div className='tab-panel' data-is-scrollable='true'>
-				<VoyageCrew />
+				{activeVoyage && <PrimaryButton onClick={() => this.setState({showCalcAnyway: !this.state.showCalcAnyway})} text={this.state.showCalcAnyway ? 'Switch to log' : 'Switch to recommendations'} />}
+				{(!activeVoyage || this.state.showCalcAnyway) && <VoyageCrew onRefreshNeeded={() => this._onRefreshNeeded()} />}
+				{activeVoyage && !this.state.showCalcAnyway && <VoyageLog />}
 			</div>
 		);
 	}

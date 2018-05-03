@@ -34,6 +34,10 @@
     align-items: stretch;
 }
 
+.field-maxwidth {
+    max-width: 250px;
+}
+
 .sharedialogMainOverride {
     max-width: 550px !important;
 }
