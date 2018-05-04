@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { Icon } from 'office-ui-fabric-react/lib/Icon';
+import { ColorClassNames, FontClassNames } from '@uifabric/styling';
 
 export class CollapsibleSection extends React.Component {
 	constructor(props) {
@@ -14,7 +15,7 @@ export class CollapsibleSection extends React.Component {
 	render() {
 		return (<div>
 			<h2><button type='button' style={{ cursor: 'default', background: this.state.background, border: 'none' }} onClick={() => this.setState({ isCollapsed: !this.state.isCollapsed })}>
-				<Icon iconName={this.state.isCollapsed ? 'ChevronDown' : 'ChevronUp'} />
+				<Icon iconName={this.state.isCollapsed ? 'ChevronDown' : 'ChevronUp'} className={ColorClassNames.neutralDark} />
 			</button> {this.props.title}
 			</h2>
 			{!this.state.isCollapsed && this.props.children}

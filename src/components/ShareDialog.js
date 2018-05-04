@@ -21,7 +21,7 @@ export class ShareDialog extends React.Component {
 			description: 'Here are my crew stats. Recommendations?'
 		};
 
-		this.htmlColorThemes = ['cerulean', 'cosmo', 'cyborg', 'darkly', 'flatly', 'journal', 'lumen', 'paper', 'readable', 'sandstone', 'simplex', 'slate', 'solar', 'spacelab', 'superhero', 'united', 'yeti'];
+		this.htmlColorThemes = ['cerulean', 'cosmo', 'cyborg', 'darkly', 'flatly', 'journal', 'litera', 'lumen', 'lux', 'materia', 'minty', 'pulse', 'sandstone', 'simplex', 'sketchy', 'slate', 'solar', 'spacelab', 'superhero', 'united', 'yeti'];
 
 		this._closeDialog = this._closeDialog.bind(this);
 		this._cancelDialog = this._cancelDialog.bind(this);
@@ -106,7 +106,10 @@ export class ShareDialog extends React.Component {
 										this.setState({ htmlColorTheme: item.key });
 									}}
 									onRenderOption={(option) => {
-										return (<Image src={option.thumbnail} height={64} imageFit={ImageFit.contain} />);
+										return (<div>
+											<p>{option.text}</p>
+											<Image src={option.thumbnail} height={64} imageFit={ImageFit.contain} shouldStartVisible={true} shouldFadeIn={false} />
+											</div>);
 									}}
 								/>
 							}

@@ -7,6 +7,8 @@ import { Persona, PersonaSize, PersonaPresence } from 'office-ui-fabric-react/li
 import vis from 'vis';
 import '!css-loader?url=false!vis/dist/vis.css';
 
+import { getTheme } from '@uifabric/styling';
+
 import STTApi from 'sttapi';
 import { CONFIG } from 'sttapi';
 
@@ -189,7 +191,7 @@ export class MissionDetails extends React.Component {
             let nodes = [];
             let edges = [];
             mission.challenges.forEach(challenge => {
-                let color = undefined;
+                let color = getTheme().palette.themeDark;
                 if (challenge.critical) {
                     if (!challenge.critical.claimed) {
                         color = 'red';
