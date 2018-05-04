@@ -12,7 +12,7 @@ import { Icon } from 'office-ui-fabric-react/lib/Icon';
 import { TextField } from 'office-ui-fabric-react/lib/TextField';
 
 import STTApi from 'sttapi';
-import { CONFIG, bestVoyageShip } from 'sttapi';
+import { CONFIG, bestVoyageShip, loadVoyage, startVoyage } from 'sttapi';
 
 const electron = require('electron');
 const shell = electron.shell;
@@ -271,7 +271,7 @@ export class VoyageCrew extends React.Component {
 			selectedCrewIds.push(entry.choice.crew_id);
 		});
 
-		STTApi.startVoyage(STTApi.playerData.character.voyage_descriptions[0].symbol, this.state.bestShips[0].ship.id, this.state.shipName, selectedCrewIds).then(() => {
+		startVoyage(STTApi.playerData.character.voyage_descriptions[0].symbol, this.state.bestShips[0].ship.id, this.state.shipName, selectedCrewIds).then(() => {
 			this.props.onRefreshNeeded();
 		});
 	}
@@ -504,7 +504,7 @@ export class VoyageLog extends React.Component {
 
 		let voyage = STTApi.playerData.character.voyage[0];
 		if (voyage && voyage.id) {
-			STTApi.loadVoyage(voyage.id, false).then((voyageNarrative) => {
+			loadVoyage(voyage.id, false).then((voyageNarrative) => {
 
 				// Group by index
 				voyageNarrative = voyageNarrative.reduce(function (r, a) {

@@ -1,6 +1,7 @@
 ﻿import React, { Component } from 'react';
 import { Callout } from 'office-ui-fabric-react/lib/Callout';
 import { PrimaryButton } from 'office-ui-fabric-react/lib/Button';
+import { Icon } from 'office-ui-fabric-react/lib/Icon';
 
 import STTApi from 'sttapi';
 
@@ -95,6 +96,7 @@ Operating system: **${os.platform()} ${os.arch()} (${os.release()})**
 					<br/><br/>
 					<PrimaryButton text='Buy me a coffee' onClick={() => shell.openItem("https://www.buymeacoffee.com/Evbkf8yRT")} iconProps={{ iconName: 'CoffeeScript' }} />
 					<br/>
+					<a href='mailto:crewmanifest@gmail.com'><Icon iconName='Mail' /> <span>crewmanifest@gmail.com</span></a>
 				</div>
 			</Callout>);
 	}

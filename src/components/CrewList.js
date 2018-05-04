@@ -109,12 +109,12 @@ export class CrewList extends React.Component {
 				name: 'Frozen',
 				minWidth: 16,
 				maxWidth: 16,
-				iconName: 'Snow',
+				iconName: 'Snowflake',
 				isIconOnly: true,
 				fieldName: 'frozen',
 				onRender: (item) => {
 					if (item.frozen)
-						return (<Icon iconName='Snow' />);
+						return (<Icon iconName='Snowflake' />);
 					else
 						return (<p />);
 				}

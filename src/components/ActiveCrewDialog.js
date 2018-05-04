@@ -9,7 +9,7 @@ import { Spinner, SpinnerSize } from 'office-ui-fabric-react/lib/Spinner';
 import { CollapsibleSection } from './CollapsibleSection.js';
 
 import STTApi from 'sttapi';
-import { CONFIG, mergeDeep } from 'sttapi';
+import { CONFIG, mergeDeep, loadVoyage } from 'sttapi';
 
 export class ShuttleAdventure extends React.Component {
     constructor(props) {
@@ -114,7 +114,7 @@ export class Voyage extends React.Component {
 
         STTApi.playerData.character.voyage.forEach((voyage) => {
             if (voyage.id == props.activeId) {
-                STTApi.loadVoyage(voyage.id, false).then((voyageNarrative) => {
+                loadVoyage(voyage.id, false).then((voyageNarrative) => {
 
                     // Group by index
                     voyageNarrative = voyageNarrative.reduce(function (r, a) {
