@@ -186,12 +186,7 @@ export class VoyageCrew extends React.Component {
                     </div>
                 </div>
 
-                <div className="two column row">
-                    <div className="column">
-                        <Checkbox checked={this.state.includeFrozen} label="Include frozen (vaulted) crew"
-                            onChange={(e, isChecked) => { this.setState({ includeFrozen: isChecked }); }}
-                        />
-                    </div>
+                <div className="row">
                     <div className="column">
                         <Checkbox checked={this.state.includeActive} label="Include active (on shuttles) crew"
                             onChange={(e, isChecked) => { this.setState({ includeActive: isChecked }); }}
@@ -271,6 +266,7 @@ export class VoyageCrew extends React.Component {
 			selectedCrewIds.push(entry.choice.crew_id);
 		});
 
+		// TODO: At this point we should refresh crew and make sure no-one's status changes (recently dismissed crew will cause weird bugs!)
 		startVoyage(STTApi.playerData.character.voyage_descriptions[0].symbol, this.state.bestShips[0].ship.id, this.state.shipName, selectedCrewIds).then(() => {
 			this.props.onRefreshNeeded();
 		});
@@ -281,7 +277,7 @@ export class VoyageCrew extends React.Component {
 
         let dataToExport = {
 			crew: STTApi.roster.map(crew => new Object({
-				id: crew.id,
+				id: crew.crew_id,
 				name: crew.name,
 				frozen: crew.frozen,
 				traits: crew.rawTraits,
@@ -305,12 +301,19 @@ export class VoyageCrew extends React.Component {
 			skillMatchingMultiplier: 1.1,
 			traitScoreBoost: 200,
 			includeAwayCrew: this.state.includeActive,
-			includeFrozenCrew: this.state.includeFrozen
+			includeFrozenCrew: false
         };
-        
+
+		// Filter out crew the user has chosen not to include
         if (this.state.currentSelectedItems.length > 0) {
             dataToExport.crew = dataToExport.crew.filter(crew => (this.state.currentSelectedItems.find(ignored => (ignored.primaryText === crew.name)) === undefined));
-        }
+		}
+
+		// Filter out buy-back crew
+		dataToExport.crew = dataToExport.crew.filter(c => !c.buyback);
+
+		// Filter out frozen crew
+		dataToExport.crew = dataToExport.crew.filter(c => c.frozen === 0);
 
 		function cppEntries(result) {
 			let entries = [];
@@ -319,7 +322,7 @@ export class VoyageCrew extends React.Component {
 					hasTrait: false,
 					slotName: slotName,
 					score: 0,
-					choice: STTApi.roster.find((crew) => (crew.id == result.selection[slotName]))
+					choice: STTApi.roster.find((crew) => (crew.crew_id == result.selection[slotName]))
 				};
 
 				entries.push(entry);
@@ -356,9 +359,6 @@ export class VoyageCrew extends React.Component {
 				this.setState(parseResults(JSON.parse(progressResult), 'inprogress'));
 			});
 		} else {
-			if (this.state.includeFrozen === false) {
-				dataToExport.crew = dataToExport.crew.filter(c => c.frozen !== 1);
-			}
 			if (this.state.includeActive === false) {
 				dataToExport.crew = dataToExport.crew.filter(c => c.active_id === 0);
 			}
@@ -371,7 +371,7 @@ export class VoyageCrew extends React.Component {
 
 		let dataToExport = {
 			crew: STTApi.roster.map(crew => new Object({
-				id: crew.id,
+				id: crew.crew_id || crew.id,
 				name: crew.name,
 				frozen: crew.frozen,
 				ff100: (crew.level == 100 && crew.rarity == crew.max_rarity) ? 1 : 0,
@@ -397,7 +397,7 @@ export class VoyageCrew extends React.Component {
 			skillMatchingMultiplier: 1.1,
 			traitScoreBoost: 200,
 			includeAwayCrew: this.state.includeActive, // used, but user should typically enable
-			includeFrozenCrew: this.state.includeFrozen // used, but user should typically enable
+			includeFrozenCrew: true
 		};
 
 		function cppEntries(result) {
@@ -407,7 +407,7 @@ export class VoyageCrew extends React.Component {
 					hasTrait: false,
 					slotName: slotName,
 					score: 0,
-					choice: STTApi.roster.find((crew) => (crew.id == result.selection[slotName]))
+					choice: STTApi.roster.find((crew) => (crew.crew_id == result.selection[slotName]))
 				};
 
 				entries.push(entry);
