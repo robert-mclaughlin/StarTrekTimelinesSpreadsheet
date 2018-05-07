@@ -107,18 +107,9 @@ Minimal set of steps required (on a Windows machine)
 * `cd ..`
 * `npm install`
 * `node_modules\.bin\electron-rebuild.cmd`
-* Apply manual hacks (see below)
 * `npm run dev`
 
 *Note*: if for some reason the above steps are not sufficient, you may need to manually build in STTApi\AssetParser (with npm install) before building STTApi.
-
-#### Manual hacks required
-After running npm install, go into node_modules\binary-parser\lib\binary_parser.js, at line 221, and comment out these 3 lines of code:
-```
-    /*ctx.pushCode('if (!Buffer.isBuffer(buffer)) {');
-    ctx.generateError('"argument buffer is not a Buffer object"');
-    ctx.pushCode('}');*/
-```
 
 ##### Development
 * Run `npm run dev` to start webpack-dev-server. Electron will launch automatically after compilation.
