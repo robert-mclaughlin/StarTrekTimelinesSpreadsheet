@@ -439,7 +439,7 @@ class App extends React.Component {
 
 	_onShare(options) {
 		shareCrew(options).then((url) => {
-			shell.openItem(url);
+			shell.openExternal(url);
 		});
 	}
 

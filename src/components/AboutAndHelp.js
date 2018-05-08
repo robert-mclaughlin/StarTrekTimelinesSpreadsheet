@@ -31,7 +31,7 @@ export class AboutAndHelp extends React.Component {
 				<div>
 				<h3>Latest version: {this.state.version.tag_name} {this.state.version.name}</h3>
 				<p>{this.state.version.body}</p>
-				<PrimaryButton onClick={() => shell.openItem(this.state.version.html_url)} text='Download now' />
+				<PrimaryButton onClick={() => shell.openExternal(this.state.version.html_url)} text='Download now' />
 				</div>}
 
 			<p><b>NOTE</b> This tool does not (and will never) automate any part of the game play; its sole purpose is to help players organize their crew using the functionality built within or with a spreadsheet application of their choice.</p>

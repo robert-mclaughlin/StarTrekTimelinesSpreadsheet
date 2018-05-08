@@ -74,7 +74,7 @@ Operating system: **${os.platform()} ${os.arch()} (${os.release()})**
 
 		let url = `https://github.com/IAmPicard/StarTrekTimelinesSpreadsheet/issues/new?labels=${encodeURIComponent(labels)}&title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}`;
 
-		shell.openItem(url);
+		shell.openExternal(url);
 	}
 
 	render() {
@@ -94,7 +94,7 @@ Operating system: **${os.platform()} ${os.arch()} (${os.release()})**
 					<br/><br/>
 					<PrimaryButton text='Report bug' onClick={() => this._sendFeedback(false)} iconProps={{ iconName: 'Bug' }} />
 					<br/><br/>
-					<PrimaryButton text='Buy me a coffee' onClick={() => shell.openItem("https://www.buymeacoffee.com/Evbkf8yRT")} iconProps={{ iconName: 'CoffeeScript' }} />
+					<PrimaryButton text='Buy me a coffee' onClick={() => shell.openExternal("https://www.buymeacoffee.com/Evbkf8yRT")} iconProps={{ iconName: 'CoffeeScript' }} />
 					<br/>
 					<a href='mailto:crewmanifest@gmail.com'><Icon iconName='Mail' /> <span>crewmanifest@gmail.com</span></a>
 				</div>
