@@ -12,7 +12,7 @@ import { Icon } from 'office-ui-fabric-react/lib/Icon';
 import { TextField } from 'office-ui-fabric-react/lib/TextField';
 
 import STTApi from 'sttapi';
-import { CONFIG, bestVoyageShip, loadVoyage, startVoyage } from 'sttapi';
+import { CONFIG, bestVoyageShip, loadVoyage, startVoyage, formatCrewStats } from 'sttapi';
 
 const electron = require('electron');
 const shell = electron.shell;
@@ -107,11 +107,11 @@ export class VoyageCrew extends React.Component {
 			this.state.crewSelection.forEach(entry => {
                 if (entry.choice) {
                     let crew = <Persona
-                        key={entry.choice.name}
+                        key={entry.choice.crew_id}
                         imageUrl={entry.choice.iconUrl}
                         primaryText={entry.choice.name}
                         secondaryText={entry.slotName}
-                        tertiaryText={entry.score.toFixed(0)}
+                        tertiaryText={formatCrewStats(entry.choice)}
                         size={PersonaSize.large}
                         presence={entry.hasTrait ? PersonaPresence.online : PersonaPresence.away} />
 
