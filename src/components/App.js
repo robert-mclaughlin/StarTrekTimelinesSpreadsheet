@@ -23,10 +23,11 @@ import { IContextualMenuProps, IContextualMenuItem, DirectionalHint, ContextualM
 import { Label } from 'office-ui-fabric-react/lib/Label';
 import { Spinner, SpinnerSize } from 'office-ui-fabric-react/lib/Spinner';
 import { Pivot, PivotItem, PivotLinkFormat, PivotLinkSize } from 'office-ui-fabric-react/lib/Pivot';
+import { Dialog, DialogType, DialogFooter } from 'office-ui-fabric-react/lib/Dialog';
 import { Image, ImageFit } from 'office-ui-fabric-react/lib/Image';
 import { Callout } from 'office-ui-fabric-react/lib/Callout';
 import { SearchBox } from 'office-ui-fabric-react/lib/SearchBox';
-import { IconButton } from 'office-ui-fabric-react/lib/Button';
+import { IconButton, PrimaryButton, DefaultButton } from 'office-ui-fabric-react/lib/Button';
 import { initializeIcons } from 'office-ui-fabric-react/lib/Icons';
 
 import { exportExcel } from '../utils/excelExporter.js';
@@ -34,6 +35,7 @@ import { exportCsv } from '../utils/csvExporter.js';
 import { exportItemsCsv } from '../utils/csvExporter.js';
 import { shareCrew } from '../utils/pastebin.js';
 import { FileImageCache } from '../utils/fileImageCache.js';
+import { createIssue } from '../utils/githubUtils';
 
 import { LoginDialog } from './LoginDialog.js';
 import { ShipList } from './ShipList.js';
@@ -76,6 +78,9 @@ class App extends React.Component {
 			captainAvatarUrl: '',
 			captainAvatarBodyUrl: '',
 			spinnerLabel: 'Loading...',
+			hideErrorDialog: true,
+			errorMessage: '',
+			updateUrl: undefined,
 			darkTheme: !settings.get('ui.darkTheme', false)
 		};
 
@@ -247,6 +252,10 @@ class App extends React.Component {
 					<div className='lcars-content-text'>
 						{this.state.secondLine}
 					</div>
+					{this.state.updateUrl && <div className='lcars-ellipse' />}
+					{this.state.updateUrl && <div className='lcars-content-text' style={{ cursor: 'pointer' }}>
+						<a style={{color: 'red'}} onClick={() => shell.openExternal(this.state.updateUrl)}>Update available!</a>
+					</div>}
 					<div className='lcars-box' />
 					<div className='lcars-content'>
 						<IconButton iconProps={{ iconName: 'Light' }} title='Switch theme' onClick={this._onSwitchTheme} className={ColorClassNames.neutralDark} />
@@ -257,6 +266,22 @@ class App extends React.Component {
 					</div>
 					<div className='lcars-corner-right' />
 				</div>
+
+				<Dialog
+					hidden={ this.state.hideErrorDialog }
+					onDismiss={ () => { this.setState({ hideErrorDialog: true });} }
+					dialogContentProps={ {
+						type: DialogType.normal,
+						title: 'An error occured while loading data!',
+						subText: 'Try restarting the application; if the error persists, please log a bug. Details: ' + this.state.errorMessage
+					} }
+					modalProps={{ isBlocking: true}}
+					>
+					<DialogFooter>
+						<PrimaryButton onClick={ () => { createIssue(false, this.state.errorMessage); }} text='Create bug report' />
+						<DefaultButton onClick={ () => { this.setState({ hideErrorDialog: true });} } text='Cancel' />
+					</DialogFooter>
+				</Dialog>
 
 				<FeedbackPanel ref='feedbackPanel' targetElement={this._feedbackButtonElement} />
 
@@ -466,8 +491,7 @@ class App extends React.Component {
 	}
 
 	_onDataError(reason) {
-		this.setState({ showSpinner: false });
-		this.refs.loginDialog._showDialog('Network error:' + reason);
+		this.setState({ errorMessage: reason, hideErrorDialog: false });
 	}
 
 	_onDataFinished() {
@@ -483,6 +507,9 @@ class App extends React.Component {
 
 			if (compareSemver.max(versions) != app.getVersion()) {
 				var n = new Notification('STT Tool - Update available!', { body: 'A new release of the Star Trek Tool (' + data[0].tag_name + ' ' + data[0].name + ') has been made available. Please check the About tab for download instructions!' });
+				this.setState({
+					updateUrl: data[0].html_url
+				});
 			}
 		});
 
