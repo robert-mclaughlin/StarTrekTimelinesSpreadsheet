@@ -2,13 +2,17 @@ import React, { Component } from 'react';
 import { Label } from 'office-ui-fabric-react/lib/Label';
 import { Image, ImageFit } from 'office-ui-fabric-react/lib/Image';
 import { MessageBar, MessageBarType } from 'office-ui-fabric-react/lib/MessageBar';
+import { SpinButton } from 'office-ui-fabric-react/lib/SpinButton';
+import { Checkbox } from 'office-ui-fabric-react/lib/Checkbox';
+import { PrimaryButton } from 'office-ui-fabric-react/lib/Button';
+import { Persona, PersonaSize, PersonaPresence } from 'office-ui-fabric-react/lib/Persona';
 import { DefaultButton, IButtonProps } from 'office-ui-fabric-react/lib/Button';
 import { Icon } from 'office-ui-fabric-react/lib/Icon';
 
 import { CrewList } from './CrewList.js';
 
 import STTApi from 'sttapi';
-import { CONFIG, loadGauntlet, gauntletCrewSelection, gauntletRoundOdds, payToGetNewOpponents, playContest } from 'sttapi';
+import { CONFIG, loadGauntlet, gauntletCrewSelection, gauntletRoundOdds, payToGetNewOpponents, playContest, enterGauntlet, formatCrewStats } from 'sttapi';
 
 class GauntletCrew extends React.Component {
 	render() {
@@ -73,7 +77,7 @@ class GauntletMatch extends React.Component {
 							<span><b>{this.props.match.chance}%</b> chance</span><br />
 							<span><b>{this.props.match.opponent.value}</b> points</span>
 						</div>
-						<DefaultButton onClick={this._playMatch} text='Play this match!' iconProps={{ iconName: 'LightningBolt' }} />
+						<PrimaryButton onClick={this._playMatch} text='Play this match!' iconProps={{ iconName: 'LightningBolt' }} />
 					</td>
 					<td className='gauntlet-match-crew-slot'>
 						<b>{STTApi.getCrewAvatarBySymbol(this.props.match.opponent.archetype_symbol).name}</b><br />
@@ -94,12 +98,19 @@ export class GauntletHelper extends React.Component {
 			gauntlet: null,
 			lastResult: null,
 			rewards: null,
-			merits: null
+			merits: null,
+			// Recommendation calculation settings
+			featuredSkillBonus: 10,
+			critBonusDivider: 3,
+			includeFrozen: false,
+			calculating: false
 		};
 
 		this._reloadGauntletData = this._reloadGauntletData.bind(this);
 		this._gauntletDataRecieved = this._gauntletDataRecieved.bind(this);
 		this._payForNewOpponents = this._payForNewOpponents.bind(this);
+		this._calculateSelection = this._calculateSelection.bind(this);
+		this._startGauntlet = this._startGauntlet.bind(this);
 		this._reloadGauntletData();
 	}
 
@@ -114,16 +125,12 @@ export class GauntletHelper extends React.Component {
 	_gauntletDataRecieved(data) {
 		if (data.gauntlet) {
 			if (data.gauntlet.state == 'NONE') {
-				var result = gauntletCrewSelection(data.gauntlet, STTApi.roster);
-
 				this.setState({
 					gauntlet: data.gauntlet,
 					lastResult: null,
 					startsIn: Math.floor(data.gauntlet.seconds_to_join / 60),
 					featuredSkill: data.gauntlet.contest_data.featured_skill,
-					traits: data.gauntlet.contest_data.traits.map(function (trait) { return STTApi.getTraitName(trait); }.bind(this)),
-					recommendations: result.recommendations.map(function (id) { return STTApi.roster.find((crew) => (crew.id == id)); }.bind(this)),
-					bestInSkill: result.best
+					traits: data.gauntlet.contest_data.traits.map(function (trait) { return STTApi.getTraitName(trait); }.bind(this))
 				});
 			}
 			else if (data.gauntlet.state == 'STARTED') {
@@ -195,7 +202,69 @@ export class GauntletHelper extends React.Component {
 			this.setState({
 				merits: data.merits
 			});
+		} else {
+			this.setState({
+				merits: STTApi.playerData.premium_earnable
+			});
 		}
+	}
+
+	_calculateSelection() {
+		this.setState({calculating: true})
+		var result = gauntletCrewSelection(this.state.gauntlet, STTApi.roster, (100 + this.state.featuredSkillBonus) / 100, this.state.critBonusDivider, 5 /*preSortCount*/, this.state.includeFrozen);
+		this.setState({crewSelection : result.recommendations, calculating: false});
+	}
+
+	_startGauntlet() {
+		if (this.state.gauntlet && this.state.gauntlet.gauntlet_id && this.state.crewSelection) {
+
+			let crew_ids = [];
+			this.state.crewSelection.forEach(id => {
+				let crew = STTApi.roster.find(crew => (crew.crew_id === id));
+				if (!crew) {
+					console.error(`Crew ${id} not found; are you trying to start a gauntlet with frozen crew?`);
+					return;
+				}
+
+				crew_ids.push(crew.crew_id);
+			});
+
+			console.log(crew_ids);
+
+			if (crew_ids.length === 5) {
+				enterGauntlet(this.state.gauntlet.gauntlet_id, crew_ids).then((data) => this._gauntletDataRecieved({ gauntlet: data }));
+			}
+		}
+	}
+
+	renderBestCrew() {
+		if (!this.state.crewSelection) {
+			return <span/>;
+		}
+
+		let crewSpans = [];
+		this.state.crewSelection.forEach(id => {
+			let crew = STTApi.roster.find(crew => (crew.crew_id === id) || (crew.id === id));
+
+			let crewSpan = <Persona
+				key={crew.name}
+				imageUrl={crew.iconUrl}
+				primaryText={crew.name}
+				secondaryText={crew.short_name}
+				tertiaryText={formatCrewStats(crew)}
+				size={PersonaSize.large}
+				presence={(crew.frozen === 0) ? PersonaPresence.online : PersonaPresence.away} />
+
+			crewSpans.push(crewSpan);
+		});
+
+		return (<div>
+			<h3>Best crew</h3>
+			{this.state.calculating && <Spinner size={SpinnerSize.small} label='Still calculating...' />}
+			<div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap' }}>
+				{crewSpans}
+			</div>
+		</div>);
 	}
 
 	render() {
@@ -205,8 +274,68 @@ export class GauntletHelper extends React.Component {
 					<Label>Next gauntlet starts in {this.state.startsIn} minutes.</Label>
 					<span className='quest-mastery'>Featured skill: <Image src={CONFIG.SPRITES['icon_' + this.state.featuredSkill].url} height={18} /> {CONFIG.SKILLS[this.state.featuredSkill]}</span>
 					<Label>Featured traits: {this.state.traits.join(', ')}</Label>
-					<h2>Recommeded crew selection:</h2>
-					<CrewList data={this.state.recommendations} grouped={false} ref='recommendedCrew' />
+
+					 {this.renderBestCrew()}
+
+					<div className="ui grid" style={{maxWidth: '600px'}}>
+						<div className="row">
+							<div className="column"><h4>Algorithm settings</h4></div>
+						</div>
+
+						<div className="two column row">
+							<div className="column">
+								<SpinButton value={this.state.featuredSkillBonus} label='Featured skill bonus:' min={ 0 } max={ 100 } step={ 1 }
+									onIncrement={(value) => { this.setState({ featuredSkillBonus: +value + 1}); }}
+									onDecrement={(value) => { this.setState({ featuredSkillBonus: +value - 1}); }}
+									onValidate={(value) => {
+										if (isNaN(+value)) {
+											this.setState({ featuredSkillBonus: 10});
+											return 10;
+										}
+
+										return +value;
+									  }}
+								/>
+							</div>
+							<div className="column">
+								The higher this number, the more bias applied towards the featured skill during crew selection
+							</div>
+						</div>
+
+						<div className="two column row">
+							<div className="column">
+								<SpinButton value={this.state.critBonusDivider} label='Crit bonus divider:' min={ 0.1 } max={ 100 } step={ 0.1 }
+									onIncrement={(value) => { this.setState({ critBonusDivider: +value + 0.1}); }}
+									onDecrement={(value) => { this.setState({ critBonusDivider: +value - 0.1}); }}
+									onValidate={(value) => {
+										if (isNaN(+value)) {
+											this.setState({ critBonusDivider: 3});
+											return 3;
+										}
+
+										return +value;
+									  }}
+								/>
+							</div>
+							<div className="column">
+								The lower this number, the more bias applied towards crew with higher crit bonus rating during selection
+							</div>
+						</div>
+
+						<div className="row">
+							<div className="column">
+								<Checkbox checked={this.state.includeFrozen} label="Include frozen crew"
+									onChange={(e, isChecked) => { this.setState({ includeFrozen: isChecked }); }}
+								/>
+							</div>
+						</div>
+					</div>
+
+					<br/>
+
+					<PrimaryButton onClick={this._calculateSelection} text='Calculate best crew selection' disabled={this.state.calculating} />
+					<span> </span>
+           			<PrimaryButton onClick={this._startGauntlet} text='Start gauntlet with recommendations' disabled={!this.state.crewSelection} />
 				</div>
 			);
 		}
@@ -262,10 +391,13 @@ export class GauntletHelper extends React.Component {
 						}).reduce((prev, curr) => [prev, ', ', curr])
 					)}
 
+					<br/>
+
 					{(this.state.roundOdds.matches.length > 0) &&
-						<DefaultButton onClick={this._payForNewOpponents} text='Pay merits for new opponents' iconProps={{ iconName: 'Money' }} />
+						<PrimaryButton onClick={this._payForNewOpponents} text='Pay merits for new opponents' iconProps={{ iconName: 'Money' }} />
 					}
 					<br />
+
 					{this.state.roundOdds.matches.map(function (match) {
 						return <GauntletMatch key={match.crewOdd.archetype_symbol + match.opponent.player_id} match={match} gauntletId={this.state.gauntlet.id} onNewData={this._gauntletDataRecieved} />;
 					}.bind(this))}
@@ -274,12 +406,6 @@ export class GauntletHelper extends React.Component {
 		}
 		else {
 			return (<MessageBar messageBarType={MessageBarType.error} >Unknown state for this gauntlet! Check the app, perhaps it's waiting to join or already done.</MessageBar>);
-		}
-	}
-
-	componentDidMount() {
-		if (this.refs.recommendedCrew) {
-			this.refs.recommendedCrew.setGroupedColumn('');
 		}
 	}
 }
