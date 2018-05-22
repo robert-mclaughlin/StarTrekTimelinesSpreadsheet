@@ -491,7 +491,7 @@ class App extends React.Component {
 	}
 
 	_onDataError(reason) {
-		this.setState({ errorMessage: reason, hideErrorDialog: false });
+		this.setState({ errorMessage: JSON.stringify(reason), hideErrorDialog: false });
 	}
 
 	_onDataFinished() {

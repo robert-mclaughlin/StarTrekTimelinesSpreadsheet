@@ -9,6 +9,7 @@ import { Persona, PersonaSize, PersonaPresence } from 'office-ui-fabric-react/li
 import { DefaultButton, IButtonProps } from 'office-ui-fabric-react/lib/Button';
 import { Icon } from 'office-ui-fabric-react/lib/Icon';
 
+import Logger from '../utils/logger';
 import { CrewList } from './CrewList.js';
 
 import STTApi from 'sttapi';
@@ -59,8 +60,12 @@ class GauntletMatch extends React.Component {
 	}
 
 	_playMatch() {
-		playContest(this.props.gauntletId, this.props.match.crewOdd.crew_id, this.props.match.opponent.player_id, this.props.match.opponent.crew_id).
-			then((data) => this.props.onNewData(data));
+		playContest(this.props.gauntletId, this.props.match.crewOdd.crew_id, this.props.match.opponent.player_id, this.props.match.opponent.crew_id, this.props.match).
+			then((data) => {
+				let logPath = Logger.logGauntletEntry(data, this.props.match);
+
+				this.props.onNewData(data, logPath);
+			});
 	}
 
 	render() {
@@ -98,12 +103,13 @@ export class GauntletHelper extends React.Component {
 			gauntlet: null,
 			lastResult: null,
 			rewards: null,
-			merits: null,
+			merits: STTApi.playerData.premium_earnable,
 			// Recommendation calculation settings
 			featuredSkillBonus: 10,
 			critBonusDivider: 3,
 			includeFrozen: false,
-			calculating: false
+			calculating: false,
+			logPath: undefined
 		};
 
 		this._reloadGauntletData = this._reloadGauntletData.bind(this);
@@ -111,6 +117,7 @@ export class GauntletHelper extends React.Component {
 		this._payForNewOpponents = this._payForNewOpponents.bind(this);
 		this._calculateSelection = this._calculateSelection.bind(this);
 		this._startGauntlet = this._startGauntlet.bind(this);
+		this._exportLog = this._exportLog.bind(this);
 		this._reloadGauntletData();
 	}
 
@@ -122,7 +129,7 @@ export class GauntletHelper extends React.Component {
 		payToGetNewOpponents(this.state.gauntlet.id).then((data) => this._gauntletDataRecieved(data));
 	}
 
-	_gauntletDataRecieved(data) {
+	_gauntletDataRecieved(data, logPath) {
 		if (data.gauntlet) {
 			if (data.gauntlet.state == 'NONE') {
 				this.setState({
@@ -202,17 +209,19 @@ export class GauntletHelper extends React.Component {
 			this.setState({
 				merits: data.merits
 			});
-		} else {
-			this.setState({
-				merits: STTApi.playerData.premium_earnable
-			});
 		}
+
+		if (!logPath && data.gauntlet) {
+			logPath = Logger.hasGauntletLog(data.gauntlet.gauntlet_id);
+		}
+
+		this.setState({ logPath: logPath });
 	}
 
 	_calculateSelection() {
-		this.setState({calculating: true})
+		this.setState({ calculating: true })
 		var result = gauntletCrewSelection(this.state.gauntlet, STTApi.roster, (100 + this.state.featuredSkillBonus) / 100, this.state.critBonusDivider, 5 /*preSortCount*/, this.state.includeFrozen);
-		this.setState({crewSelection : result.recommendations, calculating: false});
+		this.setState({ crewSelection: result.recommendations, calculating: false });
 	}
 
 	_startGauntlet() {
@@ -239,7 +248,7 @@ export class GauntletHelper extends React.Component {
 
 	renderBestCrew() {
 		if (!this.state.crewSelection) {
-			return <span/>;
+			return <span />;
 		}
 
 		let crewSpans = [];
@@ -275,26 +284,26 @@ export class GauntletHelper extends React.Component {
 					<span className='quest-mastery'>Featured skill: <Image src={CONFIG.SPRITES['icon_' + this.state.featuredSkill].url} height={18} /> {CONFIG.SKILLS[this.state.featuredSkill]}</span>
 					<Label>Featured traits: {this.state.traits.join(', ')}</Label>
 
-					 {this.renderBestCrew()}
+					{this.renderBestCrew()}
 
-					<div className="ui grid" style={{maxWidth: '600px'}}>
+					<div className="ui grid" style={{ maxWidth: '600px' }}>
 						<div className="row">
 							<div className="column"><h4>Algorithm settings</h4></div>
 						</div>
 
 						<div className="two column row">
 							<div className="column">
-								<SpinButton value={this.state.featuredSkillBonus} label='Featured skill bonus:' min={ 0 } max={ 100 } step={ 1 }
-									onIncrement={(value) => { this.setState({ featuredSkillBonus: +value + 1}); }}
-									onDecrement={(value) => { this.setState({ featuredSkillBonus: +value - 1}); }}
+								<SpinButton value={this.state.featuredSkillBonus} label='Featured skill bonus:' min={0} max={100} step={1}
+									onIncrement={(value) => { this.setState({ featuredSkillBonus: +value + 1 }); }}
+									onDecrement={(value) => { this.setState({ featuredSkillBonus: +value - 1 }); }}
 									onValidate={(value) => {
 										if (isNaN(+value)) {
-											this.setState({ featuredSkillBonus: 10});
+											this.setState({ featuredSkillBonus: 10 });
 											return 10;
 										}
 
 										return +value;
-									  }}
+									}}
 								/>
 							</div>
 							<div className="column">
@@ -304,17 +313,17 @@ export class GauntletHelper extends React.Component {
 
 						<div className="two column row">
 							<div className="column">
-								<SpinButton value={this.state.critBonusDivider} label='Crit bonus divider:' min={ 0.1 } max={ 100 } step={ 0.1 }
-									onIncrement={(value) => { this.setState({ critBonusDivider: +value + 0.1}); }}
-									onDecrement={(value) => { this.setState({ critBonusDivider: +value - 0.1}); }}
+								<SpinButton value={this.state.critBonusDivider} label='Crit bonus divider:' min={0.1} max={100} step={0.1}
+									onIncrement={(value) => { this.setState({ critBonusDivider: +value + 0.1 }); }}
+									onDecrement={(value) => { this.setState({ critBonusDivider: +value - 0.1 }); }}
 									onValidate={(value) => {
 										if (isNaN(+value)) {
-											this.setState({ critBonusDivider: 3});
+											this.setState({ critBonusDivider: 3 });
 											return 3;
 										}
 
 										return +value;
-									  }}
+									}}
 								/>
 							</div>
 							<div className="column">
@@ -331,11 +340,11 @@ export class GauntletHelper extends React.Component {
 						</div>
 					</div>
 
-					<br/>
+					<br />
 
 					<PrimaryButton onClick={this._calculateSelection} text='Calculate best crew selection' disabled={this.state.calculating} />
 					<span> </span>
-           			<PrimaryButton onClick={this._startGauntlet} text='Start gauntlet with recommendations' disabled={!this.state.crewSelection} />
+					<PrimaryButton onClick={this._startGauntlet} text='Start gauntlet with recommendations' disabled={!this.state.crewSelection} />
 				</div>
 			);
 		}
@@ -391,7 +400,7 @@ export class GauntletHelper extends React.Component {
 						}).reduce((prev, curr) => [prev, ', ', curr])
 					)}
 
-					<br/>
+					<br />
 
 					{(this.state.roundOdds.matches.length > 0) &&
 						<PrimaryButton onClick={this._payForNewOpponents} text='Pay merits for new opponents' iconProps={{ iconName: 'Money' }} />
@@ -401,11 +410,37 @@ export class GauntletHelper extends React.Component {
 					{this.state.roundOdds.matches.map(function (match) {
 						return <GauntletMatch key={match.crewOdd.archetype_symbol + match.opponent.player_id} match={match} gauntletId={this.state.gauntlet.id} onNewData={this._gauntletDataRecieved} />;
 					}.bind(this))}
+
+					<br />
+
+					{this.state.logPath && <PrimaryButton onClick={this._exportLog} text='Export log...' iconProps={{ iconName: 'DownloadDocument' }} />}
 				</div>
 			);
 		}
 		else {
 			return (<MessageBar messageBarType={MessageBarType.error} >Unknown state for this gauntlet! Check the app, perhaps it's waiting to join or already done.</MessageBar>);
 		}
+	}
+
+	_exportLog() {
+		const { dialog } = require('electron').remote;
+		const { shell } = require('electron');
+		let today = new Date();
+
+		dialog.showSaveDialog(
+			{
+				filters: [{ name: 'Comma separated file (*.csv)', extensions: ['csv'] }],
+				title: 'Export gauntlet log',
+				defaultPath: `gauntlet_${this.state.gauntlet.gauntlet_id}.csv`,
+				buttonLabel: 'Export'
+			},
+			(fileName) => {
+				if (fileName === undefined)
+					return;
+
+				Logger.exportGauntletLog(this.state.gauntlet.gauntlet_id, fileName).then(() => {
+					shell.openItem(fileName);
+				});
+			});
 	}
 }
