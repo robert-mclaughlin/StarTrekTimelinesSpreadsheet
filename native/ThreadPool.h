@@ -1,86 +1,39 @@
-#ifndef ThreadPool_H
-#define ThreadPool_H
+#ifndef THREAD_POOL_H
+#define THREAD_POOL_H
 
-#include <atomic>
-#include <condition_variable>
-#include <functional>
-#include <list>
-#include <mutex>
 #include <thread>
+#include <list>
+#include <vector>
+#include <functional>
+#include <mutex>
 
-class ThreadPool {
+namespace VoyageTools
+{
+
+// a very simple "thread pool"
+// tasks can be added to be run on a new thread
+// if the current thread count is at the limit, tasks will be queued and taken up
+//	by next available thread.
+// threads will exit if no more tasks are available
+class ThreadPool
+{
+public:
+    ThreadPool(size_t size = 0);
+	~ThreadPool() { joinAll(); }
+
+	using task = std::function<void()>;
+	void add(task f);
+
+    void joinAll();
 
 private:
-    // number of thread
-    unsigned threadCount;
-    std::list<std::thread> threads;
-    // where tasks are storage
-    std::list<std::function<void(void)> > queue;
-
-    std::atomic_bool stop;
-    std::condition_variable wait_var;
-    std::mutex queue_mutex;
-
-    // Body of every running thread.
-    // The thread will run until deconstructor or `JoinAll` are called
-    // and it fetch the top of the queue to find a task to exec.
-    void Run() {
-        while (!stop) {
-            std::function<void(void)> run;
-            std::unique_lock<std::mutex> lock(queue_mutex);
-            if (!queue.empty()) {
-                run = queue.front();
-                queue.pop_front();
-                lock.unlock();
-                // unlock befor `run` to ensure parallelism
-                run();
-            }
-            // awake some sleeping threads
-            wait_var.notify_one();
-        }
-    }
-
-public:
-    // Constructor
-    ThreadPool(int c = std::thread::hardware_concurrency())
-        : threadCount(c)
-        , threads(threadCount)
-        , stop(false)
-    {
-        // create the threads
-        for (std::thread& t : threads)
-            t = std::move(std::thread([this] { this->Run(); }));
-    }
-
-    // Deconstructor
-    ~ThreadPool() {
-        joinAll();
-    }
-
-    // Add a task to queue
-    // The function will add, at the end of the queue, a `void`
-    // function only if no one is waiting for stop.
-    void add(std::function<void(void)> job) {
-        if (!stop) {
-            std::lock_guard<std::mutex> lock(queue_mutex);
-            queue.emplace_back(job);
-            wait_var.notify_one();
-        }
-    }
-
-    // Wait until all tasks ended.
-    // If the queue is not empty wait the end of all tasks inserted
-    // and terminate the threads.
-    void joinAll() {
-        std::unique_lock<std::mutex> lock(queue_mutex);
-        wait_var.wait(lock, [this]() -> bool { return queue.empty(); });
-        stop = true;
-        lock.unlock();
-        for (std::thread& t : threads) {
-            if (t.joinable())
-                t.join();
-        }
-    }
+	size_t maxThreads;
+	std::mutex lock;
+	using lockScope = std::lock_guard<std::mutex>;
+    std::list<std::shared_ptr<std::thread>> threads;
+	std::vector<task> tasks;
 };
 
-#endif /* ThreadPool_H */
+} //namespace VoyageTools
+
+#endif
