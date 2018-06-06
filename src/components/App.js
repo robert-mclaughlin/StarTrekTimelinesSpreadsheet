@@ -507,7 +507,9 @@ class App extends React.Component {
 
 		loginSequence((progressLabel) => this.setState({ spinnerLabel: progressLabel }))
 			.then(this._onDataFinished)
-			.catch(this._onDataError);
+			.catch((err) => {
+				this._onDataError(err);
+			});
 	}
 
 	_onLogout() {
@@ -525,7 +527,7 @@ class App extends React.Component {
 	}
 
 	_onDataError(reason) {
-		this.setState({ errorMessage: JSON.stringify(reason), hideErrorDialog: false });
+		this.setState({ errorMessage: reason, hideErrorDialog: false });
 	}
 
 	_onDataFinished() {
