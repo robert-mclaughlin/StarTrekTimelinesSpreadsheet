@@ -28,6 +28,7 @@ import { Image, ImageFit } from 'office-ui-fabric-react/lib/Image';
 import { Callout } from 'office-ui-fabric-react/lib/Callout';
 import { SearchBox } from 'office-ui-fabric-react/lib/SearchBox';
 import { IconButton, PrimaryButton, DefaultButton } from 'office-ui-fabric-react/lib/Button';
+import { Checkbox } from 'office-ui-fabric-react/lib/Checkbox';
 import { initializeIcons } from 'office-ui-fabric-react/lib/Icons';
 
 import { exportExcel } from '../utils/excelExporter.js';
@@ -79,6 +80,8 @@ class App extends React.Component {
 			captainAvatarBodyUrl: '',
 			spinnerLabel: 'Loading...',
 			hideErrorDialog: true,
+			hideBootMessage: true,
+			showBootMessage: false,
 			errorMessage: '',
 			updateUrl: undefined,
 			darkTheme: !settings.get('ui.darkTheme', false)
@@ -98,6 +101,7 @@ class App extends React.Component {
 		this._onDataError = this._onDataError.bind(this);
 		this._playerResync = this._playerResync.bind(this);
 		this._onSwitchTheme = this._onSwitchTheme.bind(this);
+		this._onDismissBootMessage = this._onDismissBootMessage.bind(this);
 
 		initializeIcons(/* optional base url */);
 
@@ -194,6 +198,12 @@ class App extends React.Component {
 		this.forceUpdate();
 	}
 
+	_onDismissBootMessage() {
+		settings.set('ui.showBootMessage' + app.getVersion(), this.state.showBootMessage);
+
+		this.setState({ hideBootMessage: true });
+	}
+
 	_onCaptainClicked() {
 		if (!STTApi.loggedIn) {
 			this._onLogout();
@@ -283,6 +293,32 @@ class App extends React.Component {
 					</DialogFooter>
 				</Dialog>
 
+				<Dialog
+					hidden={ this.state.hideBootMessage }
+					onDismiss={ () => { this._onDismissBootMessage(); } }
+					dialogContentProps={ {
+						type: DialogType.normal,
+						title: 'Please read me',
+						subText: 'Star Trek Timelines is not designed to be accessed on multiple clients simultaneously!'
+					} }
+					modalProps={{ isBlocking: true }}
+					>
+					<div>
+						<p>In order to avoid synchronization issues, please only have <b>one active client at a time</b> (this includes the game on any platform and/or the tool). Close / shut down all other clients, or restart them upon making changes somewhere else.</p>
+						<p><i>Note:</i>If you're only using the tool to look at stats (and are ok with potentially out of date info), and don't use the Gauntlet or Voyage features, you can keep it running alongside the game.</p>
+
+						<Checkbox checked={!this.state.showBootMessage} label="Don't show again"
+							onChange={(e, isChecked) => { this.setState({ showBootMessage: !isChecked }); }}
+						/>
+
+						<br/>
+					</div>
+					<DialogFooter>
+						<PrimaryButton onClick={ () => { shell.openExternal('https://github.com/IAmPicard/StarTrekTimelinesSpreadsheet/blob/master/README.md'); }} text='Read more...' />
+						<DefaultButton onClick={ () => { this._onDismissBootMessage(); } } text='Ok' />
+					</DialogFooter>
+				</Dialog>
+
 				<FeedbackPanel ref='feedbackPanel' targetElement={this._feedbackButtonElement} />
 
 				{this.state.showSpinner && (
@@ -345,8 +381,8 @@ class App extends React.Component {
 			{
 				key: 'exportExcel',
 				name: 'Export Excel',
-				icon: 'ExcelLogo',
-				onClick: function () {
+				iconProps: { iconName: 'ExcelLogo' },
+				onClick: () => {
 					const { dialog } = require('electron').remote;
 
 					dialog.showSaveDialog(
@@ -356,22 +392,22 @@ class App extends React.Component {
 							defaultPath: 'My Crew.xlsx',
 							buttonLabel: 'Export'
 						},
-						function (fileName) {
+						(fileName) => {
 							if (fileName === undefined)
 								return;
 
 							exportExcel(STTApi.playerData.character.items, fileName).then((filePath) => {
 								shell.openItem(filePath);
 							});
-						}.bind(this));
+						});
 
-				}.bind(this)
+				}
 			},
 			{
 				key: 'exportCsv',
 				name: 'Export CSV',
-				icon: 'ExcelDocument',
-				onClick: function () {
+				iconProps: { iconName: 'ExcelDocument' },
+				onClick: () => {
 					const { dialog } = require('electron').remote;
 
 					dialog.showSaveDialog(
@@ -381,28 +417,26 @@ class App extends React.Component {
 							defaultPath: 'My Crew.csv',
 							buttonLabel: 'Export'
 						},
-						function (fileName) {
+						(fileName) => {
 							if (fileName === undefined)
 								return;
 
 							exportCsv(fileName).then((filePath) => {
 								shell.openItem(filePath);
 							});
-						}.bind(this));
-				}.bind(this)
+						});
+				}
 			},
 			{
 				key: 'share',
 				name: 'Share',
-				icon: 'Share',
-				onClick: function () {
-					this.refs.shareDialog._showDialog(this.state.captainName);
-				}.bind(this)
+				iconProps: { iconName: 'Share' },
+				onClick: () => { this.refs.shareDialog._showDialog(this.state.captainName); }
 			},
 			{
 				key: 'configure',
 				name: 'Configure',
-				icon: 'Settings',
+				iconProps: { iconName: 'Settings' },
 				subMenuProps: {
 					items: [
 						{
@@ -415,14 +449,14 @@ class App extends React.Component {
 										name: 'None',
 										//canCheck: true,
 										//checked: this.refs.crewList ? (this.refs.crewList.getGroupedColumn() == '') : false,
-										onClick: function () { this.refs.crewList.setGroupedColumn(''); }.bind(this)
+										onClick: () => { this.refs.crewList.setGroupedColumn(''); }
 									},
 									{
 										key: 'rarity',
 										name: 'Group by rarity',
 										//canCheck: true,
 										//checked: this.refs.crewList ? (this.refs.crewList.getGroupedColumn() == 'max_rarity') : false,
-										onClick: function () { this.refs.crewList.setGroupedColumn('max_rarity'); }.bind(this)
+										onClick: () => { this.refs.crewList.setGroupedColumn('max_rarity'); }
 									}
 								]
 							}
@@ -438,8 +472,8 @@ class App extends React.Component {
 			{
 				key: 'exportCsv',
 				name: 'Export CSV',
-				icon: 'ExcelDocument',
-				onClick: function () {
+				iconProps: { iconName: 'ExcelDocument' },
+				onClick: () => {
 					const { dialog } = require('electron').remote;
 
 					dialog.showSaveDialog(
@@ -449,15 +483,15 @@ class App extends React.Component {
 							defaultPath: 'My Items.csv',
 							buttonLabel: 'Export'
 						},
-						function (fileName) {
+						(fileName) => {
 							if (fileName === undefined)
 								return;
 
 							exportItemsCsv(fileName).then((filePath) => {
 								shell.openItem(filePath);
 							});
-						}.bind(this));
-				}.bind(this)
+						});
+				}
 			}
 		];
 	}
@@ -495,10 +529,15 @@ class App extends React.Component {
 	}
 
 	_onDataFinished() {
+		// This resets with every new version, in case the message is updated or folks forget
+		let shouldShowBootMessage = settings.get('ui.showBootMessage' + app.getVersion(), true);
+
 		this.setState({
 			showSpinner: false,
 			captainName: STTApi.playerData.character.display_name,
 			secondLine: 'Level ' + STTApi.playerData.character.level,
+			hideBootMessage: !shouldShowBootMessage,
+			showBootMessage: shouldShowBootMessage,
 			dataLoaded: true
 		});
 

@@ -49,7 +49,17 @@ export class VoyageCrew extends React.Component {
                         eventCrew[symbol] = activeEvent.content.crew_bonuses[symbol];
                         
                     }
-                }
+				}
+				
+				// For skirmish events
+				if (activeEvent.content.bonus_crew) {
+                    for (var symbol in activeEvent.content.bonus_crew) {
+                        eventCrew[symbol] = activeEvent.content.bonus_crew[symbol];
+                        
+                    }
+				}
+				
+				// TODO: there's also bonus_traits; should we bother selecting crew with those? It looks like you can use voyage crew in skirmish events, so it probably doesn't matter
 
                 if (activeEvent.content.shuttles) {
                     activeEvent.content.shuttles.forEach(shuttle => {
