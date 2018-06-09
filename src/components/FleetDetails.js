@@ -270,7 +270,7 @@ export class FleetDetails extends React.Component {
 				data.pubnub.history(
 					{
 						channel: data.subscribedChannels.fleet,
-						reverse: true,
+						reverse: false,
 						count: 30 // how many items to fetch
 					},
 					(status, response) => {
