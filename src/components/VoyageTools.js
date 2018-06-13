@@ -509,12 +509,19 @@ export class VoyageLog extends React.Component {
 		super(props);
 
 		this.state = {
-			showSpinner: true
+			showSpinner: true,
+			includeFlavor: false
 		};
 
 		let voyage = STTApi.playerData.character.voyage[0];
 		if (voyage && voyage.id) {
 			loadVoyage(voyage.id, false).then((voyageNarrative) => {
+
+				//<Checkbox checked={this.state.includeFlavor} label="Include flavor entries" onChange={(e, isChecked) => { this.setState({ includeFlavor: isChecked }); }} />
+				if (!this.state.includeFlavor) {
+					// Remove the "flavor" entries (useless text)
+					voyageNarrative = voyageNarrative.filter(e => e.encounter_type !== 'flavor');
+				}
 
 				// Group by index
 				voyageNarrative = voyageNarrative.reduce(function (r, a) {
