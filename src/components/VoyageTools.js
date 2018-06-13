@@ -441,7 +441,6 @@ export class VoyageCrew extends React.Component {
 
 			const { dialog } = require('electron').remote;
 
-			// HACK: chaining dialogs. Simple sequential calls don't work. Not sure what the proper way of doing this is atm -CPP
 			let rankFileName = dialog.showSaveDialog(
 				{
 					filters: [{ name: 'Comma separated file (*.csv)', extensions: ['csv'] }],
@@ -451,12 +450,12 @@ export class VoyageCrew extends React.Component {
 				});
 			
 			let estimateFileName = dialog.showSaveDialog(
-			{
-				filters: [{ name: 'Comma separated file (*.csv)', extensions: ['csv'] }],
-				title: 'Export Star Trek Timelines voyage estimates',
-				defaultPath: 'My Voyage Estimates.csv',
-				buttonLabel: 'Export'
-			});
+				{
+					filters: [{ name: 'Comma separated file (*.csv)', extensions: ['csv'] }],
+					title: 'Export Star Trek Timelines voyage estimates',
+					defaultPath: 'My Voyage Estimates.csv',
+					buttonLabel: 'Export'
+				});
 
 			if (rankFileName !== undefined) {
 				let promise = new Promise(function (resolve, reject) {
