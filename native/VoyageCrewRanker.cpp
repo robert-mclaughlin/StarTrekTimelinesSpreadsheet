@@ -4,8 +4,10 @@
 namespace VoyageTools
 {
 
-std::vector<RankedCrew> RankVoyageCrew(const char *jsonInput) noexcept
+RankedResult RankVoyageCrew(const char *jsonInput) noexcept
 {
+	RankedResult result;
+
 	std::unordered_map<int, RankedCrew> rankedCrew;
 
 	// compute for all voyage skill combos
@@ -19,9 +21,12 @@ std::vector<RankedCrew> RankVoyageCrew(const char *jsonInput) noexcept
 		calculator.SetInput(primarySkill, secondarySkill);
 		calculator.DisableTraits();
 
-		double dontcare;
-		std::array<const Crew*, SLOT_COUNT> voyCrew = 
-			calculator.Calculate([](auto...){}, dontcare);
+		result.Estimates.emplace_back(VoyageEstimate{primarySkill, secondarySkill});
+		CrewArray voyCrew =
+			calculator.Calculate([](auto...){}, result.Estimates.back().estimate);
+		for (size_t iCrew = 0; iCrew < SLOT_COUNT; ++iCrew) {
+			result.Estimates.back().crew[iCrew] = *voyCrew[iCrew];
+		}
 
 		for (const Crew * crew : voyCrew) {
 			RankedCrew &rCrew = rankedCrew[crew->id];
@@ -63,11 +68,10 @@ std::vector<RankedCrew> RankVoyageCrew(const char *jsonInput) noexcept
 		}
 	}
 
-	std::vector<RankedCrew> sortedCrew;
 	for (auto rankedPair : rankedCrew) {
-		sortedCrew.push_back(rankedPair.second);
+		result.Crew.push_back(rankedPair.second);
 	}
-	std::sort(sortedCrew.begin(), sortedCrew.end(), [](const auto &left, const auto &right) {
+	std::sort(result.Crew.begin(), result.Crew.end(), [](const auto &left, const auto &right) {
 		if (left.score != right.score)
 			return left.score > right.score;
 		if (left.altScores.size() != right.altScores.size())
@@ -83,7 +87,11 @@ std::vector<RankedCrew> RankVoyageCrew(const char *jsonInput) noexcept
 		return left.crew.name < right.crew.name;
 	});
 
-	return sortedCrew;
+	std::sort(result.Estimates.begin(), result.Estimates.end(), [](const auto &left, const auto &right) {
+		return left.estimate > right.estimate;
+	});
+
+	return result;
 }
 
 } // namespace VoyageTools

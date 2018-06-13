@@ -22,7 +22,19 @@ struct RankedCrew {
 	std::vector<std::pair<size_t,size_t>> altVoySkills;
 };
 
-std::vector<RankedCrew> RankVoyageCrew(const char *jsonInput) noexcept;
+struct VoyageEstimate {
+	size_t primarySkill;
+	size_t secondarySkill;
+	double estimate;
+	std::array<Crew, SLOT_COUNT> crew;
+};
+
+struct RankedResult {
+	std::vector<RankedCrew> Crew;
+	std::vector<VoyageEstimate> Estimates;
+};
+
+RankedResult RankVoyageCrew(const char *jsonInput) noexcept;
 
 } //namespace VoyageTools
 
