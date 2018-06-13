@@ -69,49 +69,71 @@ public:
 	void Execute(const Nan::AsyncProgressWorker::ExecutionProgress &progress) override
 	{
 		using namespace VoyageTools;
-		std::vector<RankedCrew> rankedCrew = RankVoyageCrew(input.c_str());
+		RankedResult result = RankVoyageCrew(input.c_str());
+		
+		{ // stringify crew ranking
+			const std::vector<RankedCrew> &rankedCrew = result.Crew;
 
-		std::stringstream ss;
-		ss << "Score,";
-		for (unsigned int iAlt = 0; iAlt < RankedCrew::altLevels; ++iAlt) {
-			ss << "Alt " << iAlt+1 << ",";
-		}
-		ss << "Status,Crew,Voyages\n";
-
-		std::array<const char*,SKILL_COUNT> skillNames = {"CMD", "SCI", "SEC", "ENG", "DIP", "MED"};
-		std::array<const char*,SKILL_COUNT> altSkillNames = {"cmd", "sci", "sec", "eng", "dip", "med"};
-
-		for (const RankedCrew &crew : rankedCrew) {
-			ss << crew.score << ",";
+			std::stringstream ss;
+			ss << "Score,";
 			for (unsigned int iAlt = 0; iAlt < RankedCrew::altLevels; ++iAlt) {
-				ss << (crew.altScores.empty()?0:crew.altScores[iAlt]) << ",";
+				ss << "Alt " << iAlt+1 << ",";
 			}
-			std::string status;
-			if (crew.crew.frozen) {
-				status = "F";
-			} else if (crew.crew.ff100) {
-				status = "I?";
-			} else {
-				status = '0'+crew.crew.max_rarity;
+			ss << "Status,Crew,Voyages\n";
+
+			for (const RankedCrew &crew : rankedCrew) {
+				ss << crew.score << ",";
+				for (unsigned int iAlt = 0; iAlt < RankedCrew::altLevels; ++iAlt) {
+					ss << (crew.altScores.empty()?0:crew.altScores[iAlt]) << ",";
+				}
+				std::string status;
+				if (crew.crew.frozen) {
+					status = "F";
+				} else if (crew.crew.ff100) {
+					status = "I?";
+				} else {
+					status = '0'+crew.crew.max_rarity;
+				}
+				ss << status << "," << crew.crew.name << ",";
+				for (auto skills : crew.voySkills) {
+					ss << skillNames[skills.first] << "/" << skillNames[skills.second] << " ";
+				}
+				for (auto altSkills : crew.altVoySkills) {
+					ss << altSkillNames[altSkills.first] << "/" << altSkillNames[altSkills.second] << " ";
+				}
+				ss << "\n";
 			}
-			ss << status << "," << crew.crew.name << ",";
-			for (auto skills : crew.voySkills) {
-				ss << skillNames[skills.first] << "/" << skillNames[skills.second] << " ";
-			}
-			for (auto altSkills : crew.altVoySkills) {
-				ss << altSkillNames[altSkills.first] << "/" << altSkillNames[altSkills.second] << " ";
-			}
-			ss << "\n";
+
+			rankResult = ss.str();
 		}
 
-		result = ss.str();
+		{ // stringify voyage estimates
+			std::stringstream ss;
+			ss << "Primary,Secondary,Estimate,Crew\n";
+
+			for (const VoyageEstimate &estimate : result.Estimates) {
+				ss << skillNames[estimate.primarySkill] << "," << skillNames[estimate.secondarySkill] << ","
+					<< std::setprecision(2) << estimate.estimate << ",";
+				for (const Crew &crew : estimate.crew) {
+					if (&crew != &estimate.crew[0])
+						ss << " | ";
+					ss << crew.name;
+				}
+				ss << "\n";
+			}
+
+			estimateResult = ss.str();
+		}
 	}
 
 	void HandleOKCallback() override
 	{
 		Nan::HandleScope scope;
-		v8::Local<v8::Value> argv[] = { Nan::New(result.c_str(), result.size()).ToLocalChecked() };
-		callback->Call(1, argv);
+		v8::Local<v8::Value> argv[] = {
+			Nan::New(rankResult.c_str(), rankResult.size()).ToLocalChecked(),
+			Nan::New(estimateResult.c_str(), estimateResult.size()).ToLocalChecked()
+		};
+		callback->Call(2, argv);
 	};
 
 	void HandleProgressCallback(const char *data, size_t size) override
@@ -122,19 +144,12 @@ public:
 	}
 
 private:
-	std::string ResultToString(const std::array<const VoyageTools::Crew*, VoyageTools::SLOT_COUNT>& res, double score) noexcept
-	{
-		nlohmann::json j;
-		for (int i = 0; i < VoyageTools::SLOT_COUNT; i++)
-		{
-			j["selection"][voyageCalculator->GetSlotName(i)] = res[i]->id;
-		}
-		j["score"] = score;
-		return j.dump();
-	}
+	static constexpr std::array<const char*,VoyageTools::SKILL_COUNT> skillNames = {"CMD", "SCI", "SEC", "ENG", "DIP", "MED"};
+	static constexpr std::array<const char*,VoyageTools::SKILL_COUNT> altSkillNames = {"cmd", "sci", "sec", "eng", "dip", "med"};
 
 	Nan::Callback *progressCallback;
-	std::string result;
+	std::string rankResult;
+	std::string estimateResult;
 	std::unique_ptr<VoyageTools::VoyageCalculator> voyageCalculator;
 };
 

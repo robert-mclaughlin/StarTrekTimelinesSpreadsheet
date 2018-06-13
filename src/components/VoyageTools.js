@@ -432,36 +432,56 @@ export class VoyageCrew extends React.Component {
 				state: state};
 		}
 
-		NativeExtension.calculateVoyageCrewRank(JSON.stringify(dataToExport), result => {
+		NativeExtension.calculateVoyageCrewRank(JSON.stringify(dataToExport), (rankResult, estimateResult) => {
 			console.log("done!");
-			console.log(result);
+			console.log(rankResult);
+			console.log(estimateResult);
 			this.setState({state: 'calculating'});
 			const fs = require('fs');
 
 			const { dialog } = require('electron').remote;
 
-			dialog.showSaveDialog(
+			let rankFileName = dialog.showSaveDialog(
 				{
 					filters: [{ name: 'Comma separated file (*.csv)', extensions: ['csv'] }],
 					title: 'Export Star Trek Timelines voyage crew ranking',
 					defaultPath: 'My Voyage Crew.csv',
 					buttonLabel: 'Export'
-				},
-				function (fileName) {
-					if (fileName === undefined)
-						return;
+				});
+			
+			let estimateFileName = dialog.showSaveDialog(
+				{
+					filters: [{ name: 'Comma separated file (*.csv)', extensions: ['csv'] }],
+					title: 'Export Star Trek Timelines voyage estimates',
+					defaultPath: 'My Voyage Estimates.csv',
+					buttonLabel: 'Export'
+				});
 
-					let promise = new Promise(function (resolve, reject) {
-						fs.writeFile(fileName, result, function (err) {
-							if (err) { reject(err); }
-							else { resolve(fileName); }
-						});
+			if (rankFileName !== undefined) {
+				let promise = new Promise(function (resolve, reject) {
+					fs.writeFile(rankFileName, rankResult, function (err) {
+						if (err) { reject(err); }
+						else { resolve(rankFileName); }
 					});
+				});
 
-					promise.then((filePath) => {
-						shell.openItem(filePath);
+				promise.then((filePath) => {
+					shell.openItem(filePath);
+				});
+			}
+
+			if (estimateFileName !== undefined) {
+				let promise = new Promise(function (resolve, reject) {
+					fs.writeFile(estimateFileName, estimateResult, function (err) {
+						if (err) { reject(err); }
+						else { resolve(estimateFileName); }
 					});
-				}.bind(this));
+				});
+
+				promise.then((filePath) => {
+					shell.openItem(filePath);
+				});
+			}
 
 		}, progressResult => {
 			console.log("unexpected progress result!"); // not implemented yet..
