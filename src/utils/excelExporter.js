@@ -50,6 +50,10 @@ export function exportExcel(itemList, fileName) {
 		worksheet.column(41).width(20);
 		worksheet.column(42).width(15);
 		worksheet.column(43).width(35);
+		worksheet.column(44).width(40);
+		worksheet.column(45).width(40);
+		worksheet.column(46).width(40);
+		worksheet.column(47).width(40);
 
 		worksheet.row(1).style("bold", true);
 
@@ -63,9 +67,15 @@ export function exportExcel(itemList, fileName) {
 'ship_battle.accuracy', 'ship_battle.crit_bonus', 'ship_battle.crit_chance', 'ship_battle.evasion', 'action.name', 'action.bonus_amount',
 'action.bonus_type', 'action.duration', 'action.cooldown', 'action.initial_cooldown', 'action.limit',
 'action.penalty.type', 'action.penalty.amount', 'action.charge_phases',
-'action.trigger', 'action.ability']);
+'action.trigger', 'action.ability', 'equipment.slot 1', 'equipment.slot 2', 'equipment.slot 3', 'equipment.slot 4']);
 
 		STTApi.roster.forEach(function (crew) {
+			let equipment = [];
+			crew.equipment_slots.forEach(es => {
+				equipment.push(STTApi.itemArchetypeCache.archetypes.find(equipment => equipment.id === es.archetype).name +
+					(es.have ? ' (1)' : ' (0)'));
+			});
+
 			values.push([crew.id, crew.name, crew.short_name, crew.rarity, crew.max_rarity, crew.level, crew.frozen,
 				crew.command_skill.core, crew.command_skill.min, crew.command_skill.max, crew.diplomacy_skill.core, crew.diplomacy_skill.min, crew.diplomacy_skill.max,
 				crew.science_skill.core, crew.science_skill.min, crew.science_skill.max, crew.security_skill.core, crew.security_skill.min, crew.security_skill.max,
@@ -77,7 +87,8 @@ export function exportExcel(itemList, fileName) {
 				crew.action.penalty ? crew.action.penalty.amount : '',
 				crew.action.charge_phases ? JSON.stringify(crew.action.charge_phases) : '',
 				crew.action.ability ? CONFIG.CREW_SHIP_BATTLE_TRIGGER[crew.action.ability.condition] : '',
-				crew.action.ability ? CONFIG.CREW_SHIP_BATTLE_ABILITY_TYPE[crew.action.ability.type].replace('%VAL%', crew.action.ability.amount) : ''
+				crew.action.ability ? CONFIG.CREW_SHIP_BATTLE_ABILITY_TYPE[crew.action.ability.type].replace('%VAL%', crew.action.ability.amount) : '',
+				equipment[0], equipment[1], equipment[2], equipment[3]
 			]);
 		});
 
