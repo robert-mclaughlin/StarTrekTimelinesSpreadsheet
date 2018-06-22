@@ -14,10 +14,10 @@ export class ItemDisplay extends React.Component {
         let rarity = [];
         if (!this.props.hideRarity) {
             for (var i = 0; i < this.props.rarity; i++) {
-                rarity.push(<img src={CONFIG.SPRITES['star_reward'].url} style={{ width: starSize + 'px' }} />);
+                rarity.push(<img key={i} src={CONFIG.SPRITES['star_reward'].url} style={{ width: starSize + 'px' }} />);
             }
             for (var i = this.props.rarity; i < this.props.maxRarity; i++) {
-                rarity.push(<img src={CONFIG.SPRITES['star_reward_inactive'].url} style={{ width: starSize + 'px' }} />);
+                rarity.push(<img key={i} src={CONFIG.SPRITES['star_reward_inactive'].url} style={{ width: starSize + 'px' }} />);
             }
         }
 

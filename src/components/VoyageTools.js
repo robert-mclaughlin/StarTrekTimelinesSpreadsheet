@@ -47,7 +47,6 @@ export class VoyageCrew extends React.Component {
                 if (activeEvent.content.crew_bonuses) {
                     for (var symbol in activeEvent.content.crew_bonuses) {
                         eventCrew[symbol] = activeEvent.content.crew_bonuses[symbol];
-                        
                     }
 				}
 				
@@ -55,12 +54,17 @@ export class VoyageCrew extends React.Component {
 				if (activeEvent.content.bonus_crew) {
                     for (var symbol in activeEvent.content.bonus_crew) {
                         eventCrew[symbol] = activeEvent.content.bonus_crew[symbol];
-                        
                     }
 				}
-				
-				// TODO: there's also bonus_traits; should we bother selecting crew with those? It looks like you can use voyage crew in skirmish events, so it probably doesn't matter
 
+				// For expedition events
+				if (activeEvent.content.special_crew) {
+                    activeEvent.content.special_crew.forEach(symbol => {
+						eventCrew[symbol] = symbol;
+					});
+				}
+
+				// TODO: there's also bonus_traits; should we bother selecting crew with those? It looks like you can use voyage crew in skirmish events, so it probably doesn't matter
                 if (activeEvent.content.shuttles) {
                     activeEvent.content.shuttles.forEach(shuttle => {
                         for (var symbol in shuttle.crew_bonuses) {
@@ -208,6 +212,7 @@ export class VoyageCrew extends React.Component {
                     <div className="column">
                         <p>Crew you don't want to consider for voyage
                             {this.state.activeEvent && <span> (preselected crew which gives bonus in the event <b>{this.state.activeEvent}</b>)</span>}: </p>
+						<PrimaryButton onClick={() => { this.setState({currentSelectedItems: []}); } } text='Clear' disabled={this.state.currentSelectedItems.length === 0} />
                         <NormalPeoplePicker
                             onResolveSuggestions={ this._onFilterChanged }
                             selectedItems={ this.state.currentSelectedItems }

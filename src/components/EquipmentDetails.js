@@ -183,25 +183,9 @@ export class EquipmentDetails extends React.Component {
 		});
 
 		this.state = {
-			dataAvailable: false,
+			dataAvailable: true,
 			filteredCrew: filteredCrew
 		};
-
-		loadFullTree().then(() => {
-			let iconPromises = [];
-			STTApi.itemArchetypeCache.archetypes.forEach((equipment) => {
-				equipment.iconUrl = '';
-				iconPromises.push(STTApi.imageProvider.getItemImageUrl(equipment, equipment.id).then(({id, url}) => {
-					STTApi.itemArchetypeCache.archetypes.forEach(function (item) {
-						if ((item.id === id) && url)
-							item.iconUrl = url;
-					});
-					return Promise.resolve();
-				}).catch((error) => {}));
-			});
-
-			Promise.all(iconPromises).then(() => this.setState({ dataAvailable: true }));
-		});
 	}
 	
 	render() {

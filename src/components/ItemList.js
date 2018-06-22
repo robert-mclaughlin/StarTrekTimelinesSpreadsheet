@@ -3,7 +3,7 @@ import { DetailsList, DetailsListLayoutMode, SelectionMode } from 'office-ui-fab
 import { Image, ImageFit } from 'office-ui-fabric-react/lib/Image';
 import { Link } from 'office-ui-fabric-react/lib/Link';
 
-import { ItemDisplay } from './ItemDisplay.js';
+import { ItemDisplay } from './ItemDisplay';
 import { RarityStars } from './RarityStars';
 
 import { sortItems, columnClick } from '../utils/listUtils.js';

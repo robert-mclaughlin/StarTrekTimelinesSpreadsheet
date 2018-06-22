@@ -1,16 +1,21 @@
+import '../assets/css/fabric.min.css';
+
 import React, { Component } from 'react';
 import { DetailsList, DetailsListLayoutMode, SelectionMode } from 'office-ui-fabric-react/lib/DetailsList';
 import { Image, ImageFit } from 'office-ui-fabric-react/lib/Image';
 import { Link } from 'office-ui-fabric-react/lib/Link';
 import { Icon } from 'office-ui-fabric-react/lib/Icon';
 import { IconButton, IButtonProps } from 'office-ui-fabric-react/lib/Button';
+import { HoverCard } from 'office-ui-fabric-react/lib/HoverCard';
 
 import { SkillCell } from './SkillCell';
 import { ActiveCrewDialog } from './ActiveCrewDialog';
 import { RarityStars } from './RarityStars';
+import { ItemDisplay } from './ItemDisplay';
 
 import { sortItems, columnClick } from '../utils/listUtils.js';
 
+import STTApi from 'sttapi';
 import { CONFIG } from 'sttapi';
 
 function groupBy(items, fieldName) {
@@ -76,7 +81,18 @@ export class CrewList extends React.Component {
 				minWidth: 100,
 				maxWidth: 180,
 				isResizable: true,
-				fieldName: 'name'
+				onRender: (item) => {
+					return (<HoverCard id="nameHoverCard"
+						expandingCardProps={{
+							renderData: item,
+							onRenderExpandedCard: this._onRenderExpandedCard,
+							onRenderCompactCard: this._onRenderCompactCard,
+							styles: { root: { width: '500px' } }
+						}}
+						instantOpenOnClick={true}>
+						<span>{item.name}</span>
+					</HoverCard>);
+				}
 			},
 			{
 				key: 'level',
@@ -144,7 +160,7 @@ export class CrewList extends React.Component {
 				fieldName: 'active_id',
 				onRender: (item) => {
 					if (item.active_id)
-						return (<IconButton iconProps={{iconName:'Balloons'}} title='Active engagement' onClick={() => this._showActiveDialog(item.active_id, item.name)} />);
+						return (<IconButton iconProps={{ iconName: 'Balloons' }} title='Active engagement' onClick={() => this._showActiveDialog(item.active_id, item.name)} />);
 					else
 						return (<p />);
 				}
@@ -258,6 +274,113 @@ export class CrewList extends React.Component {
 
 		this._onColumnClick = this._onColumnClick.bind(this);
 		this._showActiveDialog = this._showActiveDialog.bind(this);
+		this._onRenderExpandedCard = this._onRenderExpandedCard.bind(this);
+		this._onRenderCompactCard = this._onRenderCompactCard.bind(this);
+	}
+
+	_onRenderCompactCard(item) {
+		return (
+			<div className="ms-Grid">
+				<div className="ms-Grid-row">
+					<div className="ms-Grid-col ms-sm6 ms-md4 ms-lg4">
+						<Image src={item.iconBodyUrl} height={156} imageFit={ImageFit.contain} shouldStartVisible={true} />
+					</div>
+					<div className="ms-Grid-col ms-sm6 ms-md8 ms-lg8" style={{ padding: '10px' }}>
+						<h3>{item.name}</h3>
+						<p className="ms-font-s">Traits: {item.traits.replace(new RegExp(',', 'g'), ', ')}</p>
+						<p className="ms-font-xs">{item.flavor}</p>
+					</div>
+				</div>
+			</div>
+		);
+	}
+
+	_onRenderExpandedCard(item) {
+		let equipment = [];
+		item.equipment_slots.forEach(es => {
+			equipment.push(
+				{
+					e: STTApi.itemArchetypeCache.archetypes.find(equipment => equipment.id === es.archetype),
+					have: es.have
+				}
+			);
+		});
+
+		let eqTable;
+		if (equipment && equipment.length > 0) {
+			eqTable = (<div>
+				<h4>Equipment</h4>
+				<table><tbody>
+					<tr>
+						{
+							equipment.map(eq => {
+								if (eq.e) {
+									return (<td key={eq.e.name}>
+										<ItemDisplay src={eq.e.iconUrl} size={100} maxRarity={eq.e.rarity} rarity={eq.e.rarity} />
+										<p className="ms-font-xs" style={{ color: eq.have ? "" : "red" }}>{eq.e.name}</p>
+									</td>);
+								}
+								else {
+									return <td></td>;
+								}
+							})
+						}
+					</tr></tbody>
+				</table>
+			</div>);
+		}
+
+		return (
+			<div style={{ padding: '10px' }}>
+				{eqTable}
+				<h5>Ship abilitiy '{item.action.name}'</h5>
+				<p>Accuracy +{item.ship_battle.accuracy}  Crit Bonus +{item.ship_battle.crit_bonus}  {item.ship_battle.crit_chance && <span>Crit Rating +{item.ship_battle.crit_chance}  </span>}Evasion +{item.ship_battle.evasion}</p>
+				<p>Increase {CONFIG.CREW_SHIP_BATTLE_BONUS_TYPE[item.action.bonus_type]} by {item.action.bonus_amount}</p>
+				{item.action.penalty && <p>Decrease {CONFIG.CREW_SHIP_BATTLE_BONUS_TYPE[item.action.penalty.type]} by {item.action.penalty.amount}</p>}
+
+				{item.action.ability && <p>Ability: {CONFIG.CREW_SHIP_BATTLE_ABILITY_TYPE[item.action.ability.type].replace('%VAL%', item.action.ability.amount)} {(item.action.ability.condition > 0) && <span>Trigger: {CONFIG.CREW_SHIP_BATTLE_TRIGGER[item.action.ability.condition]}</span>}</p>}
+				<p>Duration: {item.action.duration}s  Cooldown: {item.action.cooldown}s  Initial Cooldown: {item.action.initial_cooldown}s  </p>
+				{item.action.limit && <p>Limit: {item.action.limit} uses per battle</p>}
+
+				{this.renderChargePhases(item.action.charge_phases)}
+			</div>
+		);
+	}
+
+	renderChargePhases(charge_phases) {
+		if (!charge_phases) {
+			return <span/>;
+		} else {
+			let phases = [];
+			charge_phases.forEach((cp, idx) => {
+				let phaseDescription = `Charge time: ${cp.charge_time}s`;
+
+				if (cp.ability_amount) {
+					phaseDescription += `  Ability amount: ${cp.ability_amount}`;
+				}
+
+				if (cp.bonus_amount) {
+					phaseDescription += `  Bonus amount: ${cp.bonus_amount}`;
+				}
+
+				if (cp.duration) {
+					phaseDescription += `  Duration: ${cp.duration}s`;
+				}
+
+				if (cp.cooldown) {
+					phaseDescription += `  Cooldown: ${cp.cooldown}s`;
+				}
+
+				phases.push(<p key={idx}>{phaseDescription}</p>);
+			});
+
+			return (<div>
+				<h5>Charge phases</h5>
+				<div>
+					{phases}
+				</div>
+			</div>);
+		}
 	}
 
 	render() {

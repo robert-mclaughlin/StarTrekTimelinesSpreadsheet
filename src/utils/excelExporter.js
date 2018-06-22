@@ -1,5 +1,6 @@
 import XlsxPopulate from 'xlsx-populate';
 import STTApi from 'sttapi';
+import { CONFIG } from 'sttapi';
 
 export function exportExcel(itemList, fileName) {
 	return XlsxPopulate.fromBlankAsync().then(workbook => {
@@ -33,6 +34,22 @@ export function exportExcel(itemList, fileName) {
 		worksheet.column(26).width(10);
 		worksheet.column(26).hidden(true);
 		worksheet.column(27).width(40);
+		worksheet.column(28).width(10);
+		worksheet.column(29).width(10);
+		worksheet.column(30).width(10);
+		worksheet.column(31).width(10);
+		worksheet.column(32).width(30);
+		worksheet.column(33).width(10);
+		worksheet.column(34).width(15);
+		worksheet.column(35).width(10);
+		worksheet.column(36).width(10);
+		worksheet.column(37).width(10);
+		worksheet.column(38).width(10);
+		worksheet.column(39).width(15);
+		worksheet.column(40).width(10);
+		worksheet.column(41).width(20);
+		worksheet.column(42).width(15);
+		worksheet.column(43).width(35);
 
 		worksheet.row(1).style("bold", true);
 
@@ -42,15 +59,26 @@ export function exportExcel(itemList, fileName) {
 		values.push(['id', 'name', 'short_name', 'rarity', 'max_rarity', 'level', 'frozen',
 'command_skill.core', 'command_skill.min', 'command_skill.max', 'diplomacy_skill.core', 'diplomacy_skill.min', 'diplomacy_skill.max',
 'science_skill.core', 'science_skill.min', 'science_skill.max', 'security_skill.core', 'security_skill.min', 'security_skill.max',
-'engineering_skill.core', 'engineering_skill.min', 'engineering_skill.max', 'medicine_skill.core', 'medicine_skill.min', 'medicine_skill.max',
-'buyback', 'traits']);
+'engineering_skill.core', 'engineering_skill.min', 'engineering_skill.max', 'medicine_skill.core', 'medicine_skill.min', 'medicine_skill.max', 'buyback', 'traits',
+'ship_battle.accuracy', 'ship_battle.crit_bonus', 'ship_battle.crit_chance', 'ship_battle.evasion', 'action.name', 'action.bonus_amount',
+'action.bonus_type', 'action.duration', 'action.cooldown', 'action.initial_cooldown', 'action.limit',
+'action.penalty.type', 'action.penalty.amount', 'action.charge_phases',
+'action.trigger', 'action.ability']);
 
 		STTApi.roster.forEach(function (crew) {
 			values.push([crew.id, crew.name, crew.short_name, crew.rarity, crew.max_rarity, crew.level, crew.frozen,
 				crew.command_skill.core, crew.command_skill.min, crew.command_skill.max, crew.diplomacy_skill.core, crew.diplomacy_skill.min, crew.diplomacy_skill.max,
 				crew.science_skill.core, crew.science_skill.min, crew.science_skill.max, crew.security_skill.core, crew.security_skill.min, crew.security_skill.max,
 				crew.engineering_skill.core, crew.engineering_skill.min, crew.engineering_skill.max, crew.medicine_skill.core, crew.medicine_skill.min, crew.medicine_skill.max,
-				crew.buyback, crew.traits]);
+				crew.buyback, crew.traits,
+				crew.ship_battle.accuracy, crew.ship_battle.crit_bonus, crew.ship_battle.crit_chance, crew.ship_battle.evasion, crew.action.name, crew.action.bonus_amount,
+				CONFIG.CREW_SHIP_BATTLE_BONUS_TYPE[crew.action.bonus_type], crew.action.duration, crew.action.cooldown, crew.action.initial_cooldown, crew.action.limit,
+				crew.action.penalty ? CONFIG.CREW_SHIP_BATTLE_BONUS_TYPE[crew.action.penalty.type] : '',
+				crew.action.penalty ? crew.action.penalty.amount : '',
+				crew.action.charge_phases ? JSON.stringify(crew.action.charge_phases) : '',
+				crew.action.ability ? CONFIG.CREW_SHIP_BATTLE_TRIGGER[crew.action.ability.condition] : '',
+				crew.action.ability ? CONFIG.CREW_SHIP_BATTLE_ABILITY_TYPE[crew.action.ability.type].replace('%VAL%', crew.action.ability.amount) : ''
+			]);
 		});
 
 		worksheet.cell("A1").value(values);

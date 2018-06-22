@@ -3,12 +3,29 @@ const electron = require('electron');
 
 export class FileImageCache {
 	basePath;
+	allImages;
 	constructor() {
 		const app = electron.app || electron.remote.app;
 		this.basePath = app.getPath('userData') + '/imagecache/';
 
 		if (!fs.existsSync(this.basePath)) {
 			fs.mkdirSync(this.basePath);
+		}
+
+		this.allImages = fs.readdirSync(this.basePath);
+
+		// Filter to images
+		this.allImages = this.allImages.filter(item => item.endsWith('.png'));
+
+		// Remove the .png extension
+		this.allImages = this.allImages.map(item => this.basePath + item);
+	}
+
+	getCached(url) {
+		if (this.allImages.includes(this.formatUrl(url))) {
+			return 'file://' + this.formatUrl(url);
+		} else {
+			return '';
 		}
 	}
 
