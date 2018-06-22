@@ -117,10 +117,10 @@ class App extends React.Component {
 			}
 		});
 
-		this._onSwitchTheme();
+		this._onSwitchTheme(false);
 	}
 
-	_onSwitchTheme() {
+	_onSwitchTheme(shouldForceUpdate) {
 		// Current theme
 		if (this.state.darkTheme) {
 			loadTheme({
@@ -195,7 +195,9 @@ class App extends React.Component {
 		this.state.darkTheme = !this.state.darkTheme;
 		settings.set('ui.darkTheme', this.state.darkTheme);
 
-		this.forceUpdate();
+		if (shouldForceUpdate) {
+			this.forceUpdate();
+		}
 	}
 
 	_onDismissBootMessage() {
@@ -268,7 +270,7 @@ class App extends React.Component {
 					</div>}
 					<div className='lcars-box' />
 					<div className='lcars-content'>
-						<IconButton iconProps={{ iconName: 'Light' }} title='Switch theme' onClick={this._onSwitchTheme} className={ColorClassNames.neutralDark} />
+						<IconButton iconProps={{ iconName: 'Light' }} title='Switch theme' onClick={() => this._onSwitchTheme(true)} className={ColorClassNames.neutralDark} />
 					</div>
 					<div className='lcars-ellipse' />
 					<div className='lcars-content' ref={(menuButton) => this._feedbackButtonElement = menuButton}>
