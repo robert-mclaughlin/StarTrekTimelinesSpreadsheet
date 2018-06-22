@@ -132,7 +132,7 @@ export class ItemList extends React.Component {
 	filter(newValue) {
 		this.setState({
 			items: sortItems((newValue ?
-				this.props.data.filter(i => this._filterItem(i, newValue)) :
+				this.props.data.filter(i => this._filterItem(i, newValue.toLowerCase())) :
 				this.props.data), this.state.sortColumn, this.state.sortedDescending)
 		});
 	}
