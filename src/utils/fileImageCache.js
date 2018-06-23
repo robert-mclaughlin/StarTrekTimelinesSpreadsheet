@@ -18,11 +18,11 @@ export class FileImageCache {
 		this.allImages = this.allImages.filter(item => item.endsWith('.png'));
 
 		// Remove the .png extension
-		this.allImages = this.allImages.map(item => this.basePath + item);
+		this.allImages = new Set(this.allImages.map(item => this.basePath + item));
 	}
 
 	getCached(url) {
-		if (this.allImages.includes(this.formatUrl(url))) {
+		if (this.allImages.has(this.formatUrl(url))) {
 			return 'file://' + this.formatUrl(url);
 		} else {
 			return '';
