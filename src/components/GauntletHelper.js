@@ -238,8 +238,6 @@ export class GauntletHelper extends React.Component {
 				crew_ids.push(crew.crew_id);
 			});
 
-			console.log(crew_ids);
-
 			if (crew_ids.length === 5) {
 				enterGauntlet(this.state.gauntlet.gauntlet_id, crew_ids).then((data) => this._gauntletDataRecieved({ gauntlet: data }));
 			}

@@ -79,16 +79,124 @@ export class LoggerClass {
                             value: (row) => row.data.gauntlet.contest_data.traits.map(trait => STTApi.getTraitName(trait)).join(', ')
                         },
                         {
-                            label: 'Player rolls',
-                            value: (row) => row.data.lastResult.player_rolls.map((roll, index) => `${roll}${row.data.lastResult.player_crit_rolls[index] ? '*' : ''}` ).join(', ')
+                            label: 'bracket_id',
+                            value: (row) => row.data.gauntlet.bracket_id
                         },
                         {
-                            label: 'Opponent rolls',
-                            value: (row) => row.data.lastResult.opponent_rolls.map((roll, index) => `${roll}${row.data.lastResult.opponent_crit_rolls[index] ? '*' : ''}` ).join(', ')
+                            label: 'Consecutive Wins',
+                            value: (row) => row.data.gauntlet.consecutive_wins
+                        },
+                        {
+                            label: 'Player 1',
+                            value: (row) => row.data.lastResult.player_rolls[0]
+                        },
+                        {
+                            label: 'PCrit 1',
+                            value: (row) => row.data.lastResult.player_crit_rolls[0]
+                        },
+                        {
+                            label: 'Player 2',
+                            value: (row) => row.data.lastResult.player_rolls[1]
+                        },
+                        {
+                            label: 'PCrit 2',
+                            value: (row) => row.data.lastResult.player_crit_rolls[1]
+                        },
+                        {
+                            label: 'Player 3',
+                            value: (row) => row.data.lastResult.player_rolls[2]
+                        },
+                        {
+                            label: 'PCrit 3',
+                            value: (row) => row.data.lastResult.player_crit_rolls[2]
+                        },
+                        {
+                            label: 'Player 4',
+                            value: (row) => row.data.lastResult.player_rolls[3]
+                        },
+                        {
+                            label: 'PCrit 4',
+                            value: (row) => row.data.lastResult.player_crit_rolls[3]
+                        },
+                        {
+                            label: 'Player 5',
+                            value: (row) => row.data.lastResult.player_rolls[4]
+                        },
+                        {
+                            label: 'PCrit 5',
+                            value: (row) => row.data.lastResult.player_crit_rolls[4]
+                        },
+                        {
+                            label: 'Player 6',
+                            value: (row) => row.data.lastResult.player_rolls[5]
+                        },
+                        {
+                            label: 'PCrit 6',
+                            value: (row) => row.data.lastResult.player_crit_rolls[5]
+                        },
+                        {
+                            label: 'Opponent 1',
+                            value: (row) => row.data.lastResult.opponent_rolls[0]
+                        },
+                        {
+                            label: 'OCrit 1',
+                            value: (row) => row.data.lastResult.opponent_crit_rolls[0]
+                        },
+                        {
+                            label: 'Opponent 2',
+                            value: (row) => row.data.lastResult.opponent_rolls[1]
+                        },
+                        {
+                            label: 'OCrit 2',
+                            value: (row) => row.data.lastResult.opponent_crit_rolls[1]
+                        },
+                        {
+                            label: 'Opponent 3',
+                            value: (row) => row.data.lastResult.opponent_rolls[2]
+                        },
+                        {
+                            label: 'OCrit 3',
+                            value: (row) => row.data.lastResult.opponent_crit_rolls[2]
+                        },
+                        {
+                            label: 'Opponent 4',
+                            value: (row) => row.data.lastResult.opponent_rolls[3]
+                        },
+                        {
+                            label: 'OCrit 4',
+                            value: (row) => row.data.lastResult.opponent_crit_rolls[3]
+                        },
+                        {
+                            label: 'Opponent 5',
+                            value: (row) => row.data.lastResult.opponent_rolls[4]
+                        },
+                        {
+                            label: 'OCrit 5',
+                            value: (row) => row.data.lastResult.opponent_crit_rolls[4]
+                        },
+                        {
+                            label: 'Opponent 6',
+                            value: (row) => row.data.lastResult.opponent_rolls[5]
+                        },
+                        {
+                            label: 'OCrit 6',
+                            value: (row) => row.data.lastResult.opponent_crit_rolls[5]
                         },
                         {
                             label: 'Won round',
                             value: (row) => row.data.lastResult.win ? 'Yes' : 'No'
+                        },
+                        {
+                            label: 'loot_box_rarity',
+                            value: (row) => row.data.lastResult.loot_box_rarity
+                        },
+                        {
+                            label: 'Skill 1',
+                            value: (row) => CONFIG.SKILLS[row.data.gauntlet.contest_data.primary_skill]
+                        },
+                        {
+                            label: 'Skill 2',
+                            value: (row) => CONFIG.SKILLS[row.data.gauntlet.contest_data.secondary_skill]
                         },
                         {
                             label: 'Player crew',
@@ -99,8 +207,20 @@ export class LoggerClass {
                             value: 'match.crewOdd.crit_chance'
                         },
                         {
-                            label: 'Player crew stats',
-                            value: (row) => `${row.match.crewOdd.min.reduce(sum, 0)} - ${row.match.crewOdd.max.reduce(sum, 0)}`
+                            label: 'PSkill1 min',
+                            value: (row) => row.match.crewOdd.min[0]
+                        },
+                        {
+                            label: 'PSkill1 max',
+                            value: (row) => row.match.crewOdd.max[0]
+                        },
+                        {
+                            label: 'PSkill2 min',
+                            value: (row) => row.match.crewOdd.min[1]
+                        },
+                        {
+                            label: 'PSkill2 max',
+                            value: (row) => row.match.crewOdd.max[1]
                         },
                         {
                             label: 'Crew uses',
@@ -115,12 +235,20 @@ export class LoggerClass {
                             value: 'match.opponent.crit_chance'
                         },
                         {
-                            label: 'Opponent crew stats',
-                            value: (row) => `${row.match.opponent.min.reduce(sum, 0)} - ${row.match.opponent.max.reduce(sum, 0)}`
+                            label: 'OSkill1 min',
+                            value: (row) => row.match.opponent.min[0]
                         },
                         {
-                            label: 'Opponent name',
-                            value: 'match.opponent.name'
+                            label: 'OSkill1 max',
+                            value: (row) => row.match.opponent.max[0]
+                        },
+                        {
+                            label: 'OSkill2 min',
+                            value: (row) => row.match.opponent.min[1]
+                        },
+                        {
+                            label: 'OSkill2 max',
+                            value: (row) => row.match.opponent.max[1]
                         },
                         {
                             label: 'Estimated chance',
