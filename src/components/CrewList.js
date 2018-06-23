@@ -4,6 +4,7 @@ import React, { Component } from 'react';
 import { DetailsList, DetailsListLayoutMode, SelectionMode } from 'office-ui-fabric-react/lib/DetailsList';
 import { Image, ImageFit } from 'office-ui-fabric-react/lib/Image';
 import { Link } from 'office-ui-fabric-react/lib/Link';
+import { Label } from 'office-ui-fabric-react/lib/Label';
 import { Icon } from 'office-ui-fabric-react/lib/Icon';
 import { IconButton, IButtonProps } from 'office-ui-fabric-react/lib/Button';
 import { HoverCard } from 'office-ui-fabric-react/lib/HoverCard';
@@ -84,10 +85,12 @@ export class CrewList extends React.Component {
 				onRender: (item) => {
 					return (<HoverCard id="nameHoverCard"
 						expandingCardProps={{
+							compactCardHeight: 180,
+							expandedCardHeight: 420,
 							renderData: item,
 							onRenderExpandedCard: this._onRenderExpandedCard,
 							onRenderCompactCard: this._onRenderCompactCard,
-							styles: { root: { width: '500px' } }
+							styles: { root: { width: '520px' } }
 						}}
 						instantOpenOnClick={true}>
 						<span>{item.name}</span>
@@ -283,12 +286,12 @@ export class CrewList extends React.Component {
 			<div className="ms-Grid">
 				<div className="ms-Grid-row">
 					<div className="ms-Grid-col ms-sm6 ms-md4 ms-lg4">
-						<Image src={item.iconBodyUrl} height={156} imageFit={ImageFit.contain} shouldStartVisible={true} />
+						<Image src={item.iconBodyUrl} height={180} imageFit={ImageFit.contain} shouldStartVisible={true} />
 					</div>
 					<div className="ms-Grid-col ms-sm6 ms-md8 ms-lg8" style={{ padding: '10px' }}>
-						<h3>{item.name}</h3>
-						<p className="ms-font-s">Traits: {item.traits.replace(new RegExp(',', 'g'), ', ')}</p>
-						<p className="ms-font-xs">{item.flavor}</p>
+						<Label className="ms-font-m-plus">{item.name}</Label>
+						<Label className="ms-font-s">Traits: {item.traits.replace(new RegExp(',', 'g'), ', ')}</Label>
+						<Label className="ms-font-xs">{item.flavor}</Label>
 					</div>
 				</div>
 			</div>
@@ -309,7 +312,7 @@ export class CrewList extends React.Component {
 		let eqTable;
 		if (equipment && equipment.length > 0) {
 			eqTable = (<div>
-				<h4>Equipment</h4>
+				<Label className="ms-font-m-plus">Equipment</Label>
 				<table><tbody>
 					<tr>
 						{
@@ -317,7 +320,7 @@ export class CrewList extends React.Component {
 								if (eq.e) {
 									return (<td key={eq.e.name}>
 										<ItemDisplay src={eq.e.iconUrl} size={100} maxRarity={eq.e.rarity} rarity={eq.e.rarity} />
-										<p className="ms-font-xs" style={{ color: eq.have ? "" : "red" }}>{eq.e.name}</p>
+										<Label className="ms-font-xs" style={{ color: eq.have ? "" : "red" }}>{eq.e.name}</Label>
 									</td>);
 								}
 								else {
@@ -333,14 +336,14 @@ export class CrewList extends React.Component {
 		return (
 			<div style={{ padding: '10px' }}>
 				{eqTable}
-				<h5>Ship abilitiy '{item.action.name}'</h5>
-				<p>Accuracy +{item.ship_battle.accuracy}  Crit Bonus +{item.ship_battle.crit_bonus}  {item.ship_battle.crit_chance && <span>Crit Rating +{item.ship_battle.crit_chance}  </span>}Evasion +{item.ship_battle.evasion}</p>
-				<p>Increase {CONFIG.CREW_SHIP_BATTLE_BONUS_TYPE[item.action.bonus_type]} by {item.action.bonus_amount}</p>
-				{item.action.penalty && <p>Decrease {CONFIG.CREW_SHIP_BATTLE_BONUS_TYPE[item.action.penalty.type]} by {item.action.penalty.amount}</p>}
+				<Label className="ms-font-m-plus">Ship abilitiy '{item.action.name}'</Label>
+				<Label>Accuracy +{item.ship_battle.accuracy}  Crit Bonus +{item.ship_battle.crit_bonus}  {item.ship_battle.crit_chance && <span>Crit Rating +{item.ship_battle.crit_chance}  </span>}Evasion +{item.ship_battle.evasion}</Label>
+				<Label>Increase {CONFIG.CREW_SHIP_BATTLE_BONUS_TYPE[item.action.bonus_type]} by {item.action.bonus_amount}</Label>
+				{item.action.penalty && <Label>Decrease {CONFIG.CREW_SHIP_BATTLE_BONUS_TYPE[item.action.penalty.type]} by {item.action.penalty.amount}</Label>}
 
-				{item.action.ability && <p>Ability: {CONFIG.CREW_SHIP_BATTLE_ABILITY_TYPE[item.action.ability.type].replace('%VAL%', item.action.ability.amount)} {(item.action.ability.condition > 0) && <span>Trigger: {CONFIG.CREW_SHIP_BATTLE_TRIGGER[item.action.ability.condition]}</span>}</p>}
-				<p>Duration: {item.action.duration}s  Cooldown: {item.action.cooldown}s  Initial Cooldown: {item.action.initial_cooldown}s  </p>
-				{item.action.limit && <p>Limit: {item.action.limit} uses per battle</p>}
+				{item.action.ability && <Label>Ability: {CONFIG.CREW_SHIP_BATTLE_ABILITY_TYPE[item.action.ability.type].replace('%VAL%', item.action.ability.amount)} {(item.action.ability.condition > 0) && <span>Trigger: {CONFIG.CREW_SHIP_BATTLE_TRIGGER[item.action.ability.condition]}</span>}</Label>}
+				<Label>Duration: {item.action.duration}s  Cooldown: {item.action.cooldown}s  Initial Cooldown: {item.action.initial_cooldown}s  </Label>
+				{item.action.limit && <Label>Limit: {item.action.limit} uses per battle</Label>}
 
 				{this.renderChargePhases(item.action.charge_phases)}
 			</div>
@@ -371,11 +374,11 @@ export class CrewList extends React.Component {
 					phaseDescription += `  Cooldown: ${cp.cooldown}s`;
 				}
 
-				phases.push(<p key={idx}>{phaseDescription}</p>);
+				phases.push(<Label key={idx}>{phaseDescription}</Label>);
 			});
 
 			return (<div>
-				<h5>Charge phases</h5>
+				<Label className="ms-font-m-plus">Charge phases</Label>
 				<div>
 					{phases}
 				</div>

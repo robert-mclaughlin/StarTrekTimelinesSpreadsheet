@@ -65,7 +65,7 @@
     "dexie": "latest",
     "electron-settings": "latest",
     "fb": "latest",
-    "json2csv": "latest",
+    "json2csv": "^4.1.4",
     "office-ui-fabric-react": "latest",
     "pubnub": "latest",
     "stt-native": "file:native",
