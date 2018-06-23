@@ -331,7 +331,7 @@ class App extends React.Component {
 					<Pivot linkFormat={PivotLinkFormat.tabs} linkSize={PivotLinkSize.large}>
 						<PivotItem linkText='Crew' itemIcon='Teamwork'>
 							<CommandBar items={this._getCommandItems()} />
-							<SearchBox labelText='Search by name or trait...'
+							<SearchBox placeholder='Search by name or trait...'
 								onChange={(newValue) => this.refs.crewList.filter(newValue)}
 								onSearch={(newValue) => this.refs.crewList.filter(newValue)}
 							/>
@@ -339,7 +339,7 @@ class App extends React.Component {
 						</PivotItem>
 						<PivotItem linkText='Items' itemIcon='Boards'>
 							<CommandBar items={this._getInventoryCommandItems()} />
-							<SearchBox labelText='Search by name description...'
+							<SearchBox placeholder='Search by name or description...'
 								onChange={(newValue) => this.refs.itemList.filter(newValue)}
 								onSearch={(newValue) => this.refs.itemList.filter(newValue)}
 							/>
