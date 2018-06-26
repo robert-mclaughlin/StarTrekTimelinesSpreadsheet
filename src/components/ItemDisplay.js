@@ -1,6 +1,4 @@
-import React, { Component } from 'react';
-
-import STTApi from 'sttapi';
+import React from 'react';
 import { CONFIG } from 'sttapi';
 
 export class ItemDisplay extends React.Component {

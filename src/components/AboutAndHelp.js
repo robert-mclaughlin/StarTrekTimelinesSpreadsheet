@@ -1,7 +1,7 @@
-import React, { Component } from 'react';
+import React from 'react';
 import { Label } from 'office-ui-fabric-react/lib/Label';
 import { Link } from 'office-ui-fabric-react/lib/Link';
-import { PrimaryButton, DefaultButton } from 'office-ui-fabric-react/lib/Button';
+import { PrimaryButton } from 'office-ui-fabric-react/lib/Button';
 
 const electron = require('electron');
 const app = electron.app || electron.remote.app;

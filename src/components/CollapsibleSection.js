@@ -1,6 +1,6 @@
-import React, { Component } from 'react';
+import React from 'react';
 import { Icon } from 'office-ui-fabric-react/lib/Icon';
-import { ColorClassNames, FontClassNames } from '@uifabric/styling';
+import { ColorClassNames } from '@uifabric/styling';
 
 export class CollapsibleSection extends React.Component {
 	constructor(props) {

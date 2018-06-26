@@ -1,8 +1,6 @@
 import '../assets/css/semantic.min.css';
 
-import React, { Component } from 'react';
-import { Image, ImageFit } from 'office-ui-fabric-react/lib/Image';
-import { DefaultButton } from 'office-ui-fabric-react/lib/Button';
+import React from 'react';
 
 import STTApi from 'sttapi';
 import { CONFIG } from 'sttapi';

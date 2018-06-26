@@ -1,10 +1,10 @@
-import React, { Component } from 'react';
+import React from 'react';
 
 import { Dialog, DialogType, DialogFooter } from 'office-ui-fabric-react/lib/Dialog';
 import { PrimaryButton, DefaultButton } from 'office-ui-fabric-react/lib/Button';
 import { TextField } from 'office-ui-fabric-react/lib/TextField';
-import { Dropdown, DropdownMenuItemType } from 'office-ui-fabric-react/lib/Dropdown';
-import { Checkbox, ICheckboxStyles } from 'office-ui-fabric-react/lib/Checkbox';
+import { Dropdown } from 'office-ui-fabric-react/lib/Dropdown';
+import { Checkbox } from 'office-ui-fabric-react/lib/Checkbox';
 import { Image, ImageFit } from 'office-ui-fabric-react/lib/Image';
 
 export class ShareDialog extends React.Component {

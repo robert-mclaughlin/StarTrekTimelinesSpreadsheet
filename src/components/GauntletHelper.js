@@ -1,16 +1,15 @@
-import React, { Component } from 'react';
+import React from 'react';
 import { Label } from 'office-ui-fabric-react/lib/Label';
-import { Image, ImageFit } from 'office-ui-fabric-react/lib/Image';
+import { Image } from 'office-ui-fabric-react/lib/Image';
 import { MessageBar, MessageBarType } from 'office-ui-fabric-react/lib/MessageBar';
 import { SpinButton } from 'office-ui-fabric-react/lib/SpinButton';
 import { Checkbox } from 'office-ui-fabric-react/lib/Checkbox';
 import { PrimaryButton } from 'office-ui-fabric-react/lib/Button';
 import { Persona, PersonaSize, PersonaPresence } from 'office-ui-fabric-react/lib/Persona';
-import { DefaultButton, IButtonProps } from 'office-ui-fabric-react/lib/Button';
+import { DefaultButton } from 'office-ui-fabric-react/lib/Button';
 import { Icon } from 'office-ui-fabric-react/lib/Icon';
 
 import Logger from '../utils/logger';
-import { CrewList } from './CrewList.js';
 
 import STTApi from 'sttapi';
 import { CONFIG, loadGauntlet, gauntletCrewSelection, gauntletRoundOdds, payToGetNewOpponents, playContest, enterGauntlet, formatCrewStats } from 'sttapi';

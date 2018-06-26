@@ -1,9 +1,7 @@
-﻿import React, { Component } from 'react';
+﻿import React from 'react';
 import { Callout } from 'office-ui-fabric-react/lib/Callout';
 import { PrimaryButton } from 'office-ui-fabric-react/lib/Button';
 import { Icon } from 'office-ui-fabric-react/lib/Icon';
-
-import STTApi from 'sttapi';
 
 import { createIssue } from '../utils/githubUtils';
 

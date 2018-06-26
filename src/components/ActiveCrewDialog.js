@@ -1,7 +1,6 @@
-import React, { Component } from 'react';
+import React from 'react';
 
-import { Dialog, DialogType, DialogFooter } from 'office-ui-fabric-react/lib/Dialog';
-import { PrimaryButton, DefaultButton } from 'office-ui-fabric-react/lib/Button';
+import { Dialog, DialogType } from 'office-ui-fabric-react/lib/Dialog';
 import { Image, ImageFit } from 'office-ui-fabric-react/lib/Image';
 import { Icon } from 'office-ui-fabric-react/lib/Icon';
 import { Spinner, SpinnerSize } from 'office-ui-fabric-react/lib/Spinner';
@@ -9,7 +8,7 @@ import { Spinner, SpinnerSize } from 'office-ui-fabric-react/lib/Spinner';
 import { CollapsibleSection } from './CollapsibleSection.js';
 
 import STTApi from 'sttapi';
-import { CONFIG, mergeDeep, loadVoyage } from 'sttapi';
+import { CONFIG, loadVoyage } from 'sttapi';
 
 export class ShuttleAdventure extends React.Component {
     constructor(props) {

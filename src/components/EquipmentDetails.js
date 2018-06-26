@@ -1,15 +1,12 @@
-import React, { Component } from 'react';
+import React from 'react';
 import { Image, ImageFit } from 'office-ui-fabric-react/lib/Image';
-import { ChoiceGroup, IChoiceGroupOption } from 'office-ui-fabric-react/lib/ChoiceGroup';
 import { Spinner, SpinnerSize } from 'office-ui-fabric-react/lib/Spinner';
 import uuidv4 from 'uuid/v4';
 import vis from 'vis';
 import '!css-loader?url=false!vis/dist/vis.css';
 
-import { CollapsibleSection } from './CollapsibleSection.js';
-
 import STTApi from 'sttapi';
-import { CONFIG, loadFullTree } from 'sttapi';
+import { CONFIG } from 'sttapi';
 
 export class EquipmentSlot extends React.Component {
 	constructor(props) {

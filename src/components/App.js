@@ -16,15 +16,13 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 import '../assets/css/App.css';
-import React, { Component } from 'react';
+import React from 'react';
 import { Fabric } from 'office-ui-fabric-react/lib/Fabric';
 import { CommandBar } from 'office-ui-fabric-react/lib/CommandBar';
-import { IContextualMenuProps, IContextualMenuItem, DirectionalHint, ContextualMenu } from 'office-ui-fabric-react/lib/ContextualMenu';
-import { Label } from 'office-ui-fabric-react/lib/Label';
 import { Spinner, SpinnerSize } from 'office-ui-fabric-react/lib/Spinner';
 import { Pivot, PivotItem, PivotLinkFormat, PivotLinkSize } from 'office-ui-fabric-react/lib/Pivot';
 import { Dialog, DialogType, DialogFooter } from 'office-ui-fabric-react/lib/Dialog';
-import { Image, ImageFit } from 'office-ui-fabric-react/lib/Image';
+import { Image } from 'office-ui-fabric-react/lib/Image';
 import { Callout } from 'office-ui-fabric-react/lib/Callout';
 import { SearchBox } from 'office-ui-fabric-react/lib/SearchBox';
 import { IconButton, PrimaryButton, DefaultButton } from 'office-ui-fabric-react/lib/Button';
@@ -57,7 +55,7 @@ import { VoyageTools } from './VoyageTools.js';
 import STTApi from 'sttapi';
 import { loginSequence } from 'sttapi';
 
-import { loadTheme, ColorClassNames, FontClassNames } from '@uifabric/styling';
+import { loadTheme, ColorClassNames } from '@uifabric/styling';
 
 const settings = require('electron-settings');
 const compareSemver = require('compare-semver');

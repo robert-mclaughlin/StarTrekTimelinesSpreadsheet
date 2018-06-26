@@ -1,9 +1,9 @@
-import React, { Component } from 'react';
-import { Icon } from 'office-ui-fabric-react/lib/Icon';
-import { Image, ImageFit } from 'office-ui-fabric-react/lib/Image';
+import React from 'react';
+import { Image } from 'office-ui-fabric-react/lib/Image';
 
 import { CrewList } from './CrewList.js';
 import { CollapsibleSection } from './CollapsibleSection.js';
+import { ItemDisplay } from './ItemDisplay';
 
 import STTApi from 'sttapi';
 import { CONFIG } from 'sttapi';
@@ -109,6 +109,104 @@ export class MinimalComplement extends React.Component {
 	}
 }
 
+export class NeededEquipment extends React.Component {
+	constructor(props) {
+		super(props);
+
+		let unparsedEquipment = [];
+		STTApi.roster.forEach((crew) => crew.equipment_slots.forEach((equipment) => {
+			if (!equipment.have) {
+				unparsedEquipment.push(equipment.archetype);
+			}
+		}));
+
+		let mapUnowned = {};
+		while (unparsedEquipment.length > 0) {
+			let archetype = unparsedEquipment.pop();
+			let equipment = STTApi.itemArchetypeCache.archetypes.find(e => e.id === archetype);
+
+			if (equipment.recipe && equipment.recipe.demands && (equipment.recipe.demands.length > 0)) {
+				// Let's add all children in the recipe, so that we can parse them on the next loop iteration
+				equipment.recipe.demands.forEach((item) => unparsedEquipment.push(item.archetype_id));
+			} else if (equipment.item_sources && (equipment.item_sources.length > 0)) {
+				let found = mapUnowned[archetype];
+				if (found) {
+					found.needed++;
+				} else {
+					mapUnowned[archetype] = {equipment, needed: 1};
+				}
+			} else {
+				console.error(`This equipment has no recipe and no sources: '${equipment.name}'`);
+			}
+		}
+
+		// Sort the map by "needed" descending
+		let arr = Object.values(mapUnowned);
+		arr.sort((a,b) => b.needed - a.needed);
+
+		this.state = {
+			neededEquipment: arr
+		};
+	}
+
+	renderSources(equipment) {
+		let disputeMissions = equipment.item_sources.filter(e => e.type === 0);
+		let missions = equipment.item_sources.filter(e => e.type === 2);
+		let factions = equipment.item_sources.filter(e => e.type === 1);
+
+		let res = [];
+
+		if (disputeMissions.length > 0) {
+			res.push(<p key={'disputeMissions'}>
+				<b>Dispute missions: </b>
+				{disputeMissions.map((entry, idx) =>
+					`${entry.name} (mastery ${entry.mastery}, chance ${entry.chance_grade})`
+				).join(', ')}
+			</p>)
+		}
+
+		if (missions.length > 0) {
+			res.push(<p key={'missions'}>
+				<b>Missions: </b>
+				{missions.map((entry, idx) =>
+					`${entry.name} (mastery ${entry.mastery}, chance ${entry.chance_grade})`
+				).join(', ')}
+			</p>)
+		}
+
+		if (factions.length > 0) {
+			res.push(<p key={'factions'}>
+				<b>Faction missions: </b>
+				{factions.map((entry, idx) =>
+					`${entry.name} (chance ${entry.chance_grade})`
+				).join(', ')}
+			</p>)
+		}
+
+		return <div>{res}</div>;
+	}
+
+	render() {
+		if (this.state.neededEquipment) {
+			return (<CollapsibleSection title={this.props.title}>
+				<p>Equipment required to fill all open slots for all crew currently in your roster</p>
+				{this.state.neededEquipment.map((entry, idx) =>
+					<div key={idx} style={{ display: 'grid', gridTemplateColumns: '128px auto', gridTemplateAreas:`'icon name' 'icon details'` }}>
+						<div style={{ gridArea: 'icon'}}><ItemDisplay src={entry.equipment.iconUrl} size={128} maxRarity={entry.equipment.rarity} rarity={entry.equipment.rarity} /></div>
+						<h4 style={{ gridArea: 'name', alignSelf: 'start', margin:'0' }}>{entry.equipment.name} ({entry.needed})</h4>
+						<div style={{ gridArea: 'details', alignSelf: 'start' }}>
+							{this.renderSources(entry.equipment)}
+						</div>
+					</div>
+				)}
+			</CollapsibleSection>);
+		}
+		else {
+			return <span />;
+		}
+	}
+}
+
 export class CrewRecommendations extends React.Component {
 	constructor(props) {
 		super(props);
@@ -125,6 +223,7 @@ export class CrewRecommendations extends React.Component {
 				<GuaranteedSuccess title='Missions without guaranteed success' cadet={false} />
 				<CrewDuplicates title='Crew duplicates' />
 				<MinimalComplement title='Minimal crew complement needed for cadet challenges' />
+				<NeededEquipment title='Needed equipment' />
 			</div>
 		);
 	}

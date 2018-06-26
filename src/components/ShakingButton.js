@@ -1,5 +1,5 @@
-import React, { Component } from 'react';
-import { IconButton, IButtonProps } from 'office-ui-fabric-react/lib/Button';
+import React from 'react';
+import { IconButton } from 'office-ui-fabric-react/lib/Button';
 
 import { ColorClassNames } from '@uifabric/styling';
 

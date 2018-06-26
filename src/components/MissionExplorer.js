@@ -1,7 +1,7 @@
-import React, { Component } from 'react';
-import { Image, ImageFit } from 'office-ui-fabric-react/lib/Image';
+import React from 'react';
+import { Image } from 'office-ui-fabric-react/lib/Image';
 import { Spinner, SpinnerSize } from 'office-ui-fabric-react/lib/Spinner';
-import { Dropdown, DropdownMenuItemType, IDropdownOption } from 'office-ui-fabric-react/lib/Dropdown';
+import { Dropdown, DropdownMenuItemType } from 'office-ui-fabric-react/lib/Dropdown';
 import { Checkbox } from 'office-ui-fabric-react/lib/Checkbox';
 import { Persona, PersonaSize, PersonaPresence } from 'office-ui-fabric-react/lib/Persona';
 import vis from 'vis';
