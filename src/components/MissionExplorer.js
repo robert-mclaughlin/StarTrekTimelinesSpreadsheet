@@ -263,7 +263,7 @@ export class MissionDetails extends React.Component {
             crewSuccess.push(<Persona
                 key={item.crew.name}
                 imageUrl={item.crew.iconUrl}
-                primaryText={item.crew.name}
+                text={item.crew.name}
                 secondaryText={item.success.toFixed(2) + '%'}
                 showSecondaryText={true}
                 size={PersonaSize.small}
@@ -311,7 +311,7 @@ export class MissionDetails extends React.Component {
                     crewSuccess.push(<Persona
                         key={crewpathcrew.crew.name + index}
                         imageUrl={crewpathcrew.crew.iconUrl}
-                        primaryText={'(' + crewpath.path[index] + ') ' + crewpathcrew.crew.name}
+                        text={'(' + crewpath.path[index] + ') ' + crewpathcrew.crew.name}
                         size={PersonaSize.extraExtraSmall}
                         presence={PersonaPresence.none} />);
                 });
@@ -334,23 +334,23 @@ export class MissionDetails extends React.Component {
 
                     <div>
                         Mastery required: <span className='quest-mastery'>
-                            <Image src={CONFIG.SPRITES['mastery_lowest_icon'].url} height={20} />({this.state.mission.difficulty_by_mastery[0]})
-                            <Image src={CONFIG.SPRITES['mastery_medium_icon'].url} height={20} />({this.state.mission.difficulty_by_mastery[1]})
-                            <Image src={CONFIG.SPRITES['mastery_highest_icon'].url} height={20} />({this.state.mission.difficulty_by_mastery[2]})
+                            <Image src={CONFIG.MASTERY_LEVELS[0].url()} height={20} />({this.state.mission.difficulty_by_mastery[0]})
+                            <Image src={CONFIG.MASTERY_LEVELS[1].url()} height={20} />({this.state.mission.difficulty_by_mastery[1]})
+                            <Image src={CONFIG.MASTERY_LEVELS[2].url()} height={20} />({this.state.mission.difficulty_by_mastery[2]})
                         </span>
                     </div>
                     <div>
                         Completed: <span className='quest-mastery'>
-                            <Image src={CONFIG.SPRITES['mastery_lowest_icon'].url} height={20} />({this.state.mission.mastery_levels[0].progress.goal_progress} / {this.state.mission.mastery_levels[0].progress.goals})
-                            <Image src={CONFIG.SPRITES['mastery_medium_icon'].url} height={20} />({this.state.mission.mastery_levels[1].progress.goal_progress} / {this.state.mission.mastery_levels[1].progress.goals})
-                            <Image src={CONFIG.SPRITES['mastery_highest_icon'].url} height={20} />({this.state.mission.mastery_levels[2].progress.goal_progress} / {this.state.mission.mastery_levels[2].progress.goals})
+                            <Image src={CONFIG.MASTERY_LEVELS[0].url()} height={20} />({this.state.mission.mastery_levels[0].progress.goal_progress} / {this.state.mission.mastery_levels[0].progress.goals})
+                            <Image src={CONFIG.MASTERY_LEVELS[1].url()} height={20} />({this.state.mission.mastery_levels[1].progress.goal_progress} / {this.state.mission.mastery_levels[1].progress.goals})
+                            <Image src={CONFIG.MASTERY_LEVELS[2].url()} height={20} />({this.state.mission.mastery_levels[2].progress.goal_progress} / {this.state.mission.mastery_levels[2].progress.goals})
                         </span>
                     </div>
                     <div>
                         Trait bonuses: <span className='quest-mastery'>
-                            <Image src={CONFIG.SPRITES['mastery_lowest_icon'].url} height={20} />({this.state.mission.trait_bonuses[0]})
-                            <Image src={CONFIG.SPRITES['mastery_medium_icon'].url} height={20} />({this.state.mission.trait_bonuses[1]})
-                            <Image src={CONFIG.SPRITES['mastery_highest_icon'].url} height={20} />({this.state.mission.trait_bonuses[2]})
+                            <Image src={CONFIG.MASTERY_LEVELS[0].url()} height={20} />({this.state.mission.trait_bonuses[0]})
+                            <Image src={CONFIG.MASTERY_LEVELS[1].url()} height={20} />({this.state.mission.trait_bonuses[1]})
+                            <Image src={CONFIG.MASTERY_LEVELS[2].url()} height={20} />({this.state.mission.trait_bonuses[2]})
                         </span>
                     </div>
                     <div>

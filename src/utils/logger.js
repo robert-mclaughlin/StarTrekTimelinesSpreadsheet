@@ -17,7 +17,7 @@ export class LoggerClass {
         }
     }
 
-    logGauntletEntry(data, match) {
+    logGauntletEntry(data, match, consecutive_wins) {
         if (data && data.gauntlet && data.gauntlet.gauntlet_id) {
             let fileName = `${this.basePath}gauntlet_log_${data.gauntlet.gauntlet_id}.json`;
 
@@ -30,6 +30,7 @@ export class LoggerClass {
                             arr.push({
                                 data: data,
                                 match: match,
+                                consecutive_wins: consecutive_wins,
                                 time: Date.now()
                             });
                             fs.writeFile(fileName, JSON.stringify(arr), (err) => { if (err) console.error(err); });
@@ -39,6 +40,7 @@ export class LoggerClass {
                     fs.writeFile(fileName, JSON.stringify([{
                         data: data,
                         match: match,
+                        consecutive_wins: consecutive_wins,
                         time: Date.now()
                     }]), (err) => { if (err) console.error(err); });
                 }
@@ -84,7 +86,7 @@ export class LoggerClass {
                         },
                         {
                             label: 'Consecutive Wins',
-                            value: (row) => row.data.gauntlet.consecutive_wins
+                            value: (row) => row.consecutive_wins
                         },
                         {
                             label: 'Player 1',

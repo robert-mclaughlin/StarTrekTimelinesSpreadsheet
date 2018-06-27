@@ -61,7 +61,7 @@ class GauntletMatch extends React.Component {
 	_playMatch() {
 		playContest(this.props.gauntletId, this.props.match.crewOdd.crew_id, this.props.match.opponent.player_id, this.props.match.opponent.crew_id, this.props.match).
 			then((data) => {
-				let logPath = Logger.logGauntletEntry(data, this.props.match);
+				let logPath = Logger.logGauntletEntry(data, this.props.match, this.props.consecutive_wins);
 
 				this.props.onNewData(data, logPath);
 			});
@@ -255,7 +255,7 @@ export class GauntletHelper extends React.Component {
 			let crewSpan = <Persona
 				key={crew.name}
 				imageUrl={crew.iconUrl}
-				primaryText={crew.name}
+				text={crew.name}
 				secondaryText={crew.short_name}
 				tertiaryText={formatCrewStats(crew)}
 				size={PersonaSize.large}
@@ -405,7 +405,7 @@ export class GauntletHelper extends React.Component {
 					<br />
 
 					{this.state.roundOdds.matches.map(function (match) {
-						return <GauntletMatch key={match.crewOdd.archetype_symbol + match.opponent.player_id} match={match} gauntletId={this.state.gauntlet.id} onNewData={this._gauntletDataRecieved} />;
+						return <GauntletMatch key={match.crewOdd.archetype_symbol + match.opponent.player_id} match={match} gauntletId={this.state.gauntlet.id} consecutive_wins={this.state.roundOdds.consecutive_wins} onNewData={this._gauntletDataRecieved} />;
 					}.bind(this))}
 
 					<br />

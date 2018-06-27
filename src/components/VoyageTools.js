@@ -84,7 +84,7 @@ export class VoyageCrew extends React.Component {
             this.state.peopleList.push({
                 key: crew.crew_id || crew.id,
                 imageUrl: crew.iconUrl,
-                primaryText: crew.name,
+                text: crew.name,
                 secondaryText: crew.short_name
             });
         });
@@ -122,7 +122,7 @@ export class VoyageCrew extends React.Component {
                     let crew = <Persona
                         key={entry.choice.crew_id}
                         imageUrl={entry.choice.iconUrl}
-                        primaryText={entry.choice.name}
+                        text={entry.choice.name}
                         secondaryText={entry.slotName}
                         tertiaryText={formatCrewStats(entry.choice)}
                         size={PersonaSize.large}
@@ -154,7 +154,7 @@ export class VoyageCrew extends React.Component {
 			shipSpans.push(<Persona
 				key={entry.ship.id}
 				imageUrl={entry.ship.iconUrl}
-				primaryText={entry.ship.name}
+				text={entry.ship.name}
 				secondaryText={entry.score.toFixed(0)}
 				size={PersonaSize.regular} />);
 		});
@@ -245,7 +245,7 @@ export class VoyageCrew extends React.Component {
         if (!personas || !personas.length || personas.length === 0) {
           return false;
         }
-        return personas.filter(item => item.primaryText === persona.primaryText).length > 0;
+        return personas.filter(item => item.text === persona.text).length > 0;
     }
 
     _removeDuplicates(personas, possibleDupes) {
@@ -253,7 +253,7 @@ export class VoyageCrew extends React.Component {
     }
 
     _filterPersonasByText(filterText) {
-        return this.state.peopleList.filter(item => item.primaryText.toLowerCase().indexOf(filterText.toLowerCase()) !== -1);
+        return this.state.peopleList.filter(item => item.text.toLowerCase().indexOf(filterText.toLowerCase()) !== -1);
     }
 
     _onFilterChanged(filterText, currentPersonas, limitResults) {
@@ -320,7 +320,7 @@ export class VoyageCrew extends React.Component {
 
 		// Filter out crew the user has chosen not to include
         if (this.state.currentSelectedItems.length > 0) {
-            dataToExport.crew = dataToExport.crew.filter(crew => (this.state.currentSelectedItems.find(ignored => (ignored.primaryText === crew.name)) === undefined));
+            dataToExport.crew = dataToExport.crew.filter(crew => (this.state.currentSelectedItems.find(ignored => (ignored.text === crew.name)) === undefined));
 		}
 
 		// Filter out buy-back crew

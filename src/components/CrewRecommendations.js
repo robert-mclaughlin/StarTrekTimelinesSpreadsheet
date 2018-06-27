@@ -157,28 +157,28 @@ export class NeededEquipment extends React.Component {
 		let res = [];
 
 		if (disputeMissions.length > 0) {
-			res.push(<p key={'disputeMissions'}>
+			res.push(<div key={'disputeMissions'}>
 				<b>Dispute missions: </b>
 				{disputeMissions.map((entry, idx) =>
-					`${entry.name} (mastery ${entry.mastery}, chance ${entry.chance_grade})`
-				).join(', ')}
-			</p>)
+					<span key={idx}>{entry.name} <span style={{ display: 'inline-block' }}><Image src={CONFIG.MASTERY_LEVELS[entry.mastery].url()} height={16} /></span> ({entry.chance_grade} / 5)</span>
+				).reduce((prev, curr) => [prev, ', ', curr])}
+			</div>)
 		}
 
 		if (missions.length > 0) {
-			res.push(<p key={'missions'}>
+			res.push(<div key={'missions'}>
 				<b>Missions: </b>
 				{missions.map((entry, idx) =>
-					`${entry.name} (mastery ${entry.mastery}, chance ${entry.chance_grade})`
-				).join(', ')}
-			</p>)
+					<span key={idx}>{entry.name} <span style={{ display: 'inline-block' }}><Image src={CONFIG.MASTERY_LEVELS[entry.mastery].url()} height={16} /></span> ({entry.chance_grade} / 5)</span>
+				).reduce((prev, curr) => [prev, ', ', curr])}
+			</div>)
 		}
 
 		if (factions.length > 0) {
 			res.push(<p key={'factions'}>
 				<b>Faction missions: </b>
 				{factions.map((entry, idx) =>
-					`${entry.name} (chance ${entry.chance_grade})`
+					`${entry.name} (${entry.chance_grade} / 5)`
 				).join(', ')}
 			</p>)
 		}
@@ -189,7 +189,7 @@ export class NeededEquipment extends React.Component {
 	render() {
 		if (this.state.neededEquipment) {
 			return (<CollapsibleSection title={this.props.title}>
-				<p>Equipment required to fill all open slots for all crew currently in your roster</p>
+				<p>Equipment required to fill all open slots for all crew currently in your roster.</p>
 				{this.state.neededEquipment.map((entry, idx) =>
 					<div key={idx} style={{ display: 'grid', gridTemplateColumns: '128px auto', gridTemplateAreas:`'icon name' 'icon details'` }}>
 						<div style={{ gridArea: 'icon'}}><ItemDisplay src={entry.equipment.iconUrl} size={128} maxRarity={entry.equipment.rarity} rarity={entry.equipment.rarity} /></div>
