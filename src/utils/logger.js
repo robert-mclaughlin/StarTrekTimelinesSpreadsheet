@@ -136,7 +136,7 @@ export class LoggerClass {
             },
             {
                 label: 'loot_box_rarity',
-                value: (row) => row.data.lastResult.loot_box_rarity
+                value: (row) => row.data.lastResult.loot_box_rarity || 0
             },
             {
                 label: 'Skill 1',
@@ -242,10 +242,10 @@ export class LoggerClass {
 
             let sheetRow = {};
             this.exportFields.forEach(entry => {
-                sheetRow[entry.label] = entry.value();
+                sheetRow[entry.label] = entry.value(results);
             });
 
-            STTApi.networkHelper().postjson(flowURL, [sheetRow]);
+            STTApi.networkHelper.postjson(flowURL, [sheetRow]);
 
             return fileName;
         }
