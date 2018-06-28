@@ -25,7 +25,8 @@ void ThreadPool::add(task f)
 		// check for more tasks
 		for (;;) {
 			task newTask;
-			{lockScope ls(lock);
+			{
+				lockScope ls(lock);
 				if (tasks.empty())
 					break;
 				newTask = tasks.back();
@@ -35,12 +36,15 @@ void ThreadPool::add(task f)
 		}
 
 		// if no more tasks, clean up and exit
-		lockScope ls(lock);
+
+		// This code is invalid in pthread systems (like macOS and Linux), because we can't delete a pthread object without either join-ing it or detaching
+		// Windows is dumb for allowing it. Proper cleanup does happen in the joinAll method below
+		/*lockScope ls(lock);
 		threads.erase(std::find_if(threads.begin(), threads.end(),
 			[](const std::shared_ptr<std::thread> &thatThread)
 		{
 			return thatThread->get_id() == std::this_thread::get_id();
-		}));
+		}));*/
 	};
 
 	lockScope ls(lock);
@@ -57,8 +61,10 @@ void ThreadPool::joinAll()
 	for (;;) {
 		std::shared_ptr<std::thread> thread;
 		lock.lock();
-		if (!threads.empty())
+		if (!threads.empty()) {
 			thread = threads.back();
+			threads.pop_back();
+		}
 		lock.unlock();
 		if (thread) {
 			thread->join();
