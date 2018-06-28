@@ -8,11 +8,15 @@ import { PrimaryButton } from 'office-ui-fabric-react/lib/Button';
 import { Persona, PersonaSize, PersonaPresence } from 'office-ui-fabric-react/lib/Persona';
 import { DefaultButton } from 'office-ui-fabric-react/lib/Button';
 import { Icon } from 'office-ui-fabric-react/lib/Icon';
+import { ColorClassNames } from '@uifabric/styling';
 
 import Logger from '../utils/logger';
 
+const electron = require('electron');
+const shell = electron.shell || electron.remote.shell;
+
 import STTApi from 'sttapi';
-import { CONFIG, loadGauntlet, gauntletCrewSelection, gauntletRoundOdds, payToGetNewOpponents, playContest, enterGauntlet, formatCrewStats } from 'sttapi';
+import { CONFIG, loadGauntlet, gauntletCrewSelection, gauntletRoundOdds, payToGetNewOpponents, payToReviveCrew, playContest, enterGauntlet, formatCrewStats } from 'sttapi';
 
 class GauntletCrew extends React.Component {
 	render() {
@@ -38,14 +42,19 @@ class GauntletCrew extends React.Component {
 				</tr>
 				<tr>
 					<td>
-						{this.props.crew.skills.map(function (skill) {
-							return <span className='gauntletCrew-statline' key={skill.skill}>
+						{this.props.crew.skills.map((skill) =>
+							<span className='gauntletCrew-statline' key={skill.skill}>
 								<Image src={CONFIG.SPRITES['icon_' + skill.skill].url} height={18} /> {CONFIG.SKILLS[skill.skill]} ({skill.min} - {skill.max})
-							</span>;
-						})}
+							</span>
+						)}
 						<span className='gauntletCrew-statline'>Crit chance {this.props.crew.crit_chance}%</span>
 					</td>
 				</tr>
+				{this.props.crew.disabled && <tr>
+					<td>
+						<PrimaryButton onClick={this.props.revive} text='Revive (30 dil)' iconProps={{ iconName: 'Money' }} />
+					</td>
+				</tr>}
 			</tbody>
 		</table>);
 	}
@@ -59,7 +68,7 @@ class GauntletMatch extends React.Component {
 	}
 
 	_playMatch() {
-		playContest(this.props.gauntletId, this.props.match.crewOdd.crew_id, this.props.match.opponent.player_id, this.props.match.opponent.crew_id, this.props.match).
+		playContest(this.props.gauntlet.id, this.props.match.crewOdd.crew_id, this.props.match.opponent.player_id, this.props.match.opponent.crew_id, this.props.match).
 			then((data) => {
 				let logPath = Logger.logGauntletEntry(data, this.props.match, this.props.consecutive_wins);
 
@@ -68,29 +77,54 @@ class GauntletMatch extends React.Component {
 	}
 
 	render() {
-		return (<table className='table-GauntletMatch'>
-			<tbody>
-				<tr>
-					<td className='gauntlet-match-crew-slot'>
-						<b>{STTApi.getCrewAvatarBySymbol(this.props.match.crewOdd.archetype_symbol).name}</b><br />
-						<Image src={this.props.match.crewOdd.iconUrl} height={128} style={{ display: 'inline-block' }} /><br />
-						Yours
-					</td>
-					<td>
-						<div className='gauntlet-arrow'>
-							<span><b>{this.props.match.chance}%</b> chance</span><br />
-							<span><b>{this.props.match.opponent.value}</b> points</span>
-						</div>
-						<PrimaryButton onClick={this._playMatch} text='Play this match!' iconProps={{ iconName: 'LightningBolt' }} />
-					</td>
-					<td className='gauntlet-match-crew-slot'>
-						<b>{STTApi.getCrewAvatarBySymbol(this.props.match.opponent.archetype_symbol).name}</b><br />
-						<Image src={this.props.match.opponent.iconUrl} height={128} style={{ display: 'inline-block' }} />
-						{this.props.match.opponent.name}
-					</td>
-				</tr>
-			</tbody>
-		</table>);
+		//TODO: 300px hardcoded below!
+		let containerStyle = {
+			display: 'grid',
+			padding: '3px',
+			boxShadow: '0 3px 5px rgba(0, 0, 0, 0.1)',
+			borderRadius: '3px',
+    		borderCollapse: 'collapse',
+			gridTemplateColumns: '90px auto 12px auto 90px',
+			gridTemplateRows: '14px 46px 50px 32px',
+			gridTemplateAreas: `
+			"pcrewname pcrewname . ocrewname ocrewname"
+			"pcrewimage stats stats stats ocrewimage"
+			"pcrewimage chance chance chance ocrewimage"
+			"pcrewimage button button button ocrewimage"`};
+
+		return <div style={containerStyle} className={ColorClassNames.themeLighterBackground}>
+			<span style={{ gridArea: 'pcrewname', justifySelf: 'center' }}>{STTApi.getCrewAvatarBySymbol(this.props.match.crewOdd.archetype_symbol).name}</span>
+			<div style={{ gridArea: 'pcrewimage' }}><Image src={this.props.match.crewOdd.iconUrl} height={128} /></div>
+
+			<div style={{ gridArea: 'stats' }}>
+				<table style={{ width: '100%' }}>
+					<tbody>
+						<tr>
+							<td style={{ textAlign: 'center', verticalAlign: 'middle' }}>{this.props.match.crewOdd.min[0]}-{this.props.match.crewOdd.max[0]}</td>
+							<td style={{ textAlign: 'center' }}><Image src={CONFIG.SPRITES['icon_' + this.props.gauntlet.contest_data.primary_skill].url} height={18} /></td>
+							<td style={{ textAlign: 'center', verticalAlign: 'middle' }}>{this.props.match.opponent.min[0]}-{this.props.match.opponent.max[0]}</td>
+						</tr>
+						<tr>
+							<td style={{ textAlign: 'center', verticalAlign: 'middle' }}>{this.props.match.crewOdd.min[1]}-{this.props.match.crewOdd.max[1]}</td>
+							<td style={{ textAlign: 'center' }}><Image src={CONFIG.SPRITES['icon_' + this.props.gauntlet.contest_data.secondary_skill].url} height={18} /></td>
+							<td style={{ textAlign: 'center', verticalAlign: 'middle' }}>{this.props.match.opponent.min[1]}-{this.props.match.opponent.max[1]}</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+
+			<div style={{ gridArea: 'chance', justifySelf: 'center', alignSelf: 'center' }}>
+				<Label className="ms-font-m-plus" style={{ padding: '0' }}><b>{this.props.match.chance}%</b> chance</Label>
+				<Label className="ms-font-m-plus" style={{ padding: '0' }}><b>{this.props.match.opponent.value}</b> points</Label>
+			</div>
+
+			<div style={{ gridArea: 'button', justifySelf: 'center', alignSelf: 'center' }}>
+				<PrimaryButton onClick={this._playMatch} text='Engage' />
+			</div>
+
+			<div style={{ gridArea: 'ocrewimage' }}><Image src={this.props.match.opponent.iconUrl} height={128} /></div>
+			<span style={{ gridArea: 'ocrewname', justifySelf: 'center' }}>{STTApi.getCrewAvatarBySymbol(this.props.match.opponent.archetype_symbol).name}</span>
+		</div>;
 	}
 }
 
@@ -114,6 +148,7 @@ export class GauntletHelper extends React.Component {
 		this._reloadGauntletData = this._reloadGauntletData.bind(this);
 		this._gauntletDataRecieved = this._gauntletDataRecieved.bind(this);
 		this._payForNewOpponents = this._payForNewOpponents.bind(this);
+		this._payToReviveCrew = this._payToReviveCrew.bind(this);
 		this._calculateSelection = this._calculateSelection.bind(this);
 		this._startGauntlet = this._startGauntlet.bind(this);
 		this._exportLog = this._exportLog.bind(this);
@@ -126,6 +161,10 @@ export class GauntletHelper extends React.Component {
 
 	_payForNewOpponents() {
 		payToGetNewOpponents(this.state.gauntlet.id).then((data) => this._gauntletDataRecieved(data));
+	}
+
+	_payToReviveCrew(crew_id) {
+		payToReviveCrew(this.state.gauntlet.id, crew_id).then((data) => this._gauntletDataRecieved(data));
 	}
 
 	_gauntletDataRecieved(data, logPath) {
@@ -353,9 +392,7 @@ export class GauntletHelper extends React.Component {
 					<Label>Your rank is {this.state.roundOdds.rank} and you have {this.state.roundOdds.consecutive_wins} consecutive wins</Label>
 					<span><h3>Your crew stats <DefaultButton onClick={this._reloadGauntletData} text='Reload data' iconProps={{ iconName: 'Refresh' }} /></h3></span>
 					<div style={{ display: 'flex', width: '95%' }} >
-						{this.state.gauntlet.contest_data.selected_crew.map(function (crew) {
-							return <GauntletCrew key={crew.crew_id} crew={crew} />;
-						})}
+						{this.state.gauntlet.contest_data.selected_crew.map((crew) => <GauntletCrew key={crew.crew_id} crew={crew} revive={() => this._payToReviveCrew(crew.crew_id)} />)}
 					</div>
 					<h3>Gauntlet player - BETA</h3>
 
@@ -391,26 +428,34 @@ export class GauntletHelper extends React.Component {
 						</table>)
 					}
 
-					{this.state.rewards && (
-						this.state.rewards.loot.map((loot, index) => {
-							return (<span key={index} style={{ color: loot.rarity && CONFIG.RARITIES[loot.rarity].color }}>{loot.quantity} {(loot.rarity == null) ? '' : CONFIG.RARITIES[loot.rarity].name} {loot.full_name}</span>);
-						}).reduce((prev, curr) => [prev, ', ', curr])
-					)}
+					{this.state.rewards && <div><span>Rewards: </span>
+						{this.state.rewards.loot.map((loot, index) =>
+							<span key={index} style={{ color: loot.rarity && CONFIG.RARITIES[loot.rarity].color }}>{loot.quantity} {(loot.rarity == null) ? '' : CONFIG.RARITIES[loot.rarity].name} {loot.full_name}</span>
+						).reduce((prev, curr) => [prev, ', ', curr])}
+					</div>}
 
 					<br />
 
 					{(this.state.roundOdds.matches.length > 0) &&
 						<PrimaryButton onClick={this._payForNewOpponents} text='Pay merits for new opponents' iconProps={{ iconName: 'Money' }} />
 					}
+					<br /><br/>
+
+					<div style={{ display: 'grid', gridGap: '10px', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
+						{this.state.roundOdds.matches.map((match) =>
+							<GauntletMatch key={match.crewOdd.archetype_symbol + match.opponent.player_id} match={match} gauntlet={this.state.gauntlet} consecutive_wins={this.state.roundOdds.consecutive_wins} onNewData={this._gauntletDataRecieved} />
+						)}
+					</div>
+
 					<br />
 
-					{this.state.roundOdds.matches.map(function (match) {
-						return <GauntletMatch key={match.crewOdd.archetype_symbol + match.opponent.player_id} match={match} gauntletId={this.state.gauntlet.id} consecutive_wins={this.state.roundOdds.consecutive_wins} onNewData={this._gauntletDataRecieved} />;
-					}.bind(this))}
+					<div>
+						{this.state.logPath && <PrimaryButton onClick={this._exportLog} text='Export log...' iconProps={{ iconName: 'DownloadDocument' }} />}
 
-					<br />
+						<span> </span>
 
-					{this.state.logPath && <PrimaryButton onClick={this._exportLog} text='Export log...' iconProps={{ iconName: 'DownloadDocument' }} />}
+						<PrimaryButton text='Shared spreadsheet with results' onClick={() => { shell.openExternal('https://docs.google.com/spreadsheets/d/1AM76npxLgvOq6L1hwLlW_tDFNFHcSaQjMPpZ88wGg8I/edit?usp=sharing'); }} />
+					</div>
 				</div>
 			);
 		}
