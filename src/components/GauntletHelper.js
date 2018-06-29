@@ -16,7 +16,7 @@ const electron = require('electron');
 const shell = electron.shell || electron.remote.shell;
 
 import STTApi from 'sttapi';
-import { CONFIG, loadGauntlet, gauntletCrewSelection, gauntletRoundOdds, payToGetNewOpponents, payToReviveCrew, playContest, enterGauntlet, formatCrewStats } from 'sttapi';
+import { CONFIG, loadGauntlet, gauntletCrewSelection, gauntletRoundOdds, payToGetNewOpponents, payToReviveCrew, claimRankRewards, playContest, enterGauntlet, formatCrewStats } from 'sttapi';
 
 class GauntletCrew extends React.Component {
 	render() {
@@ -50,11 +50,13 @@ class GauntletCrew extends React.Component {
 						<span className='gauntletCrew-statline'>Crit chance {this.props.crew.crit_chance}%</span>
 					</td>
 				</tr>
-				{this.props.crew.disabled && <tr>
+				<tr>
 					<td>
-						<PrimaryButton onClick={this.props.revive} text='Revive (30 dil)' iconProps={{ iconName: 'Money' }} />
+						{this.props.crew.disabled ?
+							<PrimaryButton onClick={() => this.props.revive(true)} text='Revive (30 dil)' iconProps={{ iconName: 'Money' }} /> :
+							<PrimaryButton onClick={() => this.props.revive(false)} text='Restore (30 dil)' iconProps={{ iconName: 'Money' }} />}
 					</td>
-				</tr>}
+				</tr>
 			</tbody>
 		</table>);
 	}
@@ -135,6 +137,7 @@ export class GauntletHelper extends React.Component {
 		this.state = {
 			gauntlet: null,
 			lastResult: null,
+			lastErrorMessage: null,
 			rewards: null,
 			merits: STTApi.playerData.premium_earnable,
 			// Recommendation calculation settings
@@ -149,6 +152,7 @@ export class GauntletHelper extends React.Component {
 		this._gauntletDataRecieved = this._gauntletDataRecieved.bind(this);
 		this._payForNewOpponents = this._payForNewOpponents.bind(this);
 		this._payToReviveCrew = this._payToReviveCrew.bind(this);
+		this._clainRankedRewards = this._clainRankedRewards.bind(this);
 		this._calculateSelection = this._calculateSelection.bind(this);
 		this._startGauntlet = this._startGauntlet.bind(this);
 		this._exportLog = this._exportLog.bind(this);
@@ -159,12 +163,32 @@ export class GauntletHelper extends React.Component {
 		loadGauntlet().then((data) => this._gauntletDataRecieved({ gauntlet: data }));
 	}
 
-	_payForNewOpponents() {
-		payToGetNewOpponents(this.state.gauntlet.id).then((data) => this._gauntletDataRecieved(data));
+	_clainRankedRewards() {
+		claimRankRewards(this.state.gauntlet.id).then((results) =>
+		{
+			// TODO: how can we show this to the user while going back to the unstarted state? Perhaps a modal dialog of sorts
+			let lootbox = `You've got ${results.description.quantity} loot boxes of ${results.description.loot_box_rarity} rarity!`;
+			let rewards = results.rewards.loot;
+			
+			console.log(lootbox);
+			console.log(rewards);
+		}).then(() => loadGauntlet()).then((data) => this._gauntletDataRecieved({ gauntlet: data }));
 	}
 
-	_payToReviveCrew(crew_id) {
-		payToReviveCrew(this.state.gauntlet.id, crew_id).then((data) => this._gauntletDataRecieved(data));
+	_payForNewOpponents() {
+		payToGetNewOpponents(this.state.gauntlet.id).then((data) => {
+			if (data.gauntlet) {
+				this._gauntletDataRecieved(data);
+			} else if (data.message) {
+				this.setState({
+					lastErrorMessage: data.message
+				});
+			}
+		});
+	}
+
+	_payToReviveCrew(crew_id, save) {
+		payToReviveCrew(this.state.gauntlet.id, crew_id, save).then((data) => this._gauntletDataRecieved(data));
 	}
 
 	_gauntletDataRecieved(data, logPath) {
@@ -172,6 +196,7 @@ export class GauntletHelper extends React.Component {
 			if (data.gauntlet.state == 'NONE') {
 				this.setState({
 					gauntlet: data.gauntlet,
+					lastErrorMessage: null,
 					lastResult: null,
 					startsIn: Math.floor(data.gauntlet.seconds_to_join / 60),
 					featuredSkill: data.gauntlet.contest_data.featured_skill,
@@ -392,7 +417,7 @@ export class GauntletHelper extends React.Component {
 					<Label>Your rank is {this.state.roundOdds.rank} and you have {this.state.roundOdds.consecutive_wins} consecutive wins</Label>
 					<span><h3>Your crew stats <DefaultButton onClick={this._reloadGauntletData} text='Reload data' iconProps={{ iconName: 'Refresh' }} /></h3></span>
 					<div style={{ display: 'flex', width: '95%' }} >
-						{this.state.gauntlet.contest_data.selected_crew.map((crew) => <GauntletCrew key={crew.crew_id} crew={crew} revive={() => this._payToReviveCrew(crew.crew_id)} />)}
+						{this.state.gauntlet.contest_data.selected_crew.map((crew) => <GauntletCrew key={crew.crew_id} crew={crew} revive={(save) => this._payToReviveCrew(crew.crew_id, save)} />)}
 					</div>
 					<h3>Gauntlet player - BETA</h3>
 
@@ -434,6 +459,8 @@ export class GauntletHelper extends React.Component {
 						).reduce((prev, curr) => [prev, ', ', curr])}
 					</div>}
 
+					{this.state.lastErrorMessage && <p>Error: '{this.state.lastErrorMessage}'</p>}
+
 					<br />
 
 					{(this.state.roundOdds.matches.length > 0) &&
@@ -458,6 +485,12 @@ export class GauntletHelper extends React.Component {
 					</div>
 				</div>
 			);
+		} else if (this.state.gauntlet && (this.state.gauntlet.state == 'ENDED_WITH_REWARDS')) {
+			return <div>
+				<h3>Gauntlet ended.</h3>
+				<PrimaryButton onClick={this._clainRankedRewards} text='Claim rewards and select new crew' />
+				<p>Note: you won't see the rewards here, you'll go straight to crew selection. Claim rewards in the game client to see them. !THIS FEATURE IS UNTESTED!</p>
+			</div>;
 		}
 		else {
 			return (<MessageBar messageBarType={MessageBarType.error} >Unknown state for this gauntlet! Check the app, perhaps it's waiting to join or already done.</MessageBar>);
