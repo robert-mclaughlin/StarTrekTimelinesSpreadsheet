@@ -1,5 +1,6 @@
 import React from 'react';
 import { Image } from 'office-ui-fabric-react/lib/Image';
+import { PrimaryButton } from 'office-ui-fabric-react/lib/Button';
 
 import { CrewList } from './CrewList.js';
 import { CollapsibleSection } from './CollapsibleSection.js';
@@ -114,11 +115,16 @@ export class NeededEquipment extends React.Component {
 		super(props);
 
 		let unparsedEquipment = [];
-		STTApi.roster.forEach((crew) => crew.equipment_slots.forEach((equipment) => {
+		for(let crew of STTApi.roster) {
+			if (crew.buyback) {
+				continue;
+			}
+
+			crew.equipment_slots.forEach((equipment) => {
 			if (!equipment.have) {
 				unparsedEquipment.push(equipment.archetype);
-			}
-		}));
+			}});
+		}
 
 		let mapUnowned = {};
 		while (unparsedEquipment.length > 0) {
@@ -133,7 +139,8 @@ export class NeededEquipment extends React.Component {
 				if (found) {
 					found.needed++;
 				} else {
-					mapUnowned[archetype] = {equipment, needed: 1};
+					let have = STTApi.playerData.character.items.find(item => item.archetype_id === archetype);
+					mapUnowned[archetype] = {equipment, needed: 1, have: have ? have.quantity : 0};
 				}
 			} else {
 				console.error(`This equipment has no recipe and no sources: '${equipment.name}'`);
@@ -151,25 +158,25 @@ export class NeededEquipment extends React.Component {
 
 	renderSources(equipment) {
 		let disputeMissions = equipment.item_sources.filter(e => e.type === 0);
-		let missions = equipment.item_sources.filter(e => e.type === 2);
+		let shipBattles = equipment.item_sources.filter(e => e.type === 2);
 		let factions = equipment.item_sources.filter(e => e.type === 1);
 
 		let res = [];
 
 		if (disputeMissions.length > 0) {
 			res.push(<div key={'disputeMissions'}>
-				<b>Dispute missions: </b>
+				<b>Missions: </b>
 				{disputeMissions.map((entry, idx) =>
-					<span key={idx}>{entry.name} <span style={{ display: 'inline-block' }}><Image src={CONFIG.MASTERY_LEVELS[entry.mastery].url()} height={16} /></span> ({entry.chance_grade} / 5)</span>
+					<span key={idx}>{entry.name} <span style={{ display: 'inline-block' }}><Image src={CONFIG.MASTERY_LEVELS[entry.mastery].url()} height={16} /></span> ({entry.chance_grade}/5, {(entry.energy_quotient*100).toFixed(2)}%)</span>
 				).reduce((prev, curr) => [prev, ', ', curr])}
 			</div>)
 		}
 
-		if (missions.length > 0) {
-			res.push(<div key={'missions'}>
-				<b>Missions: </b>
-				{missions.map((entry, idx) =>
-					<span key={idx}>{entry.name} <span style={{ display: 'inline-block' }}><Image src={CONFIG.MASTERY_LEVELS[entry.mastery].url()} height={16} /></span> ({entry.chance_grade} / 5)</span>
+		if (shipBattles.length > 0) {
+			res.push(<div key={'shipBattles'}>
+				<b>Ship battles: </b>
+				{shipBattles.map((entry, idx) =>
+					<span key={idx}>{entry.name} <span style={{ display: 'inline-block' }}><Image src={CONFIG.MASTERY_LEVELS[entry.mastery].url()} height={16} /></span> ({entry.chance_grade}/5, {(entry.energy_quotient*100).toFixed(2)}%)</span>
 				).reduce((prev, curr) => [prev, ', ', curr])}
 			</div>)
 		}
@@ -178,7 +185,7 @@ export class NeededEquipment extends React.Component {
 			res.push(<p key={'factions'}>
 				<b>Faction missions: </b>
 				{factions.map((entry, idx) =>
-					`${entry.name} (${entry.chance_grade} / 5)`
+					`${entry.name} (${entry.chance_grade}/5, ${(entry.energy_quotient*100).toFixed(2)}%)`
 				).join(', ')}
 			</p>)
 		}
@@ -190,10 +197,11 @@ export class NeededEquipment extends React.Component {
 		if (this.state.neededEquipment) {
 			return (<CollapsibleSection title={this.props.title}>
 				<p>Equipment required to fill all open slots for all crew currently in your roster.</p>
+				<PrimaryButton onClick={() => this._exportCSV()} text='Export as CSV...' /><br/><br/>
 				{this.state.neededEquipment.map((entry, idx) =>
 					<div key={idx} style={{ display: 'grid', gridTemplateColumns: '128px auto', gridTemplateAreas:`'icon name' 'icon details'` }}>
 						<div style={{ gridArea: 'icon'}}><ItemDisplay src={entry.equipment.iconUrl} size={128} maxRarity={entry.equipment.rarity} rarity={entry.equipment.rarity} /></div>
-						<h4 style={{ gridArea: 'name', alignSelf: 'start', margin:'0' }}>{entry.equipment.name} ({entry.needed})</h4>
+						<h4 style={{ gridArea: 'name', alignSelf: 'start', margin:'0' }}>{`${entry.equipment.name} (need ${entry.needed}, have ${entry.have})`}</h4>
 						<div style={{ gridArea: 'details', alignSelf: 'start' }}>
 							{this.renderSources(entry.equipment)}
 						</div>
@@ -204,6 +212,47 @@ export class NeededEquipment extends React.Component {
 		else {
 			return <span />;
 		}
+	}
+
+	_exportCSV() {
+		const { dialog } = require('electron').remote;
+		const { shell } = require('electron');
+		let today = new Date();
+		dialog.showSaveDialog(
+			{
+				filters: [{ name: 'Comma separated file (*.csv)', extensions: ['csv'] }],
+				title: 'Export needed equipment',
+				defaultPath: 'Equipment-' + (today.getUTCMonth() + 1) + '-' + (today.getUTCDate())+ '.csv',
+				buttonLabel: 'Export'
+			},
+			(fileName) => {
+				if (fileName === undefined)
+					return;
+
+				const json2csv = require('json2csv').parse;
+				const fs = require('fs');
+
+				var fields = ['equipment.name', 'equipment.rarity', 'needed', 'have',
+				{
+					label: 'Missions',
+					value: (row) => row.equipment.item_sources.filter(e => e.type === 0).map((mission) => `${mission.name} (${CONFIG.MASTERY_LEVELS[mission.mastery].name} ${mission.chance_grade}/5, ${(mission.energy_quotient*100).toFixed(2)}%)`).join(', ')
+				},
+				{
+					label: 'Ship battles',
+					value: (row) => row.equipment.item_sources.filter(e => e.type === 2).map((mission) => `${mission.name} (${CONFIG.MASTERY_LEVELS[mission.mastery].name} ${mission.chance_grade}/5, ${(mission.energy_quotient*100).toFixed(2)}%)`).join(', ')
+				},
+				{
+					label: 'Faction missions',
+					value: (row) => row.equipment.item_sources.filter(e => e.type === 1).map((mission) => `${mission.name} (${mission.chance_grade}/5, ${(mission.energy_quotient*100).toFixed(2)}%)`).join(', ')
+				}];
+				var csv = json2csv(this.state.neededEquipment, { fields: fields });
+
+				fs.writeFile(fileName, csv, (err) => {
+					if (!err) {
+						shell.openItem(fileName);
+					}
+				});
+			});
 	}
 }
 

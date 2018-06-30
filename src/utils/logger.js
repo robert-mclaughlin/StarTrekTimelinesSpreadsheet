@@ -237,7 +237,9 @@ export class LoggerClass {
 
             // Upload the result to a Google Sheet
 
-            //TODO: there should be an opt-out setting
+            // This could be used to upload anonymized gountlet round results to a google spreadsheet
+            // However, I did not anticipate the sheer amount of users the app has, in less than 1 day of release 0.7.5, this accumulated 4000 results, leading Flow to disable my free account and getting close to the limit of the Spreadsheet itself :)
+            /*
             const flowURL = 'https://prod-55.westus.logic.azure.com:443/workflows/dda0b81f61964c08ac5baf2dcd6ba1c8/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=04L6hPWcEIpAVI1oI8rSct0_XR4wDW4NMWjpDvW85V0';
 
             let sheetRow = {};
@@ -245,7 +247,7 @@ export class LoggerClass {
                 sheetRow[entry.label] = entry.value(results);
             });
 
-            STTApi.networkHelper.postjson(flowURL, [sheetRow]);
+            STTApi.networkHelper.postjson(flowURL, [sheetRow]);*/
 
             return fileName;
         }

@@ -116,8 +116,8 @@ class GauntletMatch extends React.Component {
 			</div>
 
 			<div style={{ gridArea: 'chance', justifySelf: 'center', alignSelf: 'center' }}>
-				<Label className="ms-font-m-plus" style={{ padding: '0' }}><b>{this.props.match.chance}%</b> chance</Label>
-				<Label className="ms-font-m-plus" style={{ padding: '0' }}><b>{this.props.match.opponent.value}</b> points</Label>
+				<Label className="ms-fontSize-l ms-fontWeight-semibold" style={{ padding: '0' }}><b>{this.props.match.chance}%</b> chance</Label>
+				<Label className="ms-fontSize-l ms-fontWeight-semibold" style={{ padding: '0' }}><b>{this.props.match.opponent.value}</b> points</Label>
 			</div>
 
 			<div style={{ gridArea: 'button', justifySelf: 'center', alignSelf: 'center' }}>
