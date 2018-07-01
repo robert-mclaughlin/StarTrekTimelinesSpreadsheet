@@ -122,25 +122,25 @@ export class NeededEquipment extends React.Component {
 
 			crew.equipment_slots.forEach((equipment) => {
 			if (!equipment.have) {
-				unparsedEquipment.push(equipment.archetype);
+				unparsedEquipment.push({archetype: equipment.archetype, need: 1});
 			}});
 		}
 
 		let mapUnowned = {};
 		while (unparsedEquipment.length > 0) {
-			let archetype = unparsedEquipment.pop();
-			let equipment = STTApi.itemArchetypeCache.archetypes.find(e => e.id === archetype);
+			let eq = unparsedEquipment.pop();
+			let equipment = STTApi.itemArchetypeCache.archetypes.find(e => e.id === eq.archetype);
 
 			if (equipment.recipe && equipment.recipe.demands && (equipment.recipe.demands.length > 0)) {
 				// Let's add all children in the recipe, so that we can parse them on the next loop iteration
-				equipment.recipe.demands.forEach((item) => unparsedEquipment.push(item.archetype_id));
+				equipment.recipe.demands.forEach((item) => unparsedEquipment.push({archetype: item.archetype_id, need: item.count * eq.need}));
 			} else if (equipment.item_sources && (equipment.item_sources.length > 0)) {
-				let found = mapUnowned[archetype];
+				let found = mapUnowned[eq.archetype];
 				if (found) {
-					found.needed++;
+					found.needed += eq.need;
 				} else {
-					let have = STTApi.playerData.character.items.find(item => item.archetype_id === archetype);
-					mapUnowned[archetype] = {equipment, needed: 1, have: have ? have.quantity : 0};
+					let have = STTApi.playerData.character.items.find(item => item.archetype_id === eq.archetype);
+					mapUnowned[eq.archetype] = {equipment, needed: eq.need, have: have ? have.quantity : 0};
 				}
 			} else {
 				console.error(`This equipment has no recipe and no sources: '${equipment.name}'`);
