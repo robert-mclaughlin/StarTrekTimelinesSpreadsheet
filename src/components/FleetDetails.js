@@ -3,11 +3,12 @@ import { DetailsList, DetailsListLayoutMode, SelectionMode } from 'office-ui-fab
 import { Image, ImageFit } from 'office-ui-fabric-react/lib/Image';
 import { PrimaryButton } from 'office-ui-fabric-react/lib/Button';
 
-import { CollapsibleSection } from './CollapsibleSection.js';
+import { CollapsibleSection } from './CollapsibleSection';
 import { RarityStars } from './RarityStars';
 
-import { loginPubNub } from '../utils/chat.js';
-import { sortItems, columnClick } from '../utils/listUtils.js';
+import { loginPubNub } from '../utils/chat';
+import { sortItems, columnClick } from '../utils/listUtils';
+import { download } from '../utils/pal';
 
 import STTApi from 'sttapi';
 
@@ -125,32 +126,12 @@ export class MemberList extends React.Component {
 	}
 
 	_exportCSV() {
-		const { dialog } = require('electron').remote;
-		const { shell } = require('electron');
+		const json2csv = require('json2csv').parse;
+		let fields = ['display_name', 'rank', 'squad_name', 'squad_rank', 'last_active', 'event_rank', 'level', 'daily_activity', 'location', 'currentShip'];
+		let csv = json2csv(this.state.members, { fields: fields });
+
 		let today = new Date();
-		dialog.showSaveDialog(
-			{
-				filters: [{ name: 'Comma separated file (*.csv)', extensions: ['csv'] }],
-				title: 'Export fleet member list',
-				defaultPath: STTApi.fleetData.name + '-' + (today.getUTCMonth() + 1) + '-' + (today.getUTCDate())+ '.csv',
-				buttonLabel: 'Export'
-			},
-			function (fileName) {
-				if (fileName === undefined)
-					return;
-
-				const json2csv = require('json2csv').parse;
-				const fs = require('fs');
-
-				var fields = ['display_name', 'rank', 'squad_name', 'squad_rank', 'last_active', 'event_rank', 'level', 'daily_activity', 'location', 'currentShip'];
-				var csv = json2csv(this.state.members, { fields: fields });
-
-				fs.writeFile(fileName, csv, function (err) {
-					if (!err) {
-						shell.openItem(fileName);
-					}
-				});
-			}.bind(this));
+		download(STTApi.fleetData.name + '-' + (today.getUTCMonth() + 1) + '-' + (today.getUTCDate())+ '.csv', csv, 'Export fleet member list', 'Export');
 	}
 
 	render() {
@@ -226,10 +207,11 @@ export class FleetDetails extends React.Component {
 				if (member.squad_id)
 				{
 					newMember.squad_rank = member.squad_rank;
-
-					var squad = STTApi.fleetSquads.find((squad) => squad.id === member.squad_id);
-					newMember.squad_name = squad.name;
-					newMember.squad_event_rank = squad.event_rank;
+					let squad = STTApi.fleetSquads.find((squad) => squad.id == member.squad_id);
+					if (squad) {
+						newMember.squad_name = squad.name;
+						newMember.squad_event_rank = squad.event_rank;
+					}
 				}
 
 				members.push(newMember);

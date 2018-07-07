@@ -1,6 +1,6 @@
 /*
     StarTrekTimelinesSpreadsheet - A tool to help with crew management in Star Trek Timelines
-    Copyright (C) 2017 IAmPicard
+    Copyright (C) 2017-2018 IAmPicard
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 'use strict';
 
 // Import parts of electron to use
-const {app, BrowserWindow, ipcMain} = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path')
 const url = require('url')
 const FB = require('fb');
@@ -32,7 +32,7 @@ let mainWindow;
 
 // Keep a reference for dev mode
 let dev = false;
-if ( process.defaultApp || /[\\/]electron-prebuilt[\\/]/.test(process.execPath) || /[\\/]electron[\\/]/.test(process.execPath) ) {
+if (process.defaultApp || /[\\/]electron-prebuilt[\\/]/.test(process.execPath) || /[\\/]electron[\\/]/.test(process.execPath)) {
   dev = true;
 }
 
@@ -44,15 +44,15 @@ function createWindow() {
     show: false,
     contextIsolation: true,
     icon: path.join(__dirname, 'src/assets/icons/ATFleet.ico'),
-    webPreferences: {webSecurity: false}
-	});
+    webPreferences: { webSecurity: false }
+  });
 
   mainWindow.setTitle('Star Trek Timelines Crew Management v' + app.getVersion());
   mainWindow.setMenu(null);
 
   // and load the index.html of the app.
   let indexPath;
-  if ( dev && process.argv.indexOf('--noDevServer') === -1 ) {
+  if (dev && process.argv.indexOf('--noDevServer') === -1) {
     indexPath = url.format({
       protocol: 'http:',
       host: 'localhost:8080',
@@ -64,21 +64,21 @@ function createWindow() {
       protocol: 'file:',
       pathname: path.join(__dirname, 'dist', 'index.html'),
       slashes: true
-	  });
+    });
   }
-  mainWindow.loadURL( indexPath );
+  mainWindow.loadURL(indexPath);
 
   // Don't show until we are ready and loaded
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
     // Open the DevTools automatically if developing
-    if ( dev ) {
+    if (dev) {
       mainWindow.webContents.openDevTools();
     }
   });
 
   // Emitted when the window is closed.
-  mainWindow.on('closed', function() {
+  mainWindow.on('closed', function () {
     // Dereference the window object, usually you would store windows
     // in an array if your app supports multi windows, this is the time
     // when you should delete the corresponding element.
@@ -86,23 +86,25 @@ function createWindow() {
   });
 }
 
-ipcMain.on("open-dev-tools",function (event, arg) {
+ipcMain.on("open-dev-tools", function (event, arg) {
   mainWindow.webContents.openDevTools();
 });
 
-ipcMain.on("fb-authenticate",function (event, arg) {
+ipcMain.on("fb-authenticate", function (event, arg) {
   var options = {
     client_id: "322613001274224",
     scopes: "public_profile",
     redirect_uri: "https://www.facebook.com/connect/login_success.html"
   };
-  var authWindow = new BrowserWindow({ width: 450, height: 300, show: false,
-    parent: mainWindow, modal: true, webPreferences: {nodeIntegration:false} });
+  var authWindow = new BrowserWindow({
+    width: 450, height: 300, show: false,
+    parent: mainWindow, modal: true, webPreferences: { nodeIntegration: false }
+  });
   var facebookAuthURL = "https://www.facebook.com/v2.8/dialog/oauth?client_id=" + options.client_id + "&redirect_uri=" + options.redirect_uri + "&response_type=token,granted_scopes&scope=" + options.scopes + "&display=popup";
   authWindow.loadURL(facebookAuthURL);
   authWindow.show();
 
-  authWindow.on('closed', function() {
+  authWindow.on('closed', function () {
     mainWindow.webContents.send("fb_closed");
   });
 
@@ -111,7 +113,7 @@ ipcMain.on("fb-authenticate",function (event, arg) {
     var access_token = (raw_code && raw_code.length > 1) ? raw_code[1] : null;
     var error = /\?error=(.+)$/.exec(newUrl);
 
-    if(access_token) {
+    if (access_token) {
       FB.setAccessToken(access_token);
       FB.api('/me', { fields: ['id', 'name', 'picture.width(200).height(200)'] }, function (res) {
         res.access_token = access_token;

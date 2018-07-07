@@ -3,9 +3,7 @@ import { Label } from 'office-ui-fabric-react/lib/Label';
 import { Link } from 'office-ui-fabric-react/lib/Link';
 import { PrimaryButton } from 'office-ui-fabric-react/lib/Button';
 
-const electron = require('electron');
-const app = electron.app || electron.remote.app;
-const shell = electron.shell || electron.remote.shell;
+import { getAppVersion, openShellExternal } from '../utils/pal';
 
 import STTApi from 'sttapi';
 
@@ -24,14 +22,14 @@ export class AboutAndHelp extends React.Component {
 
 	render() {
 		return <div>
-			<h1>Star Trek Timelines Spreadsheet Tool v{app.getVersion()}</h1>
+			<h1>Star Trek Timelines Spreadsheet Tool v{getAppVersion()}</h1>
 			<p>A tool to help with crew management in Star Trek Timelines</p>
 
 			{this.state.version &&
 				<div>
 				<h3>Latest version: {this.state.version.tag_name} {this.state.version.name}</h3>
 				<p>{this.state.version.body}</p>
-				<PrimaryButton onClick={() => shell.openExternal(this.state.version.html_url)} text='Download now' />
+				<PrimaryButton onClick={() => openShellExternal(this.state.version.html_url)} text='Download now' />
 				</div>}
 
 			<p><b>NOTE</b> This tool does not (and will never) automate any part of the game play; its sole purpose is to help players organize their crew using the functionality built within or with a spreadsheet application of their choice.</p>

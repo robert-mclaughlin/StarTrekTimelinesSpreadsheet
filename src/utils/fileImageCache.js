@@ -1,13 +1,13 @@
 const fs = require('fs');
-const electron = require('electron');
+
+import { getAppPath } from 'pal';
 
 export class FileImageCache {
 	basePath;
 	allImages;
 
 	constructor() {
-		const app = electron.app || electron.remote.app;
-		this.basePath = app.getPath('userData') + '/imagecache/';
+		this.basePath = getAppPath('userData') + '/imagecache/';
 
 		if (!fs.existsSync(this.basePath)) {
 			fs.mkdirSync(this.basePath);

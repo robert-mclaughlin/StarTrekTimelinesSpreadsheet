@@ -3,6 +3,8 @@ const fs = require('electron').remote.require('fs');
 import STTApi from 'sttapi';
 import { CONFIG } from 'sttapi';
 
+import { getAppVersion } from '../utils/pal';
+
 function pastebinPost(data, exportType) {
 	return STTApi.networkHelper.post('https://ptpb.pw/', { 'c': data }, undefined, false).then((data) => {
 		var match = /url: (.*)/g.exec(data);
@@ -176,7 +178,7 @@ function shareCrewInternal(options, missionList) {
 						missionList: missionList,
 						skillRes: skillRes,
 						template: options.htmlColorTheme,
-						version: require('electron').remote.app.getVersion()
+						version: getAppVersion()
 					});
 
 				if (options.exportWhere == 'L') {
@@ -200,7 +202,7 @@ function shareCrewInternal(options, missionList) {
 			title: options.title,
 			description: options.description,
 			created: {
-				tool: 'Star Trek Timelines Spreadsheet Tool v' + require('electron').remote.app.getVersion(),
+				tool: 'Star Trek Timelines Spreadsheet Tool v' + getAppVersion(),
 				url: 'https://github.com/IAmPicard/StarTrekTimelinesSpreadsheet',
 				when: (new Date())
 			},

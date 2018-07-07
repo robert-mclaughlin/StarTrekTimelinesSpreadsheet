@@ -1,4 +1,4 @@
-const PubNub = require('electron').remote.require('pubnub');
+const PubNub = require('pubnub');
 const uuidv4 = require('uuid/v4');
 
 import STTApi from 'sttapi';

@@ -9,6 +9,8 @@ import { ItemDisplay } from './ItemDisplay';
 import STTApi from 'sttapi';
 import { CONFIG } from 'sttapi';
 
+import { download } from '../utils/pal';
+
 export class GuaranteedSuccess extends React.Component {
 	render() {
 		return (<CollapsibleSection title={this.props.title}>
@@ -115,15 +117,16 @@ export class NeededEquipment extends React.Component {
 		super(props);
 
 		let unparsedEquipment = [];
-		for(let crew of STTApi.roster) {
+		for (let crew of STTApi.roster) {
 			if (crew.buyback) {
 				continue;
 			}
 
 			crew.equipment_slots.forEach((equipment) => {
-			if (!equipment.have) {
-				unparsedEquipment.push({archetype: equipment.archetype, need: 1});
-			}});
+				if (!equipment.have) {
+					unparsedEquipment.push({ archetype: equipment.archetype, need: 1 });
+				}
+			});
 		}
 
 		let mapUnowned = {};
@@ -133,14 +136,14 @@ export class NeededEquipment extends React.Component {
 
 			if (equipment.recipe && equipment.recipe.demands && (equipment.recipe.demands.length > 0)) {
 				// Let's add all children in the recipe, so that we can parse them on the next loop iteration
-				equipment.recipe.demands.forEach((item) => unparsedEquipment.push({archetype: item.archetype_id, need: item.count * eq.need}));
+				equipment.recipe.demands.forEach((item) => unparsedEquipment.push({ archetype: item.archetype_id, need: item.count * eq.need }));
 			} else if (equipment.item_sources && (equipment.item_sources.length > 0)) {
 				let found = mapUnowned[eq.archetype];
 				if (found) {
 					found.needed += eq.need;
 				} else {
 					let have = STTApi.playerData.character.items.find(item => item.archetype_id === eq.archetype);
-					mapUnowned[eq.archetype] = {equipment, needed: eq.need, have: have ? have.quantity : 0};
+					mapUnowned[eq.archetype] = { equipment, needed: eq.need, have: have ? have.quantity : 0 };
 				}
 			} else {
 				console.error(`This equipment has no recipe and no sources: '${equipment.name}'`);
@@ -149,7 +152,7 @@ export class NeededEquipment extends React.Component {
 
 		// Sort the map by "needed" descending
 		let arr = Object.values(mapUnowned);
-		arr.sort((a,b) => b.needed - a.needed);
+		arr.sort((a, b) => b.needed - a.needed);
 
 		this.state = {
 			neededEquipment: arr
@@ -167,7 +170,7 @@ export class NeededEquipment extends React.Component {
 			res.push(<div key={'disputeMissions'}>
 				<b>Missions: </b>
 				{disputeMissions.map((entry, idx) =>
-					<span key={idx}>{entry.name} <span style={{ display: 'inline-block' }}><Image src={CONFIG.MASTERY_LEVELS[entry.mastery].url()} height={16} /></span> ({entry.chance_grade}/5, {(entry.energy_quotient*100).toFixed(2)}%)</span>
+					<span key={idx}>{entry.name} <span style={{ display: 'inline-block' }}><Image src={CONFIG.MASTERY_LEVELS[entry.mastery].url()} height={16} /></span> ({entry.chance_grade}/5, {(entry.energy_quotient * 100).toFixed(2)}%)</span>
 				).reduce((prev, curr) => [prev, ', ', curr])}
 			</div>)
 		}
@@ -176,7 +179,7 @@ export class NeededEquipment extends React.Component {
 			res.push(<div key={'shipBattles'}>
 				<b>Ship battles: </b>
 				{shipBattles.map((entry, idx) =>
-					<span key={idx}>{entry.name} <span style={{ display: 'inline-block' }}><Image src={CONFIG.MASTERY_LEVELS[entry.mastery].url()} height={16} /></span> ({entry.chance_grade}/5, {(entry.energy_quotient*100).toFixed(2)}%)</span>
+					<span key={idx}>{entry.name} <span style={{ display: 'inline-block' }}><Image src={CONFIG.MASTERY_LEVELS[entry.mastery].url()} height={16} /></span> ({entry.chance_grade}/5, {(entry.energy_quotient * 100).toFixed(2)}%)</span>
 				).reduce((prev, curr) => [prev, ', ', curr])}
 			</div>)
 		}
@@ -185,7 +188,7 @@ export class NeededEquipment extends React.Component {
 			res.push(<p key={'factions'}>
 				<b>Faction missions: </b>
 				{factions.map((entry, idx) =>
-					`${entry.name} (${entry.chance_grade}/5, ${(entry.energy_quotient*100).toFixed(2)}%)`
+					`${entry.name} (${entry.chance_grade}/5, ${(entry.energy_quotient * 100).toFixed(2)}%)`
 				).join(', ')}
 			</p>)
 		}
@@ -197,11 +200,11 @@ export class NeededEquipment extends React.Component {
 		if (this.state.neededEquipment) {
 			return (<CollapsibleSection title={this.props.title}>
 				<p>Equipment required to fill all open slots for all crew currently in your roster.</p>
-				<PrimaryButton onClick={() => this._exportCSV()} text='Export as CSV...' /><br/><br/>
+				<PrimaryButton onClick={() => this._exportCSV()} text='Export as CSV...' /><br /><br />
 				{this.state.neededEquipment.map((entry, idx) =>
-					<div key={idx} style={{ display: 'grid', gridTemplateColumns: '128px auto', gridTemplateAreas:`'icon name' 'icon details'` }}>
-						<div style={{ gridArea: 'icon'}}><ItemDisplay src={entry.equipment.iconUrl} size={128} maxRarity={entry.equipment.rarity} rarity={entry.equipment.rarity} /></div>
-						<h4 style={{ gridArea: 'name', alignSelf: 'start', margin:'0' }}>{`${entry.equipment.name} (need ${entry.needed}, have ${entry.have})`}</h4>
+					<div key={idx} style={{ display: 'grid', gridTemplateColumns: '128px auto', gridTemplateAreas: `'icon name' 'icon details'` }}>
+						<div style={{ gridArea: 'icon' }}><ItemDisplay src={entry.equipment.iconUrl} size={128} maxRarity={entry.equipment.rarity} rarity={entry.equipment.rarity} /></div>
+						<h4 style={{ gridArea: 'name', alignSelf: 'start', margin: '0' }}>{`${entry.equipment.name} (need ${entry.needed}, have ${entry.have})`}</h4>
 						<div style={{ gridArea: 'details', alignSelf: 'start' }}>
 							{this.renderSources(entry.equipment)}
 						</div>
@@ -215,44 +218,25 @@ export class NeededEquipment extends React.Component {
 	}
 
 	_exportCSV() {
-		const { dialog } = require('electron').remote;
-		const { shell } = require('electron');
-		let today = new Date();
-		dialog.showSaveDialog(
+		const json2csv = require('json2csv').parse;
+		var fields = ['equipment.name', 'equipment.rarity', 'needed', 'have',
 			{
-				filters: [{ name: 'Comma separated file (*.csv)', extensions: ['csv'] }],
-				title: 'Export needed equipment',
-				defaultPath: 'Equipment-' + (today.getUTCMonth() + 1) + '-' + (today.getUTCDate())+ '.csv',
-				buttonLabel: 'Export'
+				label: 'Missions',
+				value: (row) => row.equipment.item_sources.filter(e => e.type === 0).map((mission) => `${mission.name} (${CONFIG.MASTERY_LEVELS[mission.mastery].name} ${mission.chance_grade}/5, ${(mission.energy_quotient * 100).toFixed(2)}%)`).join(', ')
 			},
-			(fileName) => {
-				if (fileName === undefined)
-					return;
+			{
+				label: 'Ship battles',
+				value: (row) => row.equipment.item_sources.filter(e => e.type === 2).map((mission) => `${mission.name} (${CONFIG.MASTERY_LEVELS[mission.mastery].name} ${mission.chance_grade}/5, ${(mission.energy_quotient * 100).toFixed(2)}%)`).join(', ')
+			},
+			{
+				label: 'Faction missions',
+				value: (row) => row.equipment.item_sources.filter(e => e.type === 1).map((mission) => `${mission.name} (${mission.chance_grade}/5, ${(mission.energy_quotient * 100).toFixed(2)}%)`).join(', ')
+			}];
 
-				const json2csv = require('json2csv').parse;
-				const fs = require('fs');
+		let csv = json2csv(this.state.neededEquipment, { fields });
 
-				var fields = ['equipment.name', 'equipment.rarity', 'needed', 'have',
-				{
-					label: 'Missions',
-					value: (row) => row.equipment.item_sources.filter(e => e.type === 0).map((mission) => `${mission.name} (${CONFIG.MASTERY_LEVELS[mission.mastery].name} ${mission.chance_grade}/5, ${(mission.energy_quotient*100).toFixed(2)}%)`).join(', ')
-				},
-				{
-					label: 'Ship battles',
-					value: (row) => row.equipment.item_sources.filter(e => e.type === 2).map((mission) => `${mission.name} (${CONFIG.MASTERY_LEVELS[mission.mastery].name} ${mission.chance_grade}/5, ${(mission.energy_quotient*100).toFixed(2)}%)`).join(', ')
-				},
-				{
-					label: 'Faction missions',
-					value: (row) => row.equipment.item_sources.filter(e => e.type === 1).map((mission) => `${mission.name} (${mission.chance_grade}/5, ${(mission.energy_quotient*100).toFixed(2)}%)`).join(', ')
-				}];
-				var csv = json2csv(this.state.neededEquipment, { fields: fields });
-
-				fs.writeFile(fileName, csv, (err) => {
-					if (!err) {
-						shell.openItem(fileName);
-					}
-				});
-			});
+		let today = new Date();
+		download('Equipment-' + (today.getUTCMonth() + 1) + '-' + (today.getUTCDate()) + '.csv', csv, 'Export needed equipment', 'Export');
 	}
 }
 

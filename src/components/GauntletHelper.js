@@ -12,8 +12,7 @@ import { ColorClassNames } from '@uifabric/styling';
 
 import Logger from '../utils/logger';
 
-const electron = require('electron');
-const shell = electron.shell || electron.remote.shell;
+import { openShellExternal, download } from '../utils/pal';
 
 import STTApi from 'sttapi';
 import { CONFIG, loadGauntlet, gauntletCrewSelection, gauntletRoundOdds, payToGetNewOpponents, payToReviveCrew, claimRankRewards, playContest, enterGauntlet, formatCrewStats } from 'sttapi';
@@ -481,7 +480,7 @@ export class GauntletHelper extends React.Component {
 
 						<span> </span>
 
-						<PrimaryButton text='Shared spreadsheet with results' onClick={() => { shell.openExternal('https://docs.google.com/spreadsheets/d/1AM76npxLgvOq6L1hwLlW_tDFNFHcSaQjMPpZ88wGg8I/edit?usp=sharing'); }} />
+						<PrimaryButton text='Shared spreadsheet with results' onClick={() => { openShellExternal('https://docs.google.com/spreadsheets/d/1AM76npxLgvOq6L1hwLlW_tDFNFHcSaQjMPpZ88wGg8I/edit?usp=sharing'); }} />
 					</div>
 				</div>
 			);
@@ -497,25 +496,8 @@ export class GauntletHelper extends React.Component {
 		}
 	}
 
-	_exportLog() {
-		const { dialog } = require('electron').remote;
-		const { shell } = require('electron');
-		let today = new Date();
-
-		dialog.showSaveDialog(
-			{
-				filters: [{ name: 'Comma separated file (*.csv)', extensions: ['csv'] }],
-				title: 'Export gauntlet log',
-				defaultPath: `gauntlet_${this.state.gauntlet.gauntlet_id}.csv`,
-				buttonLabel: 'Export'
-			},
-			(fileName) => {
-				if (fileName === undefined)
-					return;
-
-				Logger.exportGauntletLog(this.state.gauntlet.gauntlet_id, fileName).then(() => {
-					shell.openItem(fileName);
-				});
-			});
+	async _exportLog() {
+		let csv = await Logger.exportGauntletLog(this.state.gauntlet.gauntlet_id);
+		download(`gauntlet_${this.state.gauntlet.gauntlet_id}.csv`, csv, 'Export gauntlet log', 'Export');
 	}
 }

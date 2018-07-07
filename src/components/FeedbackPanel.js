@@ -5,8 +5,7 @@ import { Icon } from 'office-ui-fabric-react/lib/Icon';
 
 import { createIssue } from '../utils/githubUtils';
 
-const electron = require('electron');
-const shell = electron.shell;
+import { openShellExternal } from '../utils/pal';
 
 export class FeedbackPanel extends React.Component {
 	constructor(props) {
@@ -45,7 +44,7 @@ export class FeedbackPanel extends React.Component {
 					<br/><br/>
 					<PrimaryButton text='Report bug' onClick={() => this._sendFeedback(false)} iconProps={{ iconName: 'Bug' }} />
 					<br/><br/>
-					<PrimaryButton text='Buy me a coffee' onClick={() => shell.openExternal("https://www.buymeacoffee.com/Evbkf8yRT")} iconProps={{ iconName: 'CoffeeScript' }} />
+					<PrimaryButton text='Buy me a coffee' onClick={() => openShellExternal("https://www.buymeacoffee.com/Evbkf8yRT")} iconProps={{ iconName: 'CoffeeScript' }} />
 					<br/>
 					<a href='mailto:crewmanifest@gmail.com'><Icon iconName='Mail' /> <span>crewmanifest@gmail.com</span></a>
 				</div>

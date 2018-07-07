@@ -1,8 +1,6 @@
 const os = require('os');
 
-const electron = require('electron');
-const app = electron.app || electron.remote.app;
-const shell = electron.shell;
+import { getAppVersion, openShellExternal } from '../utils/pal';
 
 const bugBody = `
 **Describe the bug**
@@ -44,7 +42,7 @@ export function createIssue(isFeedback, bugDetails) {
     }
 
     body += `
-Tool version: **${app.getVersion()}**
+Tool version: **${getAppVersion()}**
 Operating system: **${os.platform()} ${os.arch()} (${os.release()})**
 `;
 
@@ -57,5 +55,5 @@ Error details: ${bugDetails}`;
 
     let url = `https://github.com/IAmPicard/StarTrekTimelinesSpreadsheet/issues/new?labels=${encodeURIComponent(labels)}&title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}`;
 
-    shell.openExternal(url);
+    openShellExternal(url);
 }

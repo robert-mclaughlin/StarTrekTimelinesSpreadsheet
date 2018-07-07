@@ -1,17 +1,17 @@
 const fs = require('fs');
-const electron = require('electron');
 const json2csv = require('json2csv').parse;
 
 import STTApi from 'sttapi';
 import { CONFIG } from 'sttapi';
+
+import { getAppPath } from 'pal';
 
 export class LoggerClass {
     basePath;
     exportFields;
 
     constructor() {
-        const app = electron.app || electron.remote.app;
-        this.basePath = app.getPath('userData') + '/logs/';
+        this.basePath = getAppPath('userData') + '/logs/';
 
         if (!fs.existsSync(this.basePath)) {
             fs.mkdirSync(this.basePath);
@@ -265,7 +265,7 @@ export class LoggerClass {
         return undefined;
     }
 
-    exportGauntletLog(gauntlet_id, fileName) {
+    exportGauntletLog(gauntlet_id) {
         return new Promise((resolve, reject) => {
             let logPath = `${this.basePath}gauntlet_log_${gauntlet_id}.json`;
 
@@ -273,11 +273,7 @@ export class LoggerClass {
                 if (!err) {
                     // Format as CSV
                     let csv = json2csv(JSON.parse(inFile), { fields: this.exportFields });
-
-                    fs.writeFile(fileName, csv, function (err) {
-                        if (err) { reject(err); }
-                        else { resolve(fileName); }
-                    });
+                    resolve(csv);
                 } else { reject(err); }
             });
         });

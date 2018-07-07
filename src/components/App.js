@@ -54,6 +54,7 @@ import { VoyageTools } from './VoyageTools.js';
 
 import STTApi from 'sttapi';
 import { loginSequence } from 'sttapi';
+import { download } from '../utils/pal';
 
 import { loadTheme, ColorClassNames } from '@uifabric/styling';
 
@@ -421,23 +422,8 @@ class App extends React.Component {
 				name: 'Export CSV',
 				iconProps: { iconName: 'ExcelDocument' },
 				onClick: () => {
-					const { dialog } = require('electron').remote;
-
-					dialog.showSaveDialog(
-						{
-							filters: [{ name: 'Comma separated file (*.csv)', extensions: ['csv'] }],
-							title: 'Export Star Trek Timelines crew roster',
-							defaultPath: 'My Crew.csv',
-							buttonLabel: 'Export'
-						},
-						(fileName) => {
-							if (fileName === undefined)
-								return;
-
-							exportCsv(fileName).then((filePath) => {
-								shell.openItem(filePath);
-							});
-						});
+					let csv = exportCsv();
+					download('My Crew.csv', csv, 'Export Star Trek Timelines crew roster', 'Export');
 				}
 			},
 			{
@@ -487,23 +473,8 @@ class App extends React.Component {
 				name: 'Export CSV',
 				iconProps: { iconName: 'ExcelDocument' },
 				onClick: () => {
-					const { dialog } = require('electron').remote;
-
-					dialog.showSaveDialog(
-						{
-							filters: [{ name: 'Comma separated file (*.csv)', extensions: ['csv'] }],
-							title: 'Export Star Trek Timelines item inventory',
-							defaultPath: 'My Items.csv',
-							buttonLabel: 'Export'
-						},
-						(fileName) => {
-							if (fileName === undefined)
-								return;
-
-							exportItemsCsv(fileName).then((filePath) => {
-								shell.openItem(filePath);
-							});
-						});
+					let csv = exportItemsCsv();
+					download('My Items.csv', csv, 'Export Star Trek Timelines item inventory', 'Export');
 				}
 			}
 		];
