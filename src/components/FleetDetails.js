@@ -207,7 +207,7 @@ export class FleetDetails extends React.Component {
 		if (STTApi.playerData.fleet && STTApi.playerData.fleet.id != 0) {
 			var members = new Array();
 
-			STTApi.fleetMembers.forEach(function (member) {
+			STTApi.fleetMembers.forEach((member) => {
 				var newMember = {
 					dbid: member.dbid,
 					pid: member.pid,
@@ -227,7 +227,7 @@ export class FleetDetails extends React.Component {
 				{
 					newMember.squad_rank = member.squad_rank;
 
-					var squad = STTApi.fleetSquads.find(function (squad) { return squad.id == member.squad_id; });
+					var squad = STTApi.fleetSquads.find((squad) => squad.id === member.squad_id);
 					newMember.squad_name = squad.name;
 					newMember.squad_event_rank = squad.event_rank;
 				}

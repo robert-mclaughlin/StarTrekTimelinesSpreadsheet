@@ -4,6 +4,7 @@ const electron = require('electron');
 export class FileImageCache {
 	basePath;
 	allImages;
+
 	constructor() {
 		const app = electron.app || electron.remote.app;
 		this.basePath = app.getPath('userData') + '/imagecache/';

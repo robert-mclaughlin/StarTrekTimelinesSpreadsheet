@@ -12,7 +12,7 @@ export class EquipmentSlot extends React.Component {
 	constructor(props) {
 		super(props);
 
-		let equipment = STTApi.itemArchetypeCache.archetypes.find(equipment => equipment.id == this.props.crew.equipment_slots[this.props.slot].archetype);
+		let equipment = STTApi.itemArchetypeCache.archetypes.find(equipment => equipment.id === this.props.crew.equipment_slots[this.props.slot].archetype);
 
 		this.state = {
 			iconUrl: equipment ? equipment.iconUrl : '',

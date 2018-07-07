@@ -69,7 +69,7 @@
     "office-ui-fabric-react": "latest",
     "pubnub": "latest",
     "stt-native": "file:native",
-    "sttapi": "file:STTApi",
+    "sttapi": "file:sttapi",
     "url-search-params-polyfill": "latest",
     "uuid": "latest",
     "vis": "latest",

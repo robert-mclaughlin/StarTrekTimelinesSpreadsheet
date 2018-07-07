@@ -15,26 +15,14 @@ export class ShuttleAdventure extends React.Component {
         super(props);
 
         STTApi.playerData.character.shuttle_adventures.forEach((shuttle) => {
-            if (shuttle.shuttles[0].id == props.activeId) {
+            if (shuttle.shuttles[0].id === props.activeId) {
                 this.state = {
                     name: shuttle.shuttles[0].name,
                     description: shuttle.shuttles[0].description,
                     completes_in_seconds: shuttle.shuttles[0].expires_in,
-                    faction_id: shuttle.faction_id,
                     challenge_rating: shuttle.challenge_rating,
-                    faction_iconUrl: '',
-                    faction: null
+                    faction: STTApi.playerData.character.factions.find((faction) => faction.id === shuttle.faction_id)
                 };
-            }
-        });
-
-        STTApi.playerData.character.factions.forEach((faction) => {
-            if (faction.id == this.state.faction_id) {
-                this.state.faction = faction;
-
-                STTApi.imageProvider.getFactionImageUrl(faction, 0).then(({ id, url }) => {
-                    this.setState({ faction_iconUrl: url });
-                }).catch((error) => { });
             }
         });
     }
@@ -51,7 +39,7 @@ export class ShuttleAdventure extends React.Component {
                             <h3>{this.state.name}</h3>
                         </td>
                         <td>
-                            <img src={this.state.faction_iconUrl} style={{ height: '80px' }} />
+                            <img src={this.state.faction.iconUrl} style={{ height: '80px' }} />
                         </td>
                     </tr>
                     <tr>

@@ -85,8 +85,8 @@ export class MinimalComplement extends React.Component {
 		else {
 			this.state = {
 				dataLoaded: true,
-				removableCrew: STTApi.roster.filter(function (crew) { return STTApi.minimalComplement.unneededCrew.includes(crew.id) && (crew.frozen == 0); }),
-				unfreezeCrew: STTApi.roster.filter(function (crew) { return STTApi.minimalComplement.neededCrew.includes(crew.id) && (crew.frozen > 0); })
+				removableCrew: STTApi.roster.filter((crew) => STTApi.minimalComplement.unneededCrew.includes(crew.id) && (crew.frozen === 0)),
+				unfreezeCrew: STTApi.roster.filter((crew) => STTApi.minimalComplement.neededCrew.includes(crew.id) && (crew.frozen > 0))
 			};
 		}
 	}

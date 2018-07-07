@@ -387,7 +387,7 @@ export class CrewList extends React.Component {
 	}
 
 	render() {
-		let { columns, isCompactMode, items, groups } = this.state;
+		let { columns, items, groups } = this.state;
 
 		return (
 			<div className={this.props.overrideClassName ? this.props.overrideClassName : 'data-grid'} data-is-scrollable='true'>

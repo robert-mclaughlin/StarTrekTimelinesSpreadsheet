@@ -69,7 +69,7 @@ export function exportExcel(itemList, fileName) {
 'action.penalty.type', 'action.penalty.amount', 'action.charge_phases',
 'action.trigger', 'action.ability', 'equipment.slot 1', 'equipment.slot 2', 'equipment.slot 3', 'equipment.slot 4']);
 
-		STTApi.roster.forEach(function (crew) {
+		STTApi.roster.forEach((crew) => {
 			let equipment = [];
 			crew.equipment_slots.forEach(es => {
 				equipment.push(STTApi.itemArchetypeCache.archetypes.find(equipment => equipment.id === es.archetype).name +
@@ -111,7 +111,7 @@ export function exportExcel(itemList, fileName) {
 
 		//worksheetItems.autoFilter = 'A1:G1';
 
-		itemList.forEach(function (item) {
+		itemList.forEach((item) => {
 			values.push([item.archetype_id, item.name, item.quantity, item.rarity,
 				item.icon.file.replace("/items", "").split("/")[1], item.icon.file.replace("/items", "").split("/")[2], item.flavor]);
 		});
@@ -138,7 +138,7 @@ export function exportExcel(itemList, fileName) {
 
 		//worksheetShips.autoFilter = 'A1:J1';
 
-		STTApi.ships.forEach(function (ship) {
+		STTApi.ships.forEach((ship) => {
 			values.push([ship.archetype_id, ship.name, ship.level, ship.max_level, ship.rarity, ship.shields, ship.hull, ship.attack, ship.accuracy, ship.evasion]);
 		});
 

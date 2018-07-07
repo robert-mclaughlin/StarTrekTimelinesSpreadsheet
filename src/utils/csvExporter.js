@@ -11,10 +11,10 @@ export function exportCsv(fileName) {
 		'action.penalty.type', 'action.penalty.amount', 'action.charge_phases',
 		'action.ability.condition', 'action.ability.type', 'action.ability.amount'];
 
-	var csv = json2csv(STTApi.roster, {fields});
+	var csv = json2csv(STTApi.roster, { fields });
 
-	return new Promise(function (resolve, reject) {
-		fs.writeFile(fileName, csv, function (err) {
+	return new Promise((resolve, reject) => {
+		fs.writeFile(fileName, csv, (err) => {
 			if (err) { reject(err); }
 			else { resolve(fileName); }
 		});
@@ -22,12 +22,12 @@ export function exportCsv(fileName) {
 }
 
 export function exportItemsCsv(fileName) {
-	var fields = ['name','rarity','quantity','typeName','symbol','flavor'];
+	var fields = ['name', 'rarity', 'quantity', 'typeName', 'symbol', 'flavor'];
 
-	var csv = json2csv(STTApi.playerData.character.items, {fields});
+	var csv = json2csv(STTApi.playerData.character.items, { fields });
 
-	return new Promise(function (resolve, reject) {
-		fs.writeFile(fileName, csv, function (err) {
+	return new Promise((resolve, reject) => {
+		fs.writeFile(fileName, csv, (err) => {
 			if (err) { reject(err); }
 			else { resolve(fileName); }
 		});

@@ -285,7 +285,7 @@ class App extends React.Component {
 					</div>
 					<div className='lcars-ellipse' />
 					<div className='lcars-content' ref={(menuButton) => this._feedbackButtonElement = menuButton}>
-						<ShakingButton iconName='Emoji2' title='Feedback' interval={10000} onClick={() => this.refs.feedbackPanel.show()} />
+						<ShakingButton iconName='Emoji2' title='Feedback' interval={20000} onClick={() => this.refs.feedbackPanel.show()} />
 					</div>
 					<div className='lcars-corner-right' />
 				</div>
