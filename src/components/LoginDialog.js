@@ -86,9 +86,7 @@ export class LoginDialog extends React.Component {
 					<Checkbox
 						label='Stay logged in'
 						checked={this.state.autoLogin}
-						onChange={(ev, checked) => {
-							this.setState({ autoLogin: checked });
-						}}
+						onChange={(ev, checked) => { this.setState({ autoLogin: checked }); }}
 					/>
 
 					<DialogFooter>

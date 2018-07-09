@@ -1,15 +1,12 @@
-const fs = require('electron').remote.require('fs');
-
 import STTApi from 'sttapi';
 import { CONFIG } from 'sttapi';
 
-import { getAppVersion } from '../utils/pal';
+import { getAppVersion, download, openShellExternal } from '../utils/pal';
 
-function pastebinPost(data, exportType) {
-	return STTApi.networkHelper.post('https://ptpb.pw/', { 'c': data }, undefined, false).then((data) => {
-		var match = /url: (.*)/g.exec(data);
-		return Promise.resolve(match[1] + '.' + exportType);
-	});
+async function pastebinPost(data, exportType) {
+	let result = await STTApi.networkHelper.post('https://ptpb.pw/', { 'c': data }, undefined, false);
+	let match = /url: (.*)/g.exec(result);
+	return match[1] + '.' + exportType;
 }
 
 export function shareCrew(options) {
@@ -71,10 +68,10 @@ export function shareCrew(options) {
 			});
 		});
 
-		return shareCrewInternal(options, allChallenges);
+		shareCrewInternal(options, allChallenges);
 	}
 	else {
-		return shareCrewInternal(options, null);
+		shareCrewInternal(options, null);
 	}
 }
 
@@ -103,10 +100,10 @@ function sillyTemplatizer(html, options) {
 
 function imageToDataUri(imgUrl, newEntry, resolve, wantedWidth, wantedHeight) {
 	// We create an image to receive the Data URI
-	var img = document.createElement('img');
+	let img = document.createElement('img');
 
 	// When the event "onload" is triggered we can resize the image.
-	img.onload = function () {
+	img.onload = () => {
 		// We create a canvas and get its context.
 		var canvas = document.createElement('canvas');
 		var ctx = canvas.getContext('2d');
@@ -116,7 +113,7 @@ function imageToDataUri(imgUrl, newEntry, resolve, wantedWidth, wantedHeight) {
 		canvas.height = wantedHeight;
 
 		// We resize the image with the canvas method drawImage();
-		ctx.drawImage(this, 0, 0, wantedWidth, wantedHeight);
+		ctx.drawImage(img, 0, 0, wantedWidth, wantedHeight);
 
 		newEntry.iconUrl = canvas.toDataURL();
 		resolve();
@@ -126,8 +123,8 @@ function imageToDataUri(imgUrl, newEntry, resolve, wantedWidth, wantedHeight) {
 	img.src = imgUrl;
 }
 
-function shareCrewInternal(options, missionList) {
-	var data = '';
+async function shareCrewInternal(options, missionList) {
+	let data = '';
 
 	if (options.exportType == 'html') {
 		var templateString = require('./exportTemplate.ttml');
@@ -159,43 +156,28 @@ function shareCrewInternal(options, missionList) {
 			exportedRoster.push(newEntry);
 		});
 
-		return Promise.all(iconPromises).then(() => {
-			let iconPromises = [];
-			let skillRes = {};
-			Object.keys(CONFIG.SKILLS).forEach(skill => {
-				skillRes[skill] = {};
-				skillRes[skill].name = CONFIG.SKILLS[skill];
-				iconPromises.push(new Promise(resolve => {
-					imageToDataUri(CONFIG.SPRITES['icon_' + skill].url, skillRes[skill], resolve, 18, 18);
-				}));
-			});
-
-			return Promise.all(iconPromises).then(() => {
-				data = sillyTemplatizer(templateString,
-					{
-						options: options,
-						roster: exportedRoster,
-						missionList: missionList,
-						skillRes: skillRes,
-						template: options.htmlColorTheme,
-						version: getAppVersion()
-					});
-
-				if (options.exportWhere == 'L') {
-					return new Promise(function (resolve, reject) {
-						fs.writeFile('export.' + options.exportType, data, function (err) {
-							if (err) { reject(err); }
-							else { resolve(); }
-						});
-					}).then(() => {
-						return Promise.resolve('export.' + options.exportType);
-					});
-				}
-				else {
-					return pastebinPost(data, options.exportType);
-				}
-			});
+		await Promise.all(iconPromises);
+		iconPromises = [];
+		let skillRes = {};
+		Object.keys(CONFIG.SKILLS).forEach(skill => {
+			skillRes[skill] = {};
+			skillRes[skill].name = CONFIG.SKILLS[skill];
+			iconPromises.push(new Promise(resolve => {
+				imageToDataUri(CONFIG.SPRITES['icon_' + skill].url, skillRes[skill], resolve, 18, 18);
+			}));
 		});
+
+		await Promise.all(iconPromises);
+
+		data = sillyTemplatizer(templateString,
+			{
+				options: options,
+				roster: exportedRoster,
+				missionList: missionList,
+				skillRes: skillRes,
+				template: options.htmlColorTheme,
+				version: getAppVersion()
+			});
 	}
 	else if (options.exportType == 'json') {
 		data = JSON.stringify({
@@ -203,25 +185,18 @@ function shareCrewInternal(options, missionList) {
 			description: options.description,
 			created: {
 				tool: 'Star Trek Timelines Spreadsheet Tool v' + getAppVersion(),
-				url: 'https://github.com/IAmPicard/StarTrekTimelinesSpreadsheet',
+				url: 'https://iampicard.github.io/',
 				when: (new Date())
 			},
 			crew: STTApi.roster,
 			missions: missionList
 		});
+	}
 
-		if (options.exportWhere == 'L') {
-			return new Promise(function (resolve, reject) {
-				fs.writeFile('export.' + options.exportType, data, function (err) {
-					if (err) { reject(err); }
-					else { resolve(); }
-				});
-			}).then(() => {
-				return Promise.resolve('export.' + options.exportType);
-			});
-		}
-		else {
-			return pastebinPost(data, options.exportType);
-		}
+	if (options.exportWhere == 'L') {
+		download('export.' + options.exportType, data, 'Export your crew list for sharing', 'Export');
+	}
+	else {
+		openShellExternal(pastebinPost(data, options.exportType));
 	}
 }

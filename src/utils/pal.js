@@ -4,12 +4,18 @@ const shell = electron.shell || electron.remote.shell;
 const dialog = electron.dialog || electron.remote.dialog;
 const fs = require('fs');
 
+import { ipcRenderer } from 'electron';
+
 export function getAppVersion() {
     return app.getVersion();
 }
 
 export function getAppPath(name) {
-    app.getPath(name);
+    return app.getPath(name);
+}
+
+export function openDevTools() {
+    ipcRenderer.send("open-dev-tools", "");
 }
 
 export function openShellExternal(url) {
@@ -34,9 +40,22 @@ export function download(filename, text, title, buttonLabel) {
     // For Electron:
 
     //TODO: filters based on file extension
+
+    let extension = filename.split('.').pop();
+    let extName = '';
+    if (extension === 'csv') {
+        extName = 'Comma separated file (*.csv)';
+    } else if (extension === 'xlsx') {
+        extName = 'Excel spreadsheet (*.xlsx)';
+    } else if (extension === 'json') {
+        extName = 'JSON formatted file (*.json)';
+    } else if (extension === 'html') {
+        extName = 'HTML file (*.html)';
+    }
+
     dialog.showSaveDialog(
         {
-            filters: [{ name: 'Comma separated file (*.csv)', extensions: ['csv'] }],
+            filters: [{ name: extName, extensions: [extension] }],
             title: title,
             defaultPath: filename,
             buttonLabel: buttonLabel

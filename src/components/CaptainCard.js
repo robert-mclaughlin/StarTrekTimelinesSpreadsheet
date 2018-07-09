@@ -5,7 +5,7 @@ import React from 'react';
 import STTApi from 'sttapi';
 import { CONFIG } from 'sttapi';
 
-import { ipcRenderer } from 'electron';
+import { openDevTools } from '../utils/pal';
 
 export class CaptainCard extends React.Component {
 	render() {
@@ -62,7 +62,7 @@ export class CaptainCard extends React.Component {
 					</div>
 					<button className="ui primary button" onClick={() => this.props.onLogout()}><i className="icon sign out"></i>Logout</button>
 					<button className="ui primary button" onClick={() => this.props.onRefresh()}><i className="icon refresh"></i>Refresh</button>
-					<button className="ui icon button" onClick={() => ipcRenderer.send("open-dev-tools", "")}><i className="icon bug"></i></button>
+					<button className="ui icon button" onClick={() => openDevTools()}><i className="icon bug"></i></button>
 				</div>
 			</div>
 		</div>

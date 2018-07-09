@@ -4,7 +4,7 @@ const json2csv = require('json2csv').parse;
 import STTApi from 'sttapi';
 import { CONFIG } from 'sttapi';
 
-import { getAppPath } from 'pal';
+import { getAppPath } from './pal';
 
 export class LoggerClass {
     basePath;

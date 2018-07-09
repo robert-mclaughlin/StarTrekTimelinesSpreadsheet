@@ -1,6 +1,6 @@
 const fs = require('fs');
 
-import { getAppPath } from 'pal';
+import { getAppPath } from './pal';
 
 export class FileImageCache {
 	basePath;
