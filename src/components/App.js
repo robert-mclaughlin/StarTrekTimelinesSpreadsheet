@@ -54,15 +54,11 @@ import { VoyageTools } from './VoyageTools.js';
 
 import STTApi from 'sttapi';
 import { loginSequence } from 'sttapi';
-import { download } from '../utils/pal';
+import { download, openShellExternal, getAppVersion } from '../utils/pal';
 
 import { loadTheme, ColorClassNames } from '@uifabric/styling';
 
-const settings = require('electron-settings');
-const compareSemver = require('compare-semver');
-const electron = require('electron');
-const app = electron.app || electron.remote.app;
-const shell = electron.shell;
+import { rcompare } from 'semver';
 
 class App extends React.Component {
 	constructor(props) {
@@ -84,7 +80,7 @@ class App extends React.Component {
 			errorMessage: '',
 			updateUrl: undefined,
 			theme: undefined,
-			darkTheme: !settings.get('ui.darkTheme', false)
+			darkTheme: false
 		};
 
 		this._captainButtonElement = null;
@@ -106,6 +102,12 @@ class App extends React.Component {
 		initializeIcons(/* optional base url */);
 
 		STTApi.setImageProvider(true, new FileImageCache());
+
+		STTApi.config.where('key').equals('ui.darkTheme').first().then((entry) => {
+			this.setState({ darkTheme: entry && entry.value });
+
+			this._onSwitchTheme(true);
+		});
 
 		STTApi.loginWithCachedAccessToken().then((success) => {
 			if (success) {
@@ -187,9 +189,9 @@ class App extends React.Component {
 
 		// Current theme
 		if (this.state.darkTheme) {
-			finalTheme = loadTheme({ palette: lightThemePalette });
-		} else {
 			finalTheme = loadTheme({ palette: darkThemePalette });
+		} else {
+			finalTheme = loadTheme({ palette: lightThemePalette });
 		}
 
 		const root = document.querySelector('.App-content');
@@ -201,11 +203,9 @@ class App extends React.Component {
 		document.body.style.backgroundColor = finalTheme.semanticColors.bodyBackground;
 		document.body.style.color = finalTheme.semanticColors.bodyText;
 
-		this.state.darkTheme = !this.state.darkTheme;
-		settings.set('ui.darkTheme', this.state.darkTheme);
-
 		if (shouldForceUpdate) {
 			this.setState({theme: finalTheme});
+			STTApi.config.put({ key: 'ui.darkTheme', value: this.state.darkTheme });
 			this.forceUpdate();
 		} else {
 			this.state.theme = finalTheme;
@@ -213,7 +213,7 @@ class App extends React.Component {
 	}
 
 	_onDismissBootMessage() {
-		settings.set('ui.showBootMessage' + app.getVersion(), this.state.showBootMessage);
+		STTApi.config.put({ key: 'ui.showBootMessage' + getAppVersion(), value: this.state.showBootMessage });
 
 		this.setState({ hideBootMessage: true });
 	}
@@ -278,11 +278,13 @@ class App extends React.Component {
 					</div>
 					{this.state.updateUrl && <div className='lcars-ellipse' />}
 					{this.state.updateUrl && <div className='lcars-content-text' style={{ cursor: 'pointer' }}>
-						<a style={{color: 'red'}} onClick={() => shell.openExternal(this.state.updateUrl)}>Update available!</a>
+						<a style={{color: 'red'}} onClick={() => openShellExternal(this.state.updateUrl)}>Update available!</a>
 					</div>}
 					<div className='lcars-box' />
 					<div className='lcars-content'>
-						<IconButton iconProps={{ iconName: 'Light' }} title='Switch theme' onClick={() => this._onSwitchTheme(true)} className={ColorClassNames.neutralDark} />
+						<IconButton iconProps={{ iconName: 'Light' }} title='Switch theme' onClick={() => {
+							this.setState({darkTheme: !this.state.darkTheme}, () => this._onSwitchTheme(true));
+							}} className={ColorClassNames.neutralDark} />
 					</div>
 					<div className='lcars-ellipse' />
 					<div className='lcars-content' ref={(menuButton) => this._feedbackButtonElement = menuButton}>
@@ -328,7 +330,7 @@ class App extends React.Component {
 						<br/>
 					</div>
 					<DialogFooter>
-						<PrimaryButton onClick={ () => { shell.openExternal('https://github.com/IAmPicard/StarTrekTimelinesSpreadsheet/blob/master/README.md'); }} text='Read more...' />
+						<PrimaryButton onClick={ () => { openShellExternal('https://github.com/IAmPicard/StarTrekTimelinesSpreadsheet/blob/master/README.md'); }} text='Read more...' />
 						<DefaultButton onClick={ () => { this._onDismissBootMessage(); } } text='Ok' />
 					</DialogFooter>
 				</Dialog>
@@ -396,25 +398,9 @@ class App extends React.Component {
 				key: 'exportExcel',
 				name: 'Export Excel',
 				iconProps: { iconName: 'ExcelLogo' },
-				onClick: () => {
-					const { dialog } = require('electron').remote;
-
-					dialog.showSaveDialog(
-						{
-							filters: [{ name: 'Excel sheet (*.xlsx)', extensions: ['xlsx'] }],
-							title: 'Export Star Trek Timelines crew roster',
-							defaultPath: 'My Crew.xlsx',
-							buttonLabel: 'Export'
-						},
-						(fileName) => {
-							if (fileName === undefined)
-								return;
-
-							exportExcel(STTApi.playerData.character.items, fileName).then((filePath) => {
-								shell.openItem(filePath);
-							});
-						});
-
+				onClick: async () => {
+					let data = await exportExcel(STTApi.playerData.character.items);
+					download('My Crew.xlsx', data, 'Export Star Trek Timelines crew roster', 'Export');
 				}
 			},
 			{
@@ -512,9 +498,10 @@ class App extends React.Component {
 		this.setState({ errorMessage: reason, hideErrorDialog: false });
 	}
 
-	_onDataFinished() {
+	async _onDataFinished() {
 		// This resets with every new version, in case the message is updated or folks forget
-		let shouldShowBootMessage = settings.get('ui.showBootMessage' + app.getVersion(), true);
+		let entry = await STTApi.config.where('key').equals('ui.showBootMessage' + getAppVersion()).first();
+		let shouldShowBootMessage = !entry || entry.value;
 
 		this.setState({
 			showSpinner: false,
@@ -525,16 +512,16 @@ class App extends React.Component {
 			dataLoaded: true
 		});
 
-		STTApi.getGithubReleases().then((data) => {
-			let versions = data.map((release) => release.tag_name.replace('v', ''));
+		let data = await STTApi.getGithubReleases();
+		let versions = data.map((release) => release.tag_name.replace('v', ''));
+		let maxVersion = versions.sort(rcompare)[0];
 
-			if (compareSemver.max(versions) != app.getVersion()) {
-				var n = new Notification('STT Tool - Update available!', { body: 'A new release of the Star Trek Tool (' + data[0].tag_name + ' ' + data[0].name + ') has been made available. Please check the About tab for download instructions!' });
-				this.setState({
-					updateUrl: data[0].html_url
-				});
-			}
-		});
+		if (maxVersion != getAppVersion()) {
+			var n = new Notification('STT Tool - Update available!', { body: 'A new release of the Star Trek Tool (' + data[0].tag_name + ' ' + data[0].name + ') has been made available. Please check the About tab for download instructions!' });
+			this.setState({
+				updateUrl: data[0].html_url
+			});
+		}
 
 		if (STTApi.playerData.character.crew_avatar) {
 			STTApi.imageProvider.getCrewImageUrl(STTApi.playerData.character.crew_avatar, false, 0).then(({ id, url }) => {

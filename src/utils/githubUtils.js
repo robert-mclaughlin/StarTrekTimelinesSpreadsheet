@@ -1,6 +1,4 @@
-const os = require('os');
-
-import { getAppVersion, openShellExternal } from '../utils/pal';
+import { getAppVersion, getOSDetails, openShellExternal } from '../utils/pal';
 
 const bugBody = `
 **Describe the bug**
@@ -43,7 +41,7 @@ export function createIssue(isFeedback, bugDetails) {
 
     body += `
 Tool version: **${getAppVersion()}**
-Operating system: **${os.platform()} ${os.arch()} (${os.release()})**
+Operating system: **${getOSDetails()}**
 `;
 
     if (bugDetails) {

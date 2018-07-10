@@ -11,6 +11,8 @@ import { CONFIG } from 'sttapi';
 
 import { download } from '../utils/pal';
 
+import { parse as json2csv } from 'json2csv';
+
 export class GuaranteedSuccess extends React.Component {
 	render() {
 		return (<CollapsibleSection title={this.props.title}>
@@ -218,8 +220,7 @@ export class NeededEquipment extends React.Component {
 	}
 
 	_exportCSV() {
-		const json2csv = require('json2csv').parse;
-		var fields = ['equipment.name', 'equipment.rarity', 'needed', 'have',
+		let fields = ['equipment.name', 'equipment.rarity', 'needed', 'have',
 			{
 				label: 'Missions',
 				value: (row) => row.equipment.item_sources.filter(e => e.type === 0).map((mission) => `${mission.name} (${CONFIG.MASTERY_LEVELS[mission.mastery].name} ${mission.chance_grade}/5, ${(mission.energy_quotient * 100).toFixed(2)}%)`).join(', ')

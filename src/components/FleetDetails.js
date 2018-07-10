@@ -12,6 +12,8 @@ import { download } from '../utils/pal';
 
 import STTApi from 'sttapi';
 
+import { parse as json2csv } from 'json2csv';
+
 export class MemberList extends React.Component {
 	constructor(props) {
 		super(props);
@@ -126,7 +128,6 @@ export class MemberList extends React.Component {
 	}
 
 	_exportCSV() {
-		const json2csv = require('json2csv').parse;
 		let fields = ['display_name', 'rank', 'squad_name', 'squad_rank', 'last_active', 'event_rank', 'level', 'daily_activity', 'location', 'currentShip'];
 		let csv = json2csv(this.state.members, { fields: fields });
 

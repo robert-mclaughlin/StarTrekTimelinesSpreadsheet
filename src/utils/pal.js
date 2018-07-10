@@ -3,6 +3,7 @@ const app = electron.app || electron.remote.app;
 const shell = electron.shell || electron.remote.shell;
 const dialog = electron.dialog || electron.remote.dialog;
 const fs = require('fs');
+const os = require('os');
 
 import { ipcRenderer } from 'electron';
 
@@ -12,6 +13,10 @@ export function getAppVersion() {
 
 export function getAppPath(name) {
     return app.getPath(name);
+}
+
+export function getOSDetails() {
+    return `${os.platform()} ${os.arch()} (${os.release()})`;
 }
 
 export function openDevTools() {

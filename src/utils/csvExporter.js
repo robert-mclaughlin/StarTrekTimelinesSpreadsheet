@@ -1,5 +1,6 @@
-const json2csv = require('json2csv').parse;
 import STTApi from 'sttapi';
+
+import { parse as json2csv } from 'json2csv';
 
 // In plain browsers, to avoid using fs, we could do something like this: https://stackoverflow.com/a/18197511
 export function exportCsv() {

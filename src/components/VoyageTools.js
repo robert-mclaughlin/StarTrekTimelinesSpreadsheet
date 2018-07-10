@@ -13,8 +13,7 @@ import { TextField } from 'office-ui-fabric-react/lib/TextField';
 import STTApi from 'sttapi';
 import { CONFIG, bestVoyageShip, loadVoyage, startVoyage, formatCrewStats, bonusCrewForCurrentEvent } from 'sttapi';
 
-const electron = require('electron');
-const shell = electron.shell;
+import { download } from '../utils/pal';
 
 export class VoyageCrew extends React.Component {
 	constructor(props) {
@@ -377,79 +376,13 @@ export class VoyageCrew extends React.Component {
 			includeFrozenCrew: true
 		};
 
-		function cppEntries(result) {
-			let entries = [];
-			for (var slotName in result.selection) {
-				let entry = {
-					hasTrait: false,
-					slotName: slotName,
-					score: 0,
-					choice: STTApi.roster.find((crew) => (crew.crew_id == result.selection[slotName]))
-				};
-
-				entries.push(entry);
-			}
-			return entries;
-		}
-
-		const parseResults = (result, state) => {
-			return {
-				crewSelection: cppEntries(result),
-				estimatedDuration: result.bestCrewTime || result.score || 0,
-				state: state};
-		}
-
 		NativeExtension.calculateVoyageCrewRank(JSON.stringify(dataToExport), (rankResult, estimateResult) => {
-			console.log("done!");
 			console.log(rankResult);
 			console.log(estimateResult);
 			this.setState({state: 'calculating'});
-			const fs = require('fs');
 
-			const { dialog } = require('electron').remote;
-
-			let rankFileName = dialog.showSaveDialog(
-				{
-					filters: [{ name: 'Comma separated file (*.csv)', extensions: ['csv'] }],
-					title: 'Export Star Trek Timelines voyage crew ranking',
-					defaultPath: 'My Voyage Crew.csv',
-					buttonLabel: 'Export'
-				});
-			
-			let estimateFileName = dialog.showSaveDialog(
-				{
-					filters: [{ name: 'Comma separated file (*.csv)', extensions: ['csv'] }],
-					title: 'Export Star Trek Timelines voyage estimates',
-					defaultPath: 'My Voyage Estimates.csv',
-					buttonLabel: 'Export'
-				});
-
-			if (rankFileName !== undefined) {
-				let promise = new Promise(function (resolve, reject) {
-					fs.writeFile(rankFileName, rankResult, function (err) {
-						if (err) { reject(err); }
-						else { resolve(rankFileName); }
-					});
-				});
-
-				promise.then((filePath) => {
-					shell.openItem(filePath);
-				});
-			}
-
-			if (estimateFileName !== undefined) {
-				let promise = new Promise(function (resolve, reject) {
-					fs.writeFile(estimateFileName, estimateResult, function (err) {
-						if (err) { reject(err); }
-						else { resolve(estimateFileName); }
-					});
-				});
-
-				promise.then((filePath) => {
-					shell.openItem(filePath);
-				});
-			}
-
+			download('My Voyage Crew.csv', rankResult, 'Export Star Trek Timelines voyage crew ranking', 'Export');
+			download('My Voyage Estimates.csv', estimateResult, 'Export Star Trek Timelines voyage estimates', 'Export');
 		}, progressResult => {
 			console.log("unexpected progress result!"); // not implemented yet..
 		});
