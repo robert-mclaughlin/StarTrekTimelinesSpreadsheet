@@ -44,7 +44,7 @@ function createWindow() {
     show: false,
     contextIsolation: true,
     icon: path.join(__dirname, 'src/assets/icons/ATFleet.ico'),
-    webPreferences: { webSecurity: false }
+    webPreferences: { webSecurity: false, nodeIntegration: true }
   });
 
   mainWindow.setTitle('Star Trek Timelines Crew Management v' + app.getVersion());

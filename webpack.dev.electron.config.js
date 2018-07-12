@@ -11,6 +11,15 @@ const OUTPUT_DIR = path.resolve(__dirname, 'dist');
 // Any directories you will be adding code/files into, need to be added to this array so webpack will pick them up
 const defaultInclude = [SRC_DIR];
 
+// Conditional compilation
+const ifdef_opts = {
+	ENV_ELECTRON: true,
+	ENV_WEB: false,
+	version: 3,
+	'ifdef-verbose': true,       // add this for verbose output
+	'ifdef-triple-slash': false  // add this to use double slash comment instead of default triple slash
+};
+
 module.exports = {
 	entry: SRC_DIR + '/index.js',
 	output: {
@@ -28,7 +37,7 @@ module.exports = {
 			},
 			{
 				test: /\.jsx?$/,
-				use: [{ loader: 'babel-loader' }],
+				use: [{ loader: 'babel-loader' }, { loader: 'ifdef-loader', options: ifdef_opts } ],
 				include: defaultInclude
 			},
 			{
@@ -49,17 +58,8 @@ module.exports = {
 				include: defaultInclude
 			},
 			{
-				test: /\.ts$/,
-				enforce: 'pre',
-				loader: 'tslint-loader',
-				options: {
-					typeCheck: true,
-					emitErrors: true
-				}
-			},
-			{
 				test: /\.tsx?$/,
-				loader: ['babel-loader', 'ts-loader']
+				use: [{ loader: 'babel-loader'}, { loader: 'ts-loader'}, { loader: "ifdef-loader", options: ifdef_opts } ]
 			}
 		]
 	},

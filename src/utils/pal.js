@@ -44,8 +44,7 @@ export function download(filename, text, title, buttonLabel) {
 
     // For Electron:
 
-    //TODO: filters based on file extension
-
+/// #if ENV_ELECTRON
     let extension = filename.split('.').pop();
     let extName = '';
     if (extension === 'csv') {
@@ -76,4 +75,5 @@ export function download(filename, text, title, buttonLabel) {
             });
 
         });
+/// #endif
 }
