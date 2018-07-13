@@ -11,15 +11,6 @@ const OUTPUT_DIR = path.resolve(__dirname, 'dist');
 // Any directories you will be adding code/files into, need to be added to this array so webpack will pick them up
 const defaultInclude = [SRC_DIR];
 
-// Conditional compilation
-const ifdef_opts = {
-	ENV_ELECTRON: true,
-	ENV_WEB: false,
-	version: 3,
-	'ifdef-verbose': true,       // add this for verbose output
-	'ifdef-triple-slash': false  // add this to use double slash comment instead of default triple slash
-};
-
 module.exports = {
 	entry: SRC_DIR + '/index.js',
 	output: {
@@ -28,6 +19,11 @@ module.exports = {
 		filename: 'bundle.js',
 		globalObject: 'this'
 	},
+	target: 'electron-renderer',
+	plugins: [
+		new HtmlWebpackPlugin({ title: 'Star Trek Timelines Crew Management v' + PACKAGE.version }),
+		new webpack.DefinePlugin({ 'process.env.NODE_ENV': JSON.stringify('development'), 'process.env.APP_VERSION': JSON.stringify(PACKAGE.version) })
+	],
 	module: {
 		rules: [
 			{
@@ -37,18 +33,18 @@ module.exports = {
 			},
 			{
 				test: /\.jsx?$/,
-				use: [{ loader: 'babel-loader' }, { loader: 'ifdef-loader', options: ifdef_opts } ],
+				use: [{ loader: 'babel-loader' }, { loader: 'webpack-preprocessor-loader', options: { params: { ENV: 'electron' } } }],
 				include: defaultInclude
 			},
 			{
 				test: /\.(png|jpg|gif)$/,
 				use: [
-				  {
-					loader: 'url-loader',
-					options: {
-					  limit: 8192
+					{
+						loader: 'url-loader',
+						options: {
+							limit: 8192
+						}
 					}
-				  }
 				],
 				include: defaultInclude
 			},
@@ -59,17 +55,10 @@ module.exports = {
 			},
 			{
 				test: /\.tsx?$/,
-				use: [{ loader: 'babel-loader'}, { loader: 'ts-loader'}, { loader: "ifdef-loader", options: ifdef_opts } ]
+				use: [{ loader: 'babel-loader' }, { loader: 'ts-loader' }, { loader: 'webpack-preprocessor-loader', options: { params: { ENV: 'electron' } } }]
 			}
 		]
 	},
-	target: 'electron-renderer',
-	plugins: [
-		new HtmlWebpackPlugin({ title: 'Star Trek Timelines Crew Management v' + PACKAGE.version }),
-		new webpack.DefinePlugin({
-			'process.env.NODE_ENV': JSON.stringify('development')
-		})
-	],
 	devtool: 'inline-source-map',
 	devServer: {
 		contentBase: OUTPUT_DIR,

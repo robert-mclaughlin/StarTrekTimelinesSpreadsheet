@@ -10,7 +10,9 @@ import { DefaultButton } from 'office-ui-fabric-react/lib/Button';
 import { Icon } from 'office-ui-fabric-react/lib/Icon';
 import { ColorClassNames } from '@uifabric/styling';
 
+// #!if ENV === 'electron'
 import Logger from '../utils/logger';
+// #!endif
 
 import { openShellExternal, download } from '../utils/pal';
 
@@ -71,7 +73,11 @@ class GauntletMatch extends React.Component {
 	_playMatch() {
 		playContest(this.props.gauntlet.id, this.props.match.crewOdd.crew_id, this.props.match.opponent.player_id, this.props.match.opponent.crew_id, this.props.match).
 			then((data) => {
-				let logPath = Logger.logGauntletEntry(data, this.props.match, this.props.consecutive_wins);
+				let logPath = undefined;
+
+// #!if ENV === 'electron'
+				logPath = Logger.logGauntletEntry(data, this.props.match, this.props.consecutive_wins);
+// #!endif
 
 				this.props.onNewData(data, logPath);
 			});
@@ -273,9 +279,11 @@ export class GauntletHelper extends React.Component {
 			});
 		}
 
+// #!if ENV === 'electron'
 		if (!logPath && data.gauntlet) {
 			logPath = Logger.hasGauntletLog(data.gauntlet.gauntlet_id);
 		}
+// #!endif
 
 		this.setState({ logPath: logPath });
 	}
@@ -475,13 +483,7 @@ export class GauntletHelper extends React.Component {
 
 					<br />
 
-					<div>
-						{this.state.logPath && <PrimaryButton onClick={this._exportLog} text='Export log...' iconProps={{ iconName: 'DownloadDocument' }} />}
-
-						<span> </span>
-
-						<PrimaryButton text='Shared spreadsheet with results' onClick={() => { openShellExternal('https://docs.google.com/spreadsheets/d/1AM76npxLgvOq6L1hwLlW_tDFNFHcSaQjMPpZ88wGg8I/edit?usp=sharing'); }} />
-					</div>
+					{this.state.logPath && <PrimaryButton onClick={this._exportLog} text='Export log...' iconProps={{ iconName: 'DownloadDocument' }} />}
 				</div>
 			);
 		} else if (this.state.gauntlet && (this.state.gauntlet.state == 'ENDED_WITH_REWARDS')) {
@@ -497,7 +499,9 @@ export class GauntletHelper extends React.Component {
 	}
 
 	async _exportLog() {
+// #!if ENV === 'electron'
 		let csv = await Logger.exportGauntletLog(this.state.gauntlet.gauntlet_id);
 		download(`gauntlet_${this.state.gauntlet.gauntlet_id}.csv`, csv, 'Export gauntlet log', 'Export');
+// #!endif
 	}
 }

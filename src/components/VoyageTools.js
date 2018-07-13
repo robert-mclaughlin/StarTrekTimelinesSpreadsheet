@@ -31,8 +31,8 @@ export class VoyageCrew extends React.Component {
 			activeEvent: undefined,
 			peopleList: [],
 			currentSelectedItems: [],
-			preselectedIgnored: [],
-			selectedVoyageMethod: { key: 0, text: 'Thorough', val: true }
+			selectedVoyageMethod: { key: 0, text: 'Thorough', val: true },
+			preselectedIgnored: []
 		};
         
 		// See which crew is needed in the event to give the user a chance to remove them from consideration
@@ -124,6 +124,7 @@ export class VoyageCrew extends React.Component {
 		return (<div>
 			<p><b>NOTE: </b>Algorithms are still a work in progress. Please provide feedback on your recommendations and voyage results!</p>
 
+			{/* #!if ENV === 'electron' */}
 			<div className='field-maxwidth'>
 				<Dropdown
 					label='Algorithm to use:'
@@ -133,6 +134,7 @@ export class VoyageCrew extends React.Component {
 					options={[ { key: 0, text: 'Thorough (best results)', val: true }, { key: 1, text: 'Fast (quick & dirty)', val: false } ]}
 				/>
 			</div>
+			{/* #!endif */}
 
 			<h3>Best ship(s)</h3>
 			<div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap' }}>
@@ -146,6 +148,7 @@ export class VoyageCrew extends React.Component {
                     <div className="column"><h4>Algorithm settings</h4></div>
                 </div>
 
+				{/* #!if ENV === 'electron' */}
                 <div className="two column row" style={{ display: this.state.selectedVoyageMethod.val ? 'inline-block' : 'none' }}>
                     <div className="column">
                         <SpinButton value={this.state.searchDepth} label={ 'Search depth:' } min={ 2 } max={ 30 } step={ 1 }
@@ -160,6 +163,7 @@ export class VoyageCrew extends React.Component {
                         />
                     </div>
                 </div>
+				{/* #!endif */}
 
                 <div className="row">
                     <div className="column">
@@ -186,8 +190,12 @@ export class VoyageCrew extends React.Component {
             <br/>
 
             <PrimaryButton onClick={this._exportVoyageData} text='Calculate best crew selection' disabled={this.state.state === 'inprogress'} />
+
+			{/* #!if ENV === 'electron' */}
 			<span> </span>
             <PrimaryButton onClick={this._generateVoyCrewRank} text='Export CSV with crew Voyage ranking...' disabled={this.state.state === 'inprogress'} />
+			{/* #!endif */}
+
 			<br/>
 
 			<div className='field-maxwidth'>
@@ -249,8 +257,6 @@ export class VoyageCrew extends React.Component {
 	}
 
 	_exportVoyageData() {
-		const NativeExtension = require('electron').remote.require('stt-native');
-
         let dataToExport = {
 			crew: STTApi.roster.map(crew => new Object({
 				id: crew.crew_id,
@@ -328,13 +334,17 @@ export class VoyageCrew extends React.Component {
 				state: state};
 		}
 
+// #!if ENV === 'electron'
 		if (this.state.selectedVoyageMethod.val) {
+			const NativeExtension = require('electron').remote.require('stt-native');
 			NativeExtension.calculateVoyageRecommendations(JSON.stringify(dataToExport), result => {
 				this.setState(parseResults(JSON.parse(result), 'done'));
 			}, progressResult => {
 				this.setState(parseResults(JSON.parse(progressResult), 'inprogress'));
 			});
-		} else {
+		} else
+// #!endif
+		{
 			if (this.state.includeActive === false) {
 				dataToExport.crew = dataToExport.crew.filter(c => c.active_id === 0);
 			}
@@ -343,6 +353,7 @@ export class VoyageCrew extends React.Component {
 	}
 
 	_generateVoyCrewRank() {
+// #!if ENV === 'electron'
 		const NativeExtension = require('electron').remote.require('stt-native');
 
 		let dataToExport = {
@@ -386,6 +397,7 @@ export class VoyageCrew extends React.Component {
 		}, progressResult => {
 			console.log("unexpected progress result!"); // not implemented yet..
 		});
+// #!endif
 	}
 }
 

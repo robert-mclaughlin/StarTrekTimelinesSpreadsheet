@@ -57,6 +57,7 @@
     "webpack": "^4.15.1",
     "webpack-cli": "latest",
     "webpack-dev-server": "latest",
+    "webpack-preprocessor-loader": "^1.0.4",
     "worker-loader": "latest"
   },
   "dependencies": {

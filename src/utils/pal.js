@@ -1,3 +1,4 @@
+// #!if ENV === 'electron'
 const electron = require('electron');
 const app = electron.app || electron.remote.app;
 const shell = electron.shell || electron.remote.shell;
@@ -6,25 +7,44 @@ const fs = require('fs');
 const os = require('os');
 
 import { ipcRenderer } from 'electron';
+// #!endif
 
 export function getAppVersion() {
+// #!if ENV === 'electron'
     return app.getVersion();
+// #!else
+    return process.env.APP_VERSION + '-web';
+// #!endif
 }
 
+// #!if ENV === 'electron'
 export function getAppPath(name) {
     return app.getPath(name);
 }
+// #!endif
 
 export function getOSDetails() {
+// #!if ENV === 'electron'
     return `${os.platform()} ${os.arch()} (${os.release()})`;
+// #!else
+    return navigator.userAgent;
+// #!endif
 }
 
 export function openDevTools() {
+// #!if ENV === 'electron'
     ipcRenderer.send("open-dev-tools", "");
+// #!else
+    alert('Open the developer tools by pressing F12');
+// #!endif
 }
 
 export function openShellExternal(url) {
+// #!if ENV === 'electron'
     shell.openExternal(url);
+// #!else
+    window.open(url, '_blank');
+// #!endif
 }
 
 export function download(filename, text, title, buttonLabel) {
@@ -44,7 +64,7 @@ export function download(filename, text, title, buttonLabel) {
 
     // For Electron:
 
-/// #if ENV_ELECTRON
+// #!if ENV === 'electron'
     let extension = filename.split('.').pop();
     let extName = '';
     if (extension === 'csv') {
@@ -75,5 +95,7 @@ export function download(filename, text, title, buttonLabel) {
             });
 
         });
-/// #endif
+// #!else
+
+// #!endif
 }

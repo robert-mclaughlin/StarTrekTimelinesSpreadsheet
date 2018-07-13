@@ -10,7 +10,9 @@ import { Image } from 'office-ui-fabric-react/lib/Image';
 
 import STTApi from 'sttapi';
 
+// #!if ENV === 'electron'
 import { ipcRenderer } from 'electron';
+// #!endif
 
 export class LoginDialog extends React.Component {
 	constructor(props) {
@@ -30,7 +32,10 @@ export class LoginDialog extends React.Component {
 		};
 
 		this._closeDialog = this._closeDialog.bind(this);
+
+// #!if ENV === 'electron'
 		this._connectFacebook = this._connectFacebook.bind(this);
+// #!endif
 	}
 
 	componentWillReceiveProps(nextProps) {
@@ -74,6 +79,7 @@ export class LoginDialog extends React.Component {
 								onChanged={(value) => { this.setState({ password: value }) }}
 							/>
 						</PivotItem>
+						{/* #!if ENV === 'electron' */}
 						<PivotItem linkText='Facebook'>
 							<center style={{ marginTop:'5px' }} >
 								<PrimaryButton onClick={this._connectFacebook} text='Connect with Facebook' disabled={this.state.waitingForFacebook} />
@@ -81,6 +87,7 @@ export class LoginDialog extends React.Component {
 								<p>{this.state.facebookStatus}</p>
 							</center>
 						</PivotItem>
+						{/* #!endif */}
 					</Pivot>
 
 					<Checkbox
@@ -100,6 +107,7 @@ export class LoginDialog extends React.Component {
 		);
 	}
 
+// #!if ENV === 'electron'
 	_connectFacebook() {
 		this.setState({
 			waitingForFacebook: true
@@ -126,6 +134,7 @@ export class LoginDialog extends React.Component {
 
 		ipcRenderer.send("fb-authenticate", "yes");
 	}
+// #!endif
 
 	_showDialog(errMsg) {
 		this.setState({ hideDialog: false, errorMessage: errMsg });

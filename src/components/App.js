@@ -33,7 +33,11 @@ import { exportExcel } from '../utils/excelExporter.js';
 import { exportCsv } from '../utils/csvExporter.js';
 import { exportItemsCsv } from '../utils/csvExporter.js';
 import { shareCrew } from '../utils/pastebin.js';
+// #!if ENV === 'electron'
 import { FileImageCache } from '../utils/fileImageCache.js';
+// #!else
+import { AzureImageProvider } from '../utils/azureImageCache.js';
+// #!endif
 import { createIssue } from '../utils/githubUtils';
 
 import { LoginDialog } from './LoginDialog.js';
@@ -58,7 +62,9 @@ import { download, openShellExternal, getAppVersion } from '../utils/pal';
 
 import { loadTheme, ColorClassNames } from '@uifabric/styling';
 
+// #!if ENV === 'electron'
 import { rcompare } from 'semver';
+// #!endif
 
 class App extends React.Component {
 	constructor(props) {
@@ -101,7 +107,12 @@ class App extends React.Component {
 
 		initializeIcons(/* optional base url */);
 
+// #!if ENV === 'electron'
 		STTApi.setImageProvider(true, new FileImageCache());
+// #!else
+		STTApi.setImageProviderOverride(new AzureImageProvider());
+		STTApi.networkHelper.setProxy('https://stttools.azurewebsites.net/api/sttproxy');
+// #!endif
 
 		STTApi.config.where('key').equals('ui.darkTheme').first().then((entry) => {
 			this.setState({ darkTheme: entry && entry.value });
@@ -512,6 +523,7 @@ class App extends React.Component {
 			dataLoaded: true
 		});
 
+// #!if ENV === 'electron'
 		let data = await STTApi.getGithubReleases();
 		let versions = data.map((release) => release.tag_name.replace('v', ''));
 		let maxVersion = versions.sort(rcompare)[0];
@@ -522,6 +534,7 @@ class App extends React.Component {
 				updateUrl: data[0].html_url
 			});
 		}
+// #!endif
 
 		if (STTApi.playerData.character.crew_avatar) {
 			STTApi.imageProvider.getCrewImageUrl(STTApi.playerData.character.crew_avatar, false, 0).then(({ id, url }) => {

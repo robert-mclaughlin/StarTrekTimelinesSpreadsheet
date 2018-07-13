@@ -1,7 +1,6 @@
 const webpack = require('webpack');
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const MinifyPlugin = require("babel-minify-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const PACKAGE = require('./package.json');
 
@@ -12,15 +11,6 @@ const OUTPUT_DIR = path.resolve(__dirname, 'dist');
 
 // Any directories you will be adding code/files into, need to be added to this array so webpack will pick them up
 const defaultInclude = [SRC_DIR, SHARED_DIR];
-
-// Conditional compilation
-const ifdef_opts = {
-	ENV_ELECTRON: true,
-	ENV_WEB: false,
-	version: 3,
-	"ifdef-verbose": true,       // add this for verbose output
-	"ifdef-triple-slash": false  // add this to use double slash comment instead of default triple slash
-};
 
 module.exports = {
 	entry: SRC_DIR + '/index.js',
@@ -41,12 +31,12 @@ module.exports = {
 			},
 			{
 				test: /\.jsx?$/,
-				use: [{ loader: 'babel-loader' }, { loader: "ifdef-loader", options: ifdef_opts }],
+				use: [{ loader: 'babel-loader' }, { loader: 'webpack-preprocessor-loader', options: { params: { ENV: 'electron' } } }],
 				include: defaultInclude
 			},
 			{
 				test: /\.tsx?$/,
-				use: [{ loader: 'babel-loader'}, { loader: 'ts-loader'}, { loader: "ifdef-loader", options: ifdef_opts } ],
+				use: [{ loader: 'babel-loader'}, { loader: 'ts-loader'}, { loader: 'webpack-preprocessor-loader', options: { params: { ENV: 'electron' } } } ],
 				include: defaultInclude
 			},
 			{
@@ -64,7 +54,6 @@ module.exports = {
 	target: 'electron-renderer',
 	plugins: [
 		new HtmlWebpackPlugin({ title: 'Star Trek Timelines Crew Management v' + PACKAGE.version }),
-		//new ExtractTextPlugin('bundle.css'),
 		new MiniCssExtractPlugin({
 			// Options similar to the same options in webpackOptions.output
 			// both options are optional
@@ -74,7 +63,6 @@ module.exports = {
 		new webpack.DefinePlugin({
 			'process.env.NODE_ENV': JSON.stringify('production')
 		}),
-		//new MinifyPlugin()
 	],
 	stats: {
 		colors: true,
