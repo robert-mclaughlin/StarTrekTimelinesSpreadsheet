@@ -22,6 +22,8 @@
     "prod": "webpack --mode production --config webpack.build.electron.config.js && electron --noDevServer .",
     "dev": "webpack-dev-server --mode development --hot --host 0.0.0.0 --config=./webpack.dev.electron.config.js",
     "build": "webpack --mode production --config webpack.build.electron.config.js",
+    "buildweb": "webpack --mode production --config webpack.build.web.config.js",
+    "devweb": "webpack-dev-server --mode development --hot --host 0.0.0.0 --config=./webpack.build.web.config.js",
     "package": "webpack --mode production --config webpack.build.electron.config.js",
     "postpackage": "electron-packager ./ --out=./builds --prune --icon=src/assets/icons/ATFleet.ico",
     "installer": "node createinstaller.js"
@@ -57,7 +59,9 @@
     "webpack": "^4.15.1",
     "webpack-cli": "latest",
     "webpack-dev-server": "latest",
+    "webpack-merge": "^4.1.3",
     "webpack-preprocessor-loader": "^1.0.4",
+    "webpack-serve": "^2.0.2",
     "worker-loader": "latest"
   },
   "dependencies": {

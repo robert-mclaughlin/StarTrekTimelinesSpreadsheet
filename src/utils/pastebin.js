@@ -99,6 +99,7 @@ function sillyTemplatizer(html, options) {
 }
 
 function imageToDataUri(imgUrl, newEntry, resolve, wantedWidth, wantedHeight) {
+// #!if ENV === 'electron'
 	// We create an image to receive the Data URI
 	let img = document.createElement('img');
 
@@ -121,6 +122,10 @@ function imageToDataUri(imgUrl, newEntry, resolve, wantedWidth, wantedHeight) {
 
 	// We put the Data URI in the image's src attribute
 	img.src = imgUrl;
+// #!else
+	newEntry.iconUrl = imgUrl;
+	resolve();
+// #!endif
 }
 
 async function shareCrewInternal(options, missionList) {

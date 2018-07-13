@@ -48,24 +48,8 @@ export function openShellExternal(url) {
 }
 
 export function download(filename, text, title, buttonLabel) {
-    // For the browser:
-    /*var pom = document.createElement('a');
-    pom.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(text));
-    pom.setAttribute('download', filename);
-
-    if (document.createEvent) {
-        var event = document.createEvent('MouseEvents');
-        event.initEvent('click', true, true);
-        pom.dispatchEvent(event);
-    }
-    else {
-        pom.click();
-    }*/
-
-    // For Electron:
-
-// #!if ENV === 'electron'
     let extension = filename.split('.').pop();
+// #!if ENV === 'electron'
     let extName = '';
     if (extension === 'csv') {
         extName = 'Comma separated file (*.csv)';
@@ -96,6 +80,42 @@ export function download(filename, text, title, buttonLabel) {
 
         });
 // #!else
+    let mimeType = '';
+    let isText = true;
+    if (extension === 'csv') {
+        mimeType = 'text/csv;charset=utf-8';
+    } else if (extension === 'xlsx') {
+        mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+        isText = false;
+    } else if (extension === 'json') {
+        mimeType = 'text/json;charset=utf-8';
+    } else if (extension === 'html') {
+        mimeType = 'text/html;charset=utf-8';
+    }
 
+    function downloadData(dataUrl) {
+        let pom = document.createElement('a');
+        pom.setAttribute('href', dataUrl);
+        pom.setAttribute('download', filename);
+
+        if (document.createEvent) {
+            let event = document.createEvent('MouseEvents');
+            event.initEvent('click', true, true);
+            pom.dispatchEvent(event);
+        }
+        else {
+            pom.click();
+        }
+    }
+
+    if (isText) {
+        downloadData(`data:${mimeType},${encodeURIComponent(text)}`, filename);
+    } else {
+        var a = new FileReader();
+        a.onload = (e) => {
+            downloadData(e.target.result);
+        };
+        a.readAsDataURL(text);
+    }
 // #!endif
 }

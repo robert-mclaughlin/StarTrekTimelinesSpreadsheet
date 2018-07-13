@@ -34,10 +34,20 @@ module.exports = merge(baseConfig, {
 				test: /\.(eot|svg|ttf|woff|woff2)$/,
 				use: [{ loader: 'file-loader?name=font/[name]__[hash:base64:5].[ext]' }],
 				include: defaultInclude
+			},
+			{
+				test: /\.jsx?$/,
+				use: [{ loader: 'babel-loader' }, { loader: 'webpack-preprocessor-loader', options: { params: { ENV: 'web' } } }],
+				include: defaultInclude
+			},
+			{
+				test: /\.tsx?$/,
+				use: [{ loader: 'babel-loader'}, { loader: 'ts-loader'}, { loader: 'webpack-preprocessor-loader', options: { params: { ENV: 'web' } } } ],
+				include: defaultInclude
 			}
 		]
 	},
-	target: 'electron-renderer',
+	target: 'web',
 	plugins: [
 		new MiniCssExtractPlugin({
 			// Options similar to the same options in webpackOptions.output

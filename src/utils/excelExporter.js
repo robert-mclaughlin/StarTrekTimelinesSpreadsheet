@@ -1,4 +1,9 @@
+// #!if ENV === 'electron'
 import XlsxPopulate from 'xlsx-populate';
+// #!else
+import XlsxPopulate from 'xlsx-populate/browser/xlsx-populate';
+// #!endif
+
 import STTApi from 'sttapi';
 import { CONFIG } from 'sttapi';
 

@@ -6,14 +6,29 @@ export class AzureImageProvider {
     _cachedAssets;
 
     constructor() {
-        // TODO: load entire blob list in assets/*
+        this._baseURLAsset = 'https://stttoolsstorage.blob.core.windows.net/assets/';
 
-        this._baseURLAsset = 'https://stttoolsstorage.blob.core.windows.net/assets/'
         this._cachedAssets = new Set();
+
+        this.fillCache();
+    }
+
+    async fillCache() {
+        let response = await STTApi.networkHelper.postjson('https://stttools.azurewebsites.net/api/getasset', {
+            "list_assets": true
+        });
+
+        if (response.ok) {
+            let assetList = await response.json();
+
+            let assetNames = assetList.entries.map((entry) => entry.name.replace(this._baseURLAsset, ''));
+
+            this._cachedAssets = new Set(assetNames);
+        }
     }
 
     formatUrl(url) {
-		return (url.startsWith('/') ? '' : '_') + url.replace(new RegExp('/', 'g'), '_') + '.png';
+		return url.replace(new RegExp('/', 'g'), '_') + '.png';
 	}
 
     getCached(withIcon) {
@@ -39,7 +54,11 @@ export class AzureImageProvider {
     }
 
     getSpriteCached(assetName, spriteName) {
-        return this.internalGetCached(((assetName.length > 0) ? (assetName + '_') : '') + spriteName);
+        if (!assetName) {
+            return this.internalGetCached(spriteName);
+        }
+
+        return this.internalGetCached('_' + ((assetName.length > 0) ? (assetName + '_') : '') + spriteName);
     }
 
     getCrewImageUrl(crew, fullBody, id) {
@@ -59,26 +78,26 @@ export class AzureImageProvider {
     }
 
     async getSprite(assetName, spriteName, id) {
-        let assetUrl = STTApi.networkHelper.post('https://stttools.azurewebsites.net/api/getasset', {
+        let assetUrl = await STTApi.networkHelper.postjson('https://stttools.azurewebsites.net/api/getasset', {
             "client_platform": CONFIG.CLIENT_PLATFORM,
             "client_version": CONFIG.CLIENT_VERSION,
             "asset_server": STTApi.serverConfig.config.asset_server,
             "asset_bundle_version": STTApi.serverConfig.config.asset_bundle_version,
             "asset_file": assetName,
             "sprite_name": spriteName
-        });
+        }).text();
 
         return { id, url: assetUrl };
     }
 
     async getImageUrl(iconFile, id) {
-        let assetUrl = STTApi.networkHelper.post('https://stttools.azurewebsites.net/api/getasset', {
+        let assetUrl = await STTApi.networkHelper.postjson('https://stttools.azurewebsites.net/api/getasset', {
             "client_platform": CONFIG.CLIENT_PLATFORM,
             "client_version": CONFIG.CLIENT_VERSION,
             "asset_server": STTApi.serverConfig.config.asset_server,
             "asset_bundle_version": STTApi.serverConfig.config.asset_bundle_version,
             "asset_file": iconFile
-        });
+        }).text();
 
         return { id, url: assetUrl };
     }
