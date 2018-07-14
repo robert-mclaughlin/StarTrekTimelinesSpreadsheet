@@ -78,26 +78,30 @@ export class AzureImageProvider {
     }
 
     async getSprite(assetName, spriteName, id) {
-        let assetUrl = await STTApi.networkHelper.postjson('https://stttools.azurewebsites.net/api/getasset', {
+        let response = await STTApi.networkHelper.postjson('https://stttools.azurewebsites.net/api/getasset', {
             "client_platform": CONFIG.CLIENT_PLATFORM,
             "client_version": CONFIG.CLIENT_VERSION,
             "asset_server": STTApi.serverConfig.config.asset_server,
             "asset_bundle_version": STTApi.serverConfig.config.asset_bundle_version,
             "asset_file": assetName,
             "sprite_name": spriteName
-        }).text();
+        });
+        
+        let assetUrl = await response.text();
 
         return { id, url: assetUrl };
     }
 
     async getImageUrl(iconFile, id) {
-        let assetUrl = await STTApi.networkHelper.postjson('https://stttools.azurewebsites.net/api/getasset', {
+        let response = await STTApi.networkHelper.postjson('https://stttools.azurewebsites.net/api/getasset', {
             "client_platform": CONFIG.CLIENT_PLATFORM,
             "client_version": CONFIG.CLIENT_VERSION,
             "asset_server": STTApi.serverConfig.config.asset_server,
             "asset_bundle_version": STTApi.serverConfig.config.asset_bundle_version,
             "asset_file": iconFile
-        }).text();
+        });
+
+        let assetUrl = await response.text();
 
         return { id, url: assetUrl };
     }

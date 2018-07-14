@@ -23,7 +23,7 @@
     "dev": "webpack-dev-server --mode development --hot --host 0.0.0.0 --config=./webpack.dev.electron.config.js",
     "build": "webpack --mode production --config webpack.build.electron.config.js",
     "buildweb": "webpack --mode production --config webpack.build.web.config.js",
-    "devweb": "webpack-dev-server --mode development --hot --host 0.0.0.0 --config=./webpack.build.web.config.js",
+    "serveweb": "webpack-serve --config=./webpack.build.web.config.js",
     "package": "webpack --mode production --config webpack.build.electron.config.js",
     "postpackage": "electron-packager ./ --out=./builds --prune --icon=src/assets/icons/ATFleet.ico",
     "installer": "node createinstaller.js"

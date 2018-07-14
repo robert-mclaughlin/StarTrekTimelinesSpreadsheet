@@ -122,7 +122,12 @@ export class VoyageCrew extends React.Component {
 		});
 
 		return (<div>
+			{/* #!if ENV === 'electron' */}
 			<p><b>NOTE: </b>Algorithms are still a work in progress. Please provide feedback on your recommendations and voyage results!</p>
+			{/* #!else */}
+			<br/>
+			<h2 style={{backgroundColor:'Tomato'}}>NOTE: The web version doesn't include the fancy Voyage calculator! I need to find a cheap hosting option, or a way to run the code in a browser environment (maybe webassembly). This calculator is based on the antiquated "fast" option which is pure JavaScript. Use the desktop tool for best results!</h2>
+			{/* #!endif */}
 
 			{/* #!if ENV === 'electron' */}
 			<div className='field-maxwidth'>
@@ -329,7 +334,11 @@ export class VoyageCrew extends React.Component {
 
 		const parseResults = (result, state) => {
 			return {
+// #!if ENV === 'electron'
 				crewSelection: this.state.selectedVoyageMethod.val ? cppEntries(result) : jsEntries(result),
+// #!else
+				crewSelection: jsEntries(result),
+// #!endif
 				estimatedDuration: result.bestCrewTime || result.score || 0,
 				state: state};
 		}

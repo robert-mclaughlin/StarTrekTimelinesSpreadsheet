@@ -27,6 +27,7 @@ import { Callout } from 'office-ui-fabric-react/lib/Callout';
 import { SearchBox } from 'office-ui-fabric-react/lib/SearchBox';
 import { IconButton, PrimaryButton, DefaultButton } from 'office-ui-fabric-react/lib/Button';
 import { Checkbox } from 'office-ui-fabric-react/lib/Checkbox';
+import { TooltipHost, TooltipDelay, DirectionalHint } from 'office-ui-fabric-react/lib/Tooltip';
 import { initializeIcons } from 'office-ui-fabric-react/lib/Icons';
 
 import { exportExcel } from '../utils/excelExporter.js';
@@ -86,6 +87,7 @@ class App extends React.Component {
 			errorMessage: '',
 			updateUrl: undefined,
 			theme: undefined,
+			cost: undefined,
 			darkTheme: false
 		};
 
@@ -108,10 +110,16 @@ class App extends React.Component {
 		initializeIcons(/* optional base url */);
 
 // #!if ENV === 'electron'
+		STTApi.inWebMode = false;
 		STTApi.setImageProvider(true, new FileImageCache());
 // #!else
+		STTApi.inWebMode = true;
 		STTApi.setImageProviderOverride(new AzureImageProvider());
 		STTApi.networkHelper.setProxy('https://stttools.azurewebsites.net/api/sttproxy');
+
+		STTApi.networkHelper.get('https://stttools.azurewebsites.net/api/getcost', { thismonth: true}).then((data) => {
+			this.setState({ cost: data.cost });
+		});
 // #!endif
 
 		STTApi.config.where('key').equals('ui.darkTheme').first().then((entry) => {
@@ -290,6 +298,18 @@ class App extends React.Component {
 					{this.state.updateUrl && <div className='lcars-ellipse' />}
 					{this.state.updateUrl && <div className='lcars-content-text' style={{ cursor: 'pointer' }}>
 						<a style={{color: 'red'}} onClick={() => openShellExternal(this.state.updateUrl)}>Update available!</a>
+					</div>}
+					{this.state.cost && <div className='lcars-ellipse' />}
+					{this.state.cost && <div className='lcars-content-text' style={{ cursor: 'pointer' }}>
+						<TooltipHost calloutProps={{ gapSpace: 20 }} delay={TooltipDelay.zero} directionalHint={DirectionalHint.bottomCenter}
+							tooltipProps={{ onRenderContent: () => {
+								return ( <div>
+									<span>Cost to operate the website this month: ${this.state.cost}</span>
+									<br/>
+									<span>After evaluation / beta, I'll either shut down the website or introduce a donation system to cover the costs.</span>
+								</div> ); }}} >
+							<span>Cost: ${this.state.cost}</span>
+						</TooltipHost>
 					</div>}
 					<div className='lcars-box' />
 					<div className='lcars-content'>
@@ -510,10 +530,14 @@ class App extends React.Component {
 	}
 
 	async _onDataFinished() {
+// #!if ENV === 'electron'
 		// This resets with every new version, in case the message is updated or folks forget
 		let entry = await STTApi.config.where('key').equals('ui.showBootMessage' + getAppVersion()).first();
 		let shouldShowBootMessage = !entry || entry.value;
-
+// #!else
+		// TODO: This ifdef should be the same on web, but Safari crashes and burns with dexie indexeddb transactions (potentially Promise-related)
+		let shouldShowBootMessage = false;
+// #!endif
 		this.setState({
 			showSpinner: false,
 			captainName: STTApi.playerData.character.display_name,
