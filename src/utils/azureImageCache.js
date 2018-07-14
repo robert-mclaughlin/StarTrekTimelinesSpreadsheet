@@ -78,6 +78,11 @@ export class AzureImageProvider {
     }
 
     async getSprite(assetName, spriteName, id) {
+        let cachedUrl = this.getSpriteCached(assetName, spriteName);
+        if (cachedUrl) {
+            return { id, url: cachedUrl };
+        }
+
         let response = await STTApi.networkHelper.postjson('https://stttools.azurewebsites.net/api/getasset', {
             "client_platform": CONFIG.CLIENT_PLATFORM,
             "client_version": CONFIG.CLIENT_VERSION,
@@ -93,6 +98,11 @@ export class AzureImageProvider {
     }
 
     async getImageUrl(iconFile, id) {
+        let cachedUrl = this.internalGetCached(iconFile);
+        if (cachedUrl) {
+            return { id, url: cachedUrl };
+        }
+
         let response = await STTApi.networkHelper.postjson('https://stttools.azurewebsites.net/api/getasset', {
             "client_platform": CONFIG.CLIENT_PLATFORM,
             "client_version": CONFIG.CLIENT_VERSION,

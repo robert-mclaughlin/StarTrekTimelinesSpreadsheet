@@ -48,8 +48,8 @@ export class ShipList extends React.Component {
 						return (
 							<RarityStars
 								min={1}
-								max={item.max_level}
-								value={(item.level > 0) ? item.level : null}
+								max={item.max_level + 1}
+								value={(item.level > 0) ? (item.level + 1) : null}
 							/>
 						);
 					},
@@ -130,6 +130,7 @@ export class ShipList extends React.Component {
 					key: 'traitNames',
 					name: 'Traits',
 					minWidth: 80,
+					maxWidth: 250,
 					isResizable: true,
 					fieldName: 'traitNames',
 				},
