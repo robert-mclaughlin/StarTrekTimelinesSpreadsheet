@@ -1,8 +1,4 @@
-// #!if ENV === 'electron'
 import XlsxPopulate from 'xlsx-populate';
-// #!else
-import XlsxPopulate from 'xlsx-populate/browser/xlsx-populate';
-// #!endif
 
 import STTApi from 'sttapi';
 import { CONFIG } from 'sttapi';
@@ -77,8 +73,8 @@ export async function exportExcel(itemList) {
 	STTApi.roster.forEach((crew) => {
 		let equipment = [];
 		crew.equipment_slots.forEach(es => {
-			equipment.push(STTApi.itemArchetypeCache.archetypes.find(equipment => equipment.id === es.archetype).name +
-				(es.have ? ' (1)' : ' (0)'));
+			let arch = STTApi.itemArchetypeCache.archetypes.find(equipment => equipment.id === es.archetype);
+			equipment.push((arch ? arch.name : '!UNKNOWN!') + (es.have ? ' (1)' : ' (0)'));
 		});
 
 		values.push([crew.id, crew.name, crew.short_name, crew.rarity, crew.max_rarity, crew.level, crew.frozen,

@@ -2,7 +2,7 @@ const webpack = require('webpack');
 const path = require('path');
 const merge = require('webpack-merge');
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
-
+const WebpackCdnPlugin = require('webpack-cdn-plugin');
 const baseConfig = require('./webpack.base.config.js');
 
 // Config directories
@@ -55,7 +55,21 @@ module.exports = merge(baseConfig, {
 			filename: "[name].css",
 			chunkFilename: "[id].css"
 		}),
-		new webpack.DefinePlugin({ 'process.env.NODE_ENV': JSON.stringify('production') })
+		new webpack.DefinePlugin({ 'process.env.NODE_ENV': JSON.stringify('production') }),
+		new WebpackCdnPlugin({
+			modules: [
+			  {
+				name: 'vis',
+				var: 'vis'
+			  },
+			  {
+				name: 'xlsx-populate',
+				var: 'XlsxPopulate',
+				path: 'browser/xlsx-populate.js'
+			  }
+			],
+			publicPath: '/node_modules'
+		  })
 	],
 	stats: {
 		colors: true,

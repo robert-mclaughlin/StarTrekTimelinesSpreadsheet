@@ -308,14 +308,14 @@ class App extends React.Component {
 									<br/>
 									<span>After evaluation / beta, I'll either shut down the website or introduce a donation system to cover the costs.</span>
 								</div> ); }}} >
-							<span className={ColorClassNames.neutralLighter}>Cost: ${this.state.cost}</span>
+							<span className={ColorClassNames.orangeLighter}>Cost: ${this.state.cost}</span>
 						</TooltipHost>
 					</div>}
 					<div className='lcars-box' />
 					<div className='lcars-content'>
 						<IconButton iconProps={{ iconName: 'Light' }} title='Switch theme' onClick={() => {
 							this.setState({darkTheme: !this.state.darkTheme}, () => this._onSwitchTheme(true));
-							}} className={ColorClassNames.themeTertiary} />
+							}} className={ColorClassNames.neutralDark} />
 					</div>
 					<div className='lcars-ellipse' />
 					<div className='lcars-content' ref={(menuButton) => this._feedbackButtonElement = menuButton}>
