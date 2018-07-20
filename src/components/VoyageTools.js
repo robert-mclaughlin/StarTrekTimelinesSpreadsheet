@@ -9,6 +9,7 @@ import { NormalPeoplePicker } from 'office-ui-fabric-react/lib/Pickers';
 import { Image, ImageFit } from 'office-ui-fabric-react/lib/Image';
 import { Icon } from 'office-ui-fabric-react/lib/Icon';
 import { TextField } from 'office-ui-fabric-react/lib/TextField';
+import { MessageBar, MessageBarType } from 'office-ui-fabric-react/lib/MessageBar';
 
 import STTApi from 'sttapi';
 import { CONFIG, bestVoyageShip, loadVoyage, startVoyage, formatCrewStats, bonusCrewForCurrentEvent } from 'sttapi';
@@ -32,7 +33,8 @@ export class VoyageCrew extends React.Component {
 			peopleList: [],
 			currentSelectedItems: [],
 			selectedVoyageMethod: { key: 0, text: 'Thorough', val: true },
-			preselectedIgnored: []
+			preselectedIgnored: [],
+			error: undefined
 		};
         
 		// See which crew is needed in the event to give the user a chance to remove them from consideration
@@ -122,6 +124,7 @@ export class VoyageCrew extends React.Component {
 		});
 
 		return (<div>
+			{this.state.error && <MessageBar messageBarType={MessageBarType.error}>Error: {this.state.error}</MessageBar>}
 			{/* #!if ENV === 'electron' */}
 			<p><b>NOTE: </b>Algorithms are still a work in progress. Please provide feedback on your recommendations and voyage results!</p>
 			{/* #!else */}
@@ -258,6 +261,8 @@ export class VoyageCrew extends React.Component {
 		// TODO: At this point we should refresh crew and make sure no-one's status changes (recently dismissed crew will cause weird bugs!)
 		startVoyage(STTApi.playerData.character.voyage_descriptions[0].symbol, this.state.bestShips[0].ship.id, this.state.shipName, selectedCrewIds).then(() => {
 			this.props.onRefreshNeeded();
+		}).catch((err) => {
+			this.setState({error: err.message});
 		});
 	}
 
