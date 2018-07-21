@@ -131,10 +131,17 @@ There is no server associated with this tool, all state stays on your device. He
 - https://thorium.disruptorbeam.com/ : this is the login URL for DisruptorBeam; your username / password or Facebook access token is sent to this URL in order to get an access_token. This URL is only accessed during login.
 - https://stt.disruptorbeam.com/ : this is the main Star Trek Timelines API endpoint URL, owned by DisruptorBeam.
 - https://api.github.com/repos/IAmPicard/StarTrekTimelinesSpreadsheet/releases : this URL contains the list of tool releases. It's accessed during application boot (and from the About tab) to check for new versions. No data is sent along with the request (it's just a GET).
-- https://logic.azure.com : this URL is accessed when (and only if) you submit user feedback. The only data included with the request are the fields in the feedback dialog itself. No other data is sent.
 - https://ptpb.pw : this URL is accessed when (and only if) you use the Share dialog to share your crew stats online.
 - https://www.facebook.com/v2.8/dialog/oauth : this URL is only accessed if you use the Facebook login option. It's used to obtain a facebook access token which is later sent to DB's server to get an access_token.
 
 The tool never stores your username or password and it only sends it to DisruptorBeam's official servers for login purposes. If you check the "Stay logged in" checkbox in the login dialog, the tool will store an access_token on your local device in the IndexedDB database.
+
+### Web version
+If you're using the web version of the tool (currently in pre-alpha), I need to proxy all requests to DB servers through an Azure function due to the CORS policy on DB servers (the API is located at https://stttools.azurewebsites.net/api/). Same privacy policy applies as above, I'll never store any of your private data. However, for cost reducing purposes, I need to cache some data in Azure storage. In addition, the built-in Azure diagnostics system will log some data about the function invocations (which is purged after 30 days). This is a comprehensive list of all the data that the web version stores:
+- Equipment details (recipe tree, item sources);
+- Crew stats for imoortalized crew;
+- Images / icons associated with crew / items;
+- Your in-game captain name and a timestamp of each website load - this lets me analyze usage to better plan out resources, as well as look out for abuse - this data is purged every 30 days; if you consider your in-game captain name to be private data and have any GDPR concerns, please send me an email with your captain name and I'll be happy to purge it immediately;
+- Generic metadata such as number of function calls, duration, error rate, etc.;
 
 I encourage you to only use a version of the tool from a trusted source (such as the [Releases](https://github.com/IAmPicard/StarTrekTimelinesSpreadsheet/releases) page on GitHub). If a "well intentioned" person online offers to send you a modified version with "extra features" ask for the source code and manually compare against what's here in the repo to ensure no malicious functionality was added.
