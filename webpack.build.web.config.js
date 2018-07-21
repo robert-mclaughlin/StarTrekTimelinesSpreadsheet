@@ -44,7 +44,7 @@ module.exports = merge(baseConfig, {
 			},
 			{
 				test: /\.tsx?$/,
-				use: [{ loader: 'babel-loader'}, { loader: 'ts-loader'}, { loader: 'webpack-preprocessor-loader', options: { params: { ENV: 'web' } } } ],
+				use: [{ loader: 'babel-loader' }, { loader: 'ts-loader' }, { loader: 'webpack-preprocessor-loader', options: { params: { ENV: 'web' } } }],
 				include: defaultInclude
 			}
 		]
@@ -61,19 +61,22 @@ module.exports = merge(baseConfig, {
 		new webpack.DefinePlugin({ 'process.env.NODE_ENV': JSON.stringify('production') }),
 		new WebpackCdnPlugin({
 			modules: [
-			  {
-				name: 'vis',
-				var: 'vis'
-			  },
-			  {
-				name: 'xlsx-populate',
-				var: 'XlsxPopulate',
-				path: 'browser/xlsx-populate.js'
-			  }
+				{
+					name: 'vis',
+					var: 'vis'
+				},
+				{
+					name: 'xlsx-populate',
+					var: 'XlsxPopulate',
+					path: 'browser/xlsx-populate.js'
+				}
 			],
 			publicPath: '/node_modules'
-		  })
+		})
 	],
+	node: {
+		fs: "empty"
+	},
 	stats: {
 		colors: true,
 		children: false,

@@ -26,10 +26,11 @@ const VoyageCalculators = {
 		name: 'Thorough (best results)',
 		supportsDepth: true
 	},
+// #!else
 	wasm : {
 		name: 'EXPERIMENTAL Thorough (WebAssembly)',
 		supportsDepth: true
-	}
+	},
 // #!endif
 };
 
@@ -52,12 +53,12 @@ export class VoyageCrew extends React.Component {
 // #!if ENV === 'electron'
 			selectedVoyageMethod: 'cpp',
 // #!else
-			selectedVoyageMethod: 'js',
+			selectedVoyageMethod: 'wasm',
 // #!endif
 			preselectedIgnored: [],
 			error: undefined
 		};
-        
+
 		// See which crew is needed in the event to give the user a chance to remove them from consideration
 		let result = bonusCrewForCurrentEvent();
 		if (result) {
@@ -159,7 +160,7 @@ export class VoyageCrew extends React.Component {
 			<p><b>NOTE: </b>Algorithms are still a work in progress. Please provide feedback on your recommendations and voyage results!</p>
 			{/* #!else */}
 			<br/>
-			<h2 style={{backgroundColor:'Tomato'}}>NOTE: The web version doesn't include the fancy Voyage calculator! I need to find a cheap hosting option, or a way to run the code in a browser environment (maybe webassembly). This calculator is based on the antiquated "fast" option which is pure JavaScript. Use the desktop tool for best results!</h2>
+			<h2 style={{backgroundColor:'Tomato'}}>NOTE: If the experimental algorithm keeps crashing your browser, try reducing the search depth!</h2>
 			{/* #!endif */}
 
 			<div style={containerStyle}>
