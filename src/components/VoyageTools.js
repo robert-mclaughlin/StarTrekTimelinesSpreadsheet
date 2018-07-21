@@ -16,6 +16,23 @@ import { CONFIG, bestVoyageShip, loadVoyage, startVoyage, formatCrewStats, bonus
 
 import { download } from '../utils/pal';
 
+const VoyageCalculators = {
+	js : {
+		name: 'Fast (quick & dirty)',
+		supportsDepth: false
+	},
+// #!if ENV === 'electron'
+	cpp : {
+		name: 'Thorough (best results)',
+		supportsDepth: true
+	},
+	wasm : {
+		name: 'EXPERIMENTAL Thorough (WebAssembly)',
+		supportsDepth: true
+	}
+// #!endif
+};
+
 export class VoyageCrew extends React.Component {
 	constructor(props) {
 		super(props);
@@ -26,13 +43,17 @@ export class VoyageCrew extends React.Component {
 			includeFrozen: false,
 			includeActive: false,
 			shipName: bestVoyageShips[0].ship.name,
-			state: 'calculating',
+			state: undefined,
 			searchDepth: 6,
 			extendsTarget: 0,
 			activeEvent: undefined,
 			peopleList: [],
 			currentSelectedItems: [],
-			selectedVoyageMethod: { key: 0, text: 'Thorough', val: true },
+// #!if ENV === 'electron'
+			selectedVoyageMethod: 'cpp',
+// #!else
+			selectedVoyageMethod: 'js',
+// #!endif
 			preselectedIgnored: [],
 			error: undefined
 		};
@@ -74,23 +95,18 @@ export class VoyageCrew extends React.Component {
 	}
 
 	renderBestCrew() {
-		if (this.state.state === "nothingToDo") {
-			return <p>Can only show voyage recommendations if you didn't begin your voyage yet!</p>;
-		} else if (this.state.state === "calculating") {
-			return <p>Use the button below to calculate crew. <b>WARNING</b> Calculation duration increases exponentially with the search depth</p>;
-		}
-		else {
+		if ((this.state.state === "inprogress") || (this.state.state === "done")) {
 			let crewSpans = [];
 			this.state.crewSelection.forEach(entry => {
                 if (entry.choice) {
                     let crew = <Persona
-                        key={entry.choice.crew_id}
+                        key={entry.choice.crew_id || entry.choice.id}
                         imageUrl={entry.choice.iconUrl}
                         text={entry.choice.name}
                         secondaryText={entry.slotName}
                         tertiaryText={formatCrewStats(entry.choice)}
                         size={PersonaSize.large}
-                        presence={entry.hasTrait ? PersonaPresence.online : PersonaPresence.away} />
+                        presence={(entry.choice.frozen > 0) ? PersonaPresence.dnd : ((entry.choice.active_id > 0) ? PersonaPresence.away : PersonaPresence.online)} />
 
                     crewSpans[this.getIndexBySlotName(crew.props.secondaryText)] = crew;
                 } else {
@@ -109,6 +125,8 @@ export class VoyageCrew extends React.Component {
 				<h3>Estimated duration: <b>{this.state.estimatedDuration.toFixed(2)} hours</b></h3>
                 <br/>
 			</div>);
+		} else {
+			return <span/>;
 		}
 	}
 
@@ -123,6 +141,18 @@ export class VoyageCrew extends React.Component {
 				size={PersonaSize.regular} />);
 		});
 
+		let dropdownOptions = Object.keys(VoyageCalculators).map(calc => {return {key: calc, text: VoyageCalculators[calc].name};});
+
+		let containerStyle = {
+			display: 'grid',
+			padding: '5px',
+			gridGap: '10px',
+			gridTemplateColumns: 'repeat(4, 1fr)',
+			gridTemplateRows: '1fr 1fr',
+			gridTemplateAreas: `
+			"dropdown calcbutton shipdrop startbutton"
+			"dropdown calcbutton shipdrop startbutton"`};
+
 		return (<div>
 			{this.state.error && <MessageBar messageBarType={MessageBarType.error}>Error: {this.state.error}</MessageBar>}
 			{/* #!if ENV === 'electron' */}
@@ -132,17 +162,33 @@ export class VoyageCrew extends React.Component {
 			<h2 style={{backgroundColor:'Tomato'}}>NOTE: The web version doesn't include the fancy Voyage calculator! I need to find a cheap hosting option, or a way to run the code in a browser environment (maybe webassembly). This calculator is based on the antiquated "fast" option which is pure JavaScript. Use the desktop tool for best results!</h2>
 			{/* #!endif */}
 
-			{/* #!if ENV === 'electron' */}
-			<div className='field-maxwidth'>
-				<Dropdown
-					label='Algorithm to use:'
-					selectedKey={this.state.selectedVoyageMethod.key}
-					onChanged={item => this.setState({ selectedVoyageMethod: item })}
-					placeHolder='Select an optimization method'
-					options={[ { key: 0, text: 'Thorough (best results)', val: true }, { key: 1, text: 'Fast (quick & dirty)', val: false } ]}
-				/>
+			<div style={containerStyle}>
+				<div style={{ gridArea: 'dropdown' }}>
+					<Dropdown
+						label='Algorithm to use:'
+						selectedKey={this.state.selectedVoyageMethod}
+						onChanged={item => this.setState({ selectedVoyageMethod: item.key })}
+						placeHolder='Select an optimization method'
+						options={dropdownOptions}
+					/>
+				</div>
+
+				<div style={{ gridArea: 'calcbutton', justifySelf: 'center', alignSelf: 'center' }}>
+					<PrimaryButton onClick={this._exportVoyageData} text='Calculate best crew selection' disabled={this.state.state === 'inprogress'} />
+				</div>
+
+				<div style={{ gridArea: 'shipdrop' }}>
+					<TextField
+						label='Ship Name'
+						value={this.state.shipName}
+						onChanged={v => this.setState({ shipName: v })}
+					/>
+				</div>
+
+				<div style={{ gridArea: 'startbutton', justifySelf: 'center', alignSelf: 'center' }}>
+					<PrimaryButton onClick={this._startVoyage} text='Start voyage with recommendations' disabled={this.state.state !== 'done'} />
+				</div>
 			</div>
-			{/* #!endif */}
 
 			<h3>Best ship(s)</h3>
 			<div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap' }}>
@@ -156,8 +202,7 @@ export class VoyageCrew extends React.Component {
                     <div className="column"><h4>Algorithm settings</h4></div>
                 </div>
 
-				{/* #!if ENV === 'electron' */}
-                <div className="two column row" style={{ display: this.state.selectedVoyageMethod.val ? 'inline-block' : 'none' }}>
+                <div className="two column row" style={{ display: VoyageCalculators[this.state.selectedVoyageMethod].supportsDepth ? 'inline-block' : 'none' }}>
                     <div className="column">
                         <SpinButton value={this.state.searchDepth} label={ 'Search depth:' } min={ 2 } max={ 30 } step={ 1 }
                             onIncrement={(value) => { this.setState({ searchDepth: +value + 1}); }}
@@ -171,12 +216,16 @@ export class VoyageCrew extends React.Component {
                         />
                     </div>
                 </div>
-				{/* #!endif */}
 
-                <div className="row">
+                <div className="two column row">
                     <div className="column">
                         <Checkbox checked={this.state.includeActive} label="Include active (on shuttles) crew"
                             onChange={(e, isChecked) => { this.setState({ includeActive: isChecked }); }}
+                        />
+                    </div>
+					<div className="column">
+                        <Checkbox checked={this.state.includeFrozen} label="Include frozen (vaulted) crew"
+                            onChange={(e, isChecked) => { this.setState({ includeFrozen: isChecked }); }}
                         />
                     </div>
                 </div>
@@ -197,25 +246,9 @@ export class VoyageCrew extends React.Component {
 
             <br/>
 
-            <PrimaryButton onClick={this._exportVoyageData} text='Calculate best crew selection' disabled={this.state.state === 'inprogress'} />
-
 			{/* #!if ENV === 'electron' */}
-			<span> </span>
             <PrimaryButton onClick={this._generateVoyCrewRank} text='Export CSV with crew Voyage ranking...' disabled={this.state.state === 'inprogress'} />
 			{/* #!endif */}
-
-			<br/>
-
-			<div className='field-maxwidth'>
-				<TextField
-					label='Ship Name'
-					value={this.state.shipName}
-					onChanged={v => this.setState({ shipName: v })}
-				/>
-			</div>
-
-            <PrimaryButton onClick={this._startVoyage} text='Start voyage with recommendations' disabled={this.state.state !== 'done'} />
-            <br/>
 		</div>);
     }
     
@@ -252,11 +285,16 @@ export class VoyageCrew extends React.Component {
 
 	_startVoyage() {
 		let selectedCrewIds = [];
-		STTApi.playerData.character.voyage_descriptions[0].crew_slots.forEach(slot => {
+		for(let slot of STTApi.playerData.character.voyage_descriptions[0].crew_slots) {
 			let entry = this.state.crewSelection.find(entry => entry.slotName == slot.name);
 
+			if ((!entry.choice.crew_id) || entry.choice.active_id > 0) {
+				this.setState({error: `Cannot start voyage with frozen or active crew '${entry.choice.name}'`});
+				return;
+			}
+
 			selectedCrewIds.push(entry.choice.crew_id);
-		});
+		}
 
 		// TODO: At this point we should refresh crew and make sure no-one's status changes (recently dismissed crew will cause weird bugs!)
 		startVoyage(STTApi.playerData.character.voyage_descriptions[0].symbol, this.state.bestShips[0].ship.id, this.state.shipName, selectedCrewIds).then(() => {
@@ -269,7 +307,7 @@ export class VoyageCrew extends React.Component {
 	_exportVoyageData() {
         let dataToExport = {
 			crew: STTApi.roster.map(crew => new Object({
-				id: crew.crew_id,
+				id: crew.crew_id ? crew.crew_id : crew.id,
 				name: crew.name,
 				frozen: crew.frozen,
 				traits: crew.rawTraits,
@@ -293,8 +331,8 @@ export class VoyageCrew extends React.Component {
 			skillMatchingMultiplier: 1.1,
 			traitScoreBoost: 200,
 			includeAwayCrew: this.state.includeActive,
-			includeFrozenCrew: false
-        };
+			includeFrozenCrew: this.state.includeFrozen
+		};
 
 		// Filter out crew the user has chosen not to include
         if (this.state.currentSelectedItems.length > 0) {
@@ -304,9 +342,6 @@ export class VoyageCrew extends React.Component {
 		// Filter out buy-back crew
 		dataToExport.crew = dataToExport.crew.filter(c => !c.buyback);
 
-		// Filter out frozen crew
-		dataToExport.crew = dataToExport.crew.filter(c => c.frozen === 0);
-
 		function cppEntries(result) {
 			let entries = [];
 			for (var slotName in result.selection) {
@@ -314,7 +349,7 @@ export class VoyageCrew extends React.Component {
 					hasTrait: false,
 					slotName: slotName,
 					score: 0,
-					choice: STTApi.roster.find((crew) => (crew.crew_id == result.selection[slotName]))
+					choice: STTApi.roster.find((crew) => ((crew.crew_id === result.selection[slotName]) || (crew.id === result.selection[slotName])))
 				};
 
 				entries.push(entry);
@@ -339,35 +374,45 @@ export class VoyageCrew extends React.Component {
 
 		const parseResults = (result, state) => {
 			return {
-// #!if ENV === 'electron'
-				crewSelection: this.state.selectedVoyageMethod.val ? cppEntries(result) : jsEntries(result),
-// #!else
-				crewSelection: jsEntries(result),
-// #!endif
+				crewSelection: VoyageCalculators[this.state.selectedVoyageMethod].supportsDepth ? cppEntries(result) : jsEntries(result),
 				estimatedDuration: result.bestCrewTime || result.score || 0,
 				state: state};
 		}
 
-// #!if ENV === 'electron'
-		if (this.state.selectedVoyageMethod.val) {
+		if (this.state.selectedVoyageMethod === 'cpp') {
 			const NativeExtension = require('electron').remote.require('stt-native');
 			NativeExtension.calculateVoyageRecommendations(JSON.stringify(dataToExport), result => {
 				this.setState(parseResults(JSON.parse(result), 'done'));
 			}, progressResult => {
 				this.setState(parseResults(JSON.parse(progressResult), 'inprogress'));
 			});
-		} else
-// #!endif
-		{
+		} else if (this.state.selectedVoyageMethod === 'js') {
 			if (this.state.includeActive === false) {
 				dataToExport.crew = dataToExport.crew.filter(c => c.active_id === 0);
 			}
+
+			if (this.state.includeFrozen === false) {
+				dataToExport.crew = dataToExport.crew.filter(c => c.frozen === 0);
+			}
+
 			this.setState(parseResults(calculateBestVoyage(dataToExport), 'done'));
+		} else if (this.state.selectedVoyageMethod === 'wasm') {
+			let ComputeWorker = require("worker-loader?name=wasmWorker.js!./wasmWorker");
+
+			const worker = new ComputeWorker();
+			worker.addEventListener('message', (message) => {
+				if (message.data.progressResult) {
+					this.setState(parseResults(JSON.parse(message.data.progressResult), 'inprogress'));
+				} else if (message.data.result) {
+					this.setState(parseResults(JSON.parse(message.data.result), 'done'));
+				}
+			});
+
+			worker.postMessage(dataToExport);
 		}
 	}
 
 	_generateVoyCrewRank() {
-// #!if ENV === 'electron'
 		const NativeExtension = require('electron').remote.require('stt-native');
 
 		let dataToExport = {
@@ -398,12 +443,10 @@ export class VoyageCrew extends React.Component {
 			skillMatchingMultiplier: 1.1,
 			traitScoreBoost: 200,
 			includeAwayCrew: this.state.includeActive, // used, but user should typically enable
-			includeFrozenCrew: true
+			includeFrozenCrew: this.state.includeFrozen
 		};
 
 		NativeExtension.calculateVoyageCrewRank(JSON.stringify(dataToExport), (rankResult, estimateResult) => {
-			console.log(rankResult);
-			console.log(estimateResult);
 			this.setState({state: 'calculating'});
 
 			download('My Voyage Crew.csv', rankResult, 'Export Star Trek Timelines voyage crew ranking', 'Export');
@@ -411,7 +454,6 @@ export class VoyageCrew extends React.Component {
 		}, progressResult => {
 			console.log("unexpected progress result!"); // not implemented yet..
 		});
-// #!endif
 	}
 }
 

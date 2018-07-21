@@ -2,8 +2,9 @@ const webpack = require('webpack');
 const path = require('path');
 const merge = require('webpack-merge');
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
-
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 const baseConfig = require('./webpack.base.config.js');
+const PACKAGE = require('./package.json');
 
 // Config directories
 const SRC_DIR = path.resolve(__dirname, 'src');
@@ -39,6 +40,7 @@ module.exports = merge(baseConfig, {
 	},
 	target: 'electron-renderer',
 	plugins: [
+		new HtmlWebpackPlugin({ title: 'Star Trek Timelines Crew Management v' + PACKAGE.version }),
 		new MiniCssExtractPlugin({
 			// Options similar to the same options in webpackOptions.output
 			// both options are optional

@@ -1,6 +1,5 @@
 const webpack = require('webpack');
 const path = require('path');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
 const PACKAGE = require('./package.json');
 
 // Config directories
@@ -32,7 +31,6 @@ module.exports = {
 		]
 	},
 	plugins: [
-        new HtmlWebpackPlugin({ title: 'Star Trek Timelines Crew Management v' + PACKAGE.version }),
         new webpack.DefinePlugin({ 'process.env.APP_VERSION': JSON.stringify(PACKAGE.version) })
 	]
 };

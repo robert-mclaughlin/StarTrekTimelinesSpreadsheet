@@ -12,10 +12,10 @@ using json = nlohmann::json;
 
 namespace VoyageTools
 {
-#ifdef DEBUG
+#ifndef __EMSCRIPTEN__
 Log log(true /*enabled*/);
 #else
-Log log(true /*enabled*/);
+Log log(false /*enabled*/);
 #endif
 
 constexpr unsigned int ANTIMATTER_FOR_SKILL_MATCH = 25;

@@ -1,11 +1,14 @@
 #ifndef THREAD_POOL_H
 #define THREAD_POOL_H
 
+#include <functional>
+
+#ifndef __EMSCRIPTEN__
+#include <mutex>
 #include <thread>
 #include <list>
 #include <vector>
-#include <functional>
-#include <mutex>
+#endif
 
 namespace VoyageTools
 {
@@ -18,12 +21,19 @@ namespace VoyageTools
 class ThreadPool
 {
 public:
-    ThreadPool(size_t size = 0);
 	~ThreadPool() { joinAll(); }
 
 	using task = std::function<void()>;
-	void add(task f);
 
+#ifdef __EMSCRIPTEN__
+	// Emscripten doesn't support multiple threads yet, so executing everything synchronously instead
+	ThreadPool(size_t size = 0) {}
+	void add(task f) { f(); }
+    void joinAll() {}
+
+#else
+    ThreadPool(size_t size = 0);
+	void add(task f);
     void joinAll();
 
 private:
@@ -32,6 +42,7 @@ private:
 	using lockScope = std::lock_guard<std::mutex>;
     std::list<std::shared_ptr<std::thread>> threads;
 	std::vector<task> tasks;
+#endif
 };
 
 } //namespace VoyageTools

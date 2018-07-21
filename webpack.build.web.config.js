@@ -4,6 +4,8 @@ const merge = require('webpack-merge');
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const WebpackCdnPlugin = require('webpack-cdn-plugin');
 const baseConfig = require('./webpack.base.config.js');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const PACKAGE = require('./package.json');
 
 // Config directories
 const SRC_DIR = path.resolve(__dirname, 'src');
@@ -49,6 +51,7 @@ module.exports = merge(baseConfig, {
 	},
 	target: 'web',
 	plugins: [
+		new HtmlWebpackPlugin({ title: `Star Trek Timelines Crew Management v${PACKAGE.version}-web BETA build ${new Date().toISOString()}` }),
 		new MiniCssExtractPlugin({
 			// Options similar to the same options in webpackOptions.output
 			// both options are optional
