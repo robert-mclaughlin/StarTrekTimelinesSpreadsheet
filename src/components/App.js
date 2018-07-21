@@ -118,7 +118,7 @@ class App extends React.Component {
 		STTApi.networkHelper.setProxy('https://stttools.azurewebsites.net/api/sttproxy');
 
 		STTApi.networkHelper.get('https://stttools.azurewebsites.net/api/getcost', { thismonth: true}).then((data) => {
-			this.setState({ cost: data.cost });
+			this.setState({ cost: data });
 		});
 // #!endif
 
@@ -304,11 +304,19 @@ class App extends React.Component {
 						<TooltipHost calloutProps={{ gapSpace: 20 }} delay={TooltipDelay.zero} directionalHint={DirectionalHint.bottomCenter}
 							tooltipProps={{ onRenderContent: () => {
 								return ( <div>
-									<span>Cost to operate the website this month: ${this.state.cost}</span>
+									<span>Costs to operate the website this month:</span>
+									<br/>
+									<span>Azure storage: ${this.state.cost.instances['stttoolsstorage']}</span>
+									<br/>
+									<span>Azure functions: ${this.state.cost.instances['stttools']}</span>
+									<br/>
+									<span>Azure cache: ${this.state.cost.instances['sttcache']}</span>
+									<br/>
+									<span>Azure diagnostics: ${this.state.cost.instances['stttools-logs']}</span>
 									<br/>
 									<span>After evaluation / beta, I'll either shut down the website or introduce a donation system to cover the costs.</span>
 								</div> ); }}} >
-							<span className={ColorClassNames.orangeLighter}>Cost: ${this.state.cost}</span>
+							<span className={ColorClassNames.orangeLighter}>Cost: ${this.state.cost.cost}</span>
 						</TooltipHost>
 					</div>}
 					<div className='lcars-box' />
