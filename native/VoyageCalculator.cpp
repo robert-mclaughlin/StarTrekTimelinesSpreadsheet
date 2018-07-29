@@ -75,16 +75,19 @@ unsigned int VoyageCalculator::computeScore(const Crew& crew, size_t skill, size
 }
 
 VoyageCalculator::VoyageCalculator(const char* jsonInput, bool rankMode) noexcept :
-	j(json::parse(jsonInput)), rankMode(rankMode), shipAntiMatter(j["shipAM"]),
-		config_skillPrimaryMultiplier(j["skillPrimaryMultiplier"]),
-		config_skillSecondaryMultiplier(j["skillSecondaryMultiplier"]),
-		config_skillMatchingMultiplier(j["skillMatchingMultiplier"]),
-		config_traitScoreBoost(j["traitScoreBoost"]),
-		config_includeAwayCrew(j["includeAwayCrew"]),
-		config_includeFrozenCrew(j["includeFrozenCrew"]),
-		config_searchDepth(j["search_depth"]),
-		config_extendsTarget(j["extends_target"])
+	rankMode(rankMode)
 {
+	nlohmann::json j = json::parse(jsonInput);
+	shipAntiMatter = j["shipAM"];
+	config_skillPrimaryMultiplier = j["skillPrimaryMultiplier"];
+	config_skillSecondaryMultiplier = j["skillSecondaryMultiplier"];
+	config_skillMatchingMultiplier = j["skillMatchingMultiplier"];
+	config_traitScoreBoost = j["traitScoreBoost"];
+	config_includeAwayCrew = j["includeAwayCrew"];
+	config_includeFrozenCrew = j["includeFrozenCrew"];
+	config_searchDepth = j["search_depth"];
+	config_extendsTarget =j["extends_target"];
+
 	bestconsidered.fill(nullptr);
 
 	std::map<std::string, size_t> skillMap;
@@ -95,11 +98,8 @@ VoyageCalculator::VoyageCalculator(const char* jsonInput, bool rankMode) noexcep
 	skillMap.insert({"diplomacy_skill",4});
 	skillMap.insert({"medicine_skill",5});
 
-	primarySkillName = j["voyage_skills"]["primary_skill"];
-	secondarySkillName = j["voyage_skills"]["secondary_skill"];
-
-	primarySkill = skillMap[primarySkillName];
-	secondarySkill = skillMap[secondarySkillName];
+	primarySkill = skillMap[j["voyage_skills"]["primary_skill"]];
+	secondarySkill = skillMap[j["voyage_skills"]["secondary_skill"]];
 
 	assert(SLOT_COUNT == j["voyage_crew_slots"].size());
 
@@ -317,8 +317,8 @@ void VoyageCalculator::findBest() noexcept
 	}
 
 	log << "minScore " << minScore << std::endl;
-	log << "primary " << primarySkillName << "(" << primarySkill << ")" << std::endl;
-	log << "secondary " << secondarySkillName << "(" << secondarySkill << ")" << std::endl;
+	log << "primary " << primarySkill << std::endl;
+	log << "secondary " << secondarySkill << std::endl;
 	
 	{ Timer::Scope timer(voyageCalcTime);
 		for (size_t iMinDepth = minDepth; iMinDepth < MAX_SCAN_DEPTH; ++iMinDepth)

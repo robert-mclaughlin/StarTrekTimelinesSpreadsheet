@@ -552,11 +552,11 @@ export class VoyageLog extends React.Component {
 	}
 
 	_chooseDilemma(voyageId, dilemmaId, index) {
-		if (index === -1) {
+		if (index < 0) {
 			// TODO: this should pick a random index out of the unlocked resolutions
 			let promises = [];
 			for (let i = 0; i < 21; i++) {
-				promises.push(resolveDilemma(voyageId, dilemmaId, i % 3));
+				promises.push(resolveDilemma(voyageId, dilemmaId, i % (-1 * index)));
 			}
 
 			Promise.all(promises).then(() => {
@@ -600,7 +600,7 @@ export class VoyageLog extends React.Component {
 							}
 						})}
 
-						<div className="item" key={-1} onClick={() => this._chooseDilemma(this.state.voyage.id, this.state.voyage.dilemma.id, -1)}>
+						<div className="item" key={-1} onClick={() => this._chooseDilemma(this.state.voyage.id, this.state.voyage.dilemma.id, -1 * this.state.voyage.dilemma.resolutions.length)}>
 							<Image src={CONFIG.SPRITES['question_icon'].url} height={18} />
 							<div className="content">
 								<div className="header">Random choice!</div>

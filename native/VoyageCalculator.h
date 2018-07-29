@@ -122,8 +122,6 @@ private:
 	void refine() noexcept;
 	unsigned int computeScore(const Crew& crew, size_t skill, size_t trait) const noexcept;
 
-	nlohmann::json j;
-
 	bool rankMode; // in rank calculation mode, traits are ignored
 
 	std::function<void(const std::array<const Crew *, SLOT_COUNT>&, double)> progressUpdate;
@@ -133,9 +131,7 @@ private:
 	std::array<size_t, SLOT_COUNT> slotTraits;
 	size_t primarySkill;
 	size_t secondarySkill;
-	std::string primarySkillName;
-	std::string secondarySkillName;
-	const int shipAntiMatter;
+	unsigned int shipAntiMatter;
 	std::vector<Crew> roster;
 	std::array<std::vector<Crew>, SLOT_COUNT> slotRosters;
 
@@ -144,14 +140,14 @@ private:
 	ThreadPool threadPool;
 	std::mutex calcMutex;
 
-	const size_t config_searchDepth{6};
-	const size_t config_extendsTarget{2};
-	const float config_skillPrimaryMultiplier{3.5};
-	const float config_skillSecondaryMultiplier{2.5};
-	const float config_skillMatchingMultiplier{1.0};
-	const unsigned int config_traitScoreBoost{200};
-	const bool config_includeAwayCrew{false};
-	const bool config_includeFrozenCrew{false};
+	size_t config_searchDepth{6};
+	size_t config_extendsTarget{2};
+	float config_skillPrimaryMultiplier{3.5};
+	float config_skillSecondaryMultiplier{2.5};
+	float config_skillMatchingMultiplier{1.0};
+	unsigned int config_traitScoreBoost{200};
+	bool config_includeAwayCrew{false};
+	bool config_includeFrozenCrew{false};
 
 	std::array<std::vector<const Crew*>, SLOT_COUNT> sortedSlotRosters;
 
