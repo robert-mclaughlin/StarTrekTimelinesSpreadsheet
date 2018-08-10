@@ -2,7 +2,6 @@ import React from 'react';
 import { Image } from 'office-ui-fabric-react/lib/Image';
 import { PrimaryButton } from 'office-ui-fabric-react/lib/Button';
 import { Checkbox } from 'office-ui-fabric-react/lib/Checkbox';
-import { Spinner, SpinnerSize } from 'office-ui-fabric-react/lib/Spinner';
 
 import { CrewList } from './CrewList.js';
 import { CollapsibleSection } from './CollapsibleSection.js';
@@ -120,7 +119,12 @@ export class NeededEquipment extends React.Component {
 	constructor(props) {
 		super(props);
 
-		 // filter out `crew.buyback` by default
+		/**
+		 * Notes:
+		 * Probably also want to update the REF of the STTApi submodule with the change.
+		 */
+
+		// filter out `crew.buyback` by default
 		const crew = STTApi.roster.filter(({buyback}) => buyback === false);
 
 		this.state = {
@@ -241,8 +245,6 @@ export class NeededEquipment extends React.Component {
 	}
 
 	render() {
-		const spinner = "";
-			// (this.state.dataLoaded) ? (<Spinner size={SpinnerSize.large} label='Loading data...' />) : ""; // todo: Loading
 		if (this.state.neededEquipment) {
 			return (<CollapsibleSection title={this.props.title}>
 				<p>Equipment required to fill all open slots for all crew currently in your roster.</p>
@@ -250,7 +252,6 @@ export class NeededEquipment extends React.Component {
 					onChange={(e, isChecked) => { this._toggleOnlyFavorite(isChecked); }}
 				/><br />
 				<PrimaryButton onClick={() => this._exportCSV()} text='Export as CSV...' /><br /><br />
-				{spinner}
 				{this.state.neededEquipment.map((entry, idx) =>
 					<div key={idx} style={{ display: 'grid', gridTemplateColumns: '128px auto', gridTemplateAreas: `'icon name' 'icon details'` }}>
 						<div style={{ gridArea: 'icon' }}><ItemDisplay src={entry.equipment.iconUrl} size={128} maxRarity={entry.equipment.rarity} rarity={entry.equipment.rarity} /></div>
