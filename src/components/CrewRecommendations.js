@@ -120,8 +120,11 @@ export class NeededEquipment extends React.Component {
 	constructor(props) {
 		super(props);
 
+		 // filter out `crew.buyback` by default
+		const crew = STTApi.roster.filter(({buyback}) => buyback === false);
+
 		this.state = {
-			crew: STTApi.roster.filter(({buyback}) => buyback === false), // filter out `crew.buyback` by default
+			crew: crew,
 			neededEquipment: [],
 			filters: {
 				onlyFavorite: false
@@ -131,6 +134,7 @@ export class NeededEquipment extends React.Component {
 
 	_getFilteredCrew(filters) {
 		const { crew } = this.state;
+
 		// ideally we would iterate thru all filters - for now, maunally looking for onlyFavorite
 		const filteredCrew = [].concat((! filters.onlyFavorite) ? crew : crew.filter(({favorite}) => favorite === filters.onlyFavorite));
 
