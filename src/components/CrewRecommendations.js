@@ -180,7 +180,7 @@ export class NeededEquipment extends React.Component {
 		return arr;
 	}
 
-	_renderNeededEquipment(filters) {
+	_filterNeededEquipment(filters) {
 		const filteredCrew = this._getFilteredCrew(filters);
 		const neededEquipment = this._getNeededEquipment(filteredCrew);
 
@@ -196,11 +196,11 @@ export class NeededEquipment extends React.Component {
 			filters: newFilters
 		});
 
-		return this._renderNeededEquipment(newFilters);
+		return this._filterNeededEquipment(newFilters);
 	}
 
 	componentDidMount() {
-		return this._renderNeededEquipment(this.state.filters);
+		return this._filterNeededEquipment(this.state.filters);
 	}
 
 	renderSources(equipment) {
