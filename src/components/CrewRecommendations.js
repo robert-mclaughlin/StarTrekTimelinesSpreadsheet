@@ -1,6 +1,8 @@
 import React from 'react';
 import { Image } from 'office-ui-fabric-react/lib/Image';
 import { PrimaryButton } from 'office-ui-fabric-react/lib/Button';
+import { Checkbox } from 'office-ui-fabric-react/lib/Checkbox';
+import { Spinner, SpinnerSize } from 'office-ui-fabric-react/lib/Spinner';
 
 import { CrewList } from './CrewList.js';
 import { CollapsibleSection } from './CollapsibleSection.js';
@@ -118,11 +120,26 @@ export class NeededEquipment extends React.Component {
 	constructor(props) {
 		super(props);
 
-		let unparsedEquipment = [];
-		for (let crew of STTApi.roster) {
-			if (crew.buyback) {
-				continue;
+		this.state = {
+			crew: STTApi.roster.filter(({buyback}) => buyback === false), // filter out `crew.buyback` by default
+			neededEquipment: [],
+			filters: {
+				onlyFavorite: false
 			}
+		};
+	}
+
+	_getFilteredCrew(filters) {
+		const { crew } = this.state;
+		// ideally we would iterate thru all filters - for now, maunally looking for onlyFavorite
+		const filteredCrew = [].concat((! filters.onlyFavorite) ? crew : crew.filter(({favorite}) => favorite === filters.onlyFavorite));
+
+		return filteredCrew;
+	}
+
+	_getNeededEquipment(filteredCrew) {
+		let unparsedEquipment = [];
+		for (let crew of filteredCrew) {
 
 			crew.equipment_slots.forEach((equipment) => {
 				if (!equipment.have) {
@@ -156,9 +173,30 @@ export class NeededEquipment extends React.Component {
 		let arr = Object.values(mapUnowned);
 		arr.sort((a, b) => b.needed - a.needed);
 
-		this.state = {
-			neededEquipment: arr
-		};
+		return arr;
+	}
+
+	_renderNeededEquipment(filters) {
+		const filteredCrew = this._getFilteredCrew(filters);
+		const neededEquipment = this._getNeededEquipment(filteredCrew);
+
+		return this.setState({
+			neededEquipment: neededEquipment
+		});
+	}
+
+	_toggleOnlyFavorite(isChecked) {
+		const newFilters = Object.assign({}, this.state.filters);
+		newFilters.onlyFavorite = isChecked;
+		this.setState({
+			filters: newFilters
+		});
+
+		return this._renderNeededEquipment(newFilters);
+	}
+
+	componentDidMount() {
+		return this._renderNeededEquipment(this.state.filters);
 	}
 
 	renderSources(equipment) {
@@ -199,10 +237,16 @@ export class NeededEquipment extends React.Component {
 	}
 
 	render() {
+		const spinner = "";
+			// (this.state.dataLoaded) ? (<Spinner size={SpinnerSize.large} label='Loading data...' />) : ""; // todo: Loading
 		if (this.state.neededEquipment) {
 			return (<CollapsibleSection title={this.props.title}>
 				<p>Equipment required to fill all open slots for all crew currently in your roster.</p>
+				<Checkbox label='Show only crew that are marked as favorite' checked={this.state.filters.onlyFavorite}
+					onChange={(e, isChecked) => { this._toggleOnlyFavorite(isChecked); }}
+				/><br />
 				<PrimaryButton onClick={() => this._exportCSV()} text='Export as CSV...' /><br /><br />
+				{spinner}
 				{this.state.neededEquipment.map((entry, idx) =>
 					<div key={idx} style={{ display: 'grid', gridTemplateColumns: '128px auto', gridTemplateAreas: `'icon name' 'icon details'` }}>
 						<div style={{ gridArea: 'icon' }}><ItemDisplay src={entry.equipment.iconUrl} size={128} maxRarity={entry.equipment.rarity} rarity={entry.equipment.rarity} /></div>
