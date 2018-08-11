@@ -54,8 +54,9 @@ export class CrewList extends React.Component {
 	constructor(props) {
 		super(props);
 
-		const _columns = [
-			{
+		let _columns = [];
+
+		_columns.push({
 				key: 'icon',
 				name: '',
 				minWidth: 50,
@@ -124,6 +125,21 @@ export class CrewList extends React.Component {
 				isPadded: true
 			},
 			{
+				key: 'favorite',
+				name: 'Favorite',
+				minWidth: 16,
+				maxWidth: 16,
+				iconName: 'FavoriteStar',
+				isIconOnly: true,
+				fieldName: 'favorite',
+				onRender: (item) => {
+					if (item.favorite)
+						return (<Icon iconName='FavoriteStar' />);
+					else
+						return (<p />);
+				}
+			},
+			{
 				key: 'frozen',
 				name: 'Frozen',
 				minWidth: 16,
@@ -137,23 +153,28 @@ export class CrewList extends React.Component {
 					else
 						return (<p />);
 				}
-			},
-			{
-				key: 'buyback',
-				name: 'Buy-back',
-				minWidth: 16,
-				maxWidth: 16,
-				iconName: 'EmptyRecycleBin',
-				isIconOnly: true,
-				fieldName: 'buyback',
-				onRender: (item) => {
-					if (item.buyback)
-						return (<Icon iconName='EmptyRecycleBin' />);
-					else
-						return (<p />);
-				}
-			},
-			{
+			});
+
+		// Add global setting / toggle for turning off buy-back crew
+		if (true) {
+			_columns.push({
+					key: 'buyback',
+					name: 'Buy-back',
+					minWidth: 16,
+					maxWidth: 16,
+					iconName: 'EmptyRecycleBin',
+					isIconOnly: true,
+					fieldName: 'buyback',
+					onRender: (item) => {
+						if (item.buyback)
+							return (<Icon iconName='EmptyRecycleBin' />);
+						else
+							return (<p />);
+					}
+				});
+		}
+
+		_columns.push({
 				key: 'active_id',
 				name: 'Buy-back',
 				minWidth: 16,
@@ -240,8 +261,7 @@ export class CrewList extends React.Component {
 				minWidth: 120,
 				isResizable: true,
 				fieldName: 'traits'
-			}
-		];
+			});
 
 		let sortColumn = props.sortColumn ? props.sortColumn : 'max_rarity';
 
