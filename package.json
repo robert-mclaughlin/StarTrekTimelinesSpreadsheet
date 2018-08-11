@@ -74,6 +74,7 @@
     "json2csv": "^4.1.5",
     "office-ui-fabric-react": "^6.29.0",
     "pubnub": "latest",
+    "react-table": "^6.8.6",
     "semver": "latest",
     "stt-native": "file:native",
     "stt-native-wasm": "file:native_wasm",

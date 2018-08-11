@@ -1,4 +1,5 @@
 import '../assets/css/fabric.min.css';
+import 'react-table/react-table.css';
 
 import React from 'react';
 import { DetailsList, DetailsListLayoutMode, SelectionMode } from 'office-ui-fabric-react/lib/DetailsList';
@@ -8,6 +9,8 @@ import { Label } from 'office-ui-fabric-react/lib/Label';
 import { Icon } from 'office-ui-fabric-react/lib/Icon';
 import { IconButton } from 'office-ui-fabric-react/lib/Button';
 import { HoverCard } from 'office-ui-fabric-react/lib/HoverCard';
+
+import ReactTable from "react-table";
 
 import { SkillCell } from './SkillCell';
 import { ActiveCrewDialog } from './ActiveCrewDialog';
@@ -19,10 +22,10 @@ import { sortItems, columnClick } from '../utils/listUtils.js';
 import STTApi from 'sttapi';
 import { CONFIG } from 'sttapi';
 
-function groupBy(items, fieldName) {
+function groupBy(items, accessor) {
 	let groups = items.reduce((currentGroups, currentItem, index) => {
 		let lastGroup = currentGroups[currentGroups.length - 1];
-		let fieldValue = currentItem[fieldName];
+		let fieldValue = currentItem[accessor];
 
 		if (!lastGroup || lastGroup.value !== fieldValue) {
 			currentGroups.push({
@@ -57,33 +60,33 @@ export class CrewList extends React.Component {
 		let _columns = [];
 
 		_columns.push({
-				key: 'icon',
-				name: '',
-				minWidth: 50,
-				maxWidth: 50,
-				fieldName: 'name',
-				onRender: (item) => {
+			id: 'icon',
+				Header: '',
+				minWidth: 60,
+				maxWidth: 60,
+				accessor: 'name',
+				Cell: (p) => { let item = p.original;
 					return (<Image src={item.iconUrl} width={50} height={50} imageFit={ImageFit.contain} shouldStartVisible={true} />);
 				}
 			},
 			{
 				key: 'short_name',
-				name: 'Name',
-				minWidth: 80,
-				maxWidth: 100,
+				Header: 'Name',
+				minWidth: 90,
+				maxWidth: 110,
 				isResizable: true,
-				fieldName: 'short_name',
-				onRender: (item) => {
+				accessor: 'short_name',
+				Cell: (p) => { let item = p.original;
 					return (<Link href={'https://stt.wiki/wiki/' + item.name.split(' ').join('_')} target='_blank'>{item.short_name}</Link>);
 				}
 			},
 			{
 				key: 'name',
-				name: 'Full name',
-				minWidth: 100,
-				maxWidth: 180,
+				Header: 'Full name',
+				minWidth: 110,
+				maxWidth: 190,
 				isResizable: true,
-				onRender: (item) => {
+				Cell: (p) => { let item = p.original;
 					return (<HoverCard id="nameHoverCard"
 						expandingCardProps={{
 							compactCardHeight: 180,
@@ -100,20 +103,20 @@ export class CrewList extends React.Component {
 			},
 			{
 				key: 'level',
-				name: 'Level',
+				Header: 'Level',
 				minWidth: 30,
 				maxWidth: 50,
 				isResizable: true,
-				fieldName: 'level'
+				accessor: 'level'
 			},
 			{
 				key: 'max_rarity',
-				name: 'Rarity',
-				fieldName: 'max_rarity',
-				minWidth: 70,
-				maxWidth: 100,
+				Header: 'Rarity',
+				accessor: 'max_rarity',
+				minWidth: 60,
+				maxWidth: 90,
 				isResizable: true,
-				onRender: (item) => {
+				Cell: (p) => { let item = p.original;
 					return (
 						<RarityStars
 							min={1}
@@ -126,13 +129,13 @@ export class CrewList extends React.Component {
 			},
 			{
 				key: 'favorite',
-				name: 'Favorite',
-				minWidth: 16,
-				maxWidth: 16,
+				Header: () => <Icon iconName='FavoriteStar' />,
+				minWidth: 26,
+				maxWidth: 26,
 				iconName: 'FavoriteStar',
 				isIconOnly: true,
-				fieldName: 'favorite',
-				onRender: (item) => {
+				accessor: 'favorite',
+				Cell: (p) => { let item = p.original;
 					if (item.favorite)
 						return (<Icon iconName='FavoriteStar' />);
 					else
@@ -141,13 +144,13 @@ export class CrewList extends React.Component {
 			},
 			{
 				key: 'frozen',
-				name: 'Frozen',
-				minWidth: 16,
-				maxWidth: 16,
+				Header: () => <Icon iconName='Snowflake' />,
+				minWidth: 26,
+				maxWidth: 26,
 				iconName: 'Snowflake',
 				isIconOnly: true,
-				fieldName: 'frozen',
-				onRender: (item) => {
+				accessor: 'frozen',
+				Cell: (p) => { let item = p.original;
 					if (item.frozen)
 						return (<Icon iconName='Snowflake' />);
 					else
@@ -159,13 +162,13 @@ export class CrewList extends React.Component {
 		if (true) {
 			_columns.push({
 					key: 'buyback',
-					name: 'Buy-back',
-					minWidth: 16,
-					maxWidth: 16,
+					Header: () => <Icon iconName='EmptyRecycleBin' />,
+					minWidth: 26,
+					maxWidth: 26,
 					iconName: 'EmptyRecycleBin',
 					isIconOnly: true,
-					fieldName: 'buyback',
-					onRender: (item) => {
+					accessor: 'buyback',
+					Cell: (p) => { let item = p.original;
 						if (item.buyback)
 							return (<Icon iconName='EmptyRecycleBin' />);
 						else
@@ -176,13 +179,13 @@ export class CrewList extends React.Component {
 
 		_columns.push({
 				key: 'active_id',
-				name: 'Buy-back',
-				minWidth: 16,
-				maxWidth: 16,
+				Header: () => <Icon iconName='Balloons' />,
+				minWidth: 26,
+				maxWidth: 26,
 				iconName: 'Balloons',
 				isIconOnly: true,
-				fieldName: 'active_id',
-				onRender: (item) => {
+				accessor: 'active_id',
+				Cell: (p) => { let item = p.original;
 					if (item.active_id)
 						return (<IconButton iconProps={{ iconName: 'Balloons' }} title='Active engagement' onClick={() => this._showActiveDialog(item.active_id, item.name)} />);
 					else
@@ -191,76 +194,76 @@ export class CrewList extends React.Component {
 			},
 			{
 				key: 'command_skill',
-				name: 'Command',
+				Header: 'Command',
 				minWidth: 70,
 				maxWidth: 100,
 				isResizable: true,
-				fieldName: 'command_skill_core',
-				onRender: (item) => {
+				accessor: 'command_skill_core',
+				Cell: (p) => { let item = p.original;
 					return (<SkillCell skill={item.command_skill} />);
 				}
 			},
 			{
 				key: 'diplomacy_skill',
-				name: 'Diplomacy',
+				Header: 'Diplomacy',
 				minWidth: 70,
 				maxWidth: 100,
 				isResizable: true,
-				fieldName: 'diplomacy_skill_core',
-				onRender: (item) => {
+				accessor: 'diplomacy_skill_core',
+				Cell: (p) => { let item = p.original;
 					return (<SkillCell skill={item.diplomacy_skill} />);
 				}
 			},
 			{
 				key: 'engineering_skill',
-				name: 'Engineering',
+				Header: 'Engineering',
 				minWidth: 75,
 				maxWidth: 100,
 				isResizable: true,
-				fieldName: 'engineering_skill_core',
-				onRender: (item) => {
+				accessor: 'engineering_skill_core',
+				Cell: (p) => { let item = p.original;
 					return (<SkillCell skill={item.engineering_skill} />);
 				}
 			},
 			{
 				key: 'medicine_skill',
-				name: 'Medicine',
+				Header: 'Medicine',
 				minWidth: 70,
 				maxWidth: 100,
 				isResizable: true,
-				fieldName: 'medicine_skill_core',
-				onRender: (item) => {
+				accessor: 'medicine_skill_core',
+				Cell: (p) => { let item = p.original;
 					return (<SkillCell skill={item.medicine_skill} />);
 				}
 			},
 			{
 				key: 'science_skill',
-				name: 'Science',
+				Header: 'Science',
 				minWidth: 70,
 				maxWidth: 100,
 				isResizable: true,
-				fieldName: 'science_skill_core',
-				onRender: (item) => {
+				accessor: 'science_skill_core',
+				Cell: (p) => { let item = p.original;
 					return (<SkillCell skill={item.science_skill} />);
 				}
 			},
 			{
 				key: 'security_skill',
-				name: 'Security',
+				Header: 'Security',
 				minWidth: 70,
 				maxWidth: 100,
 				isResizable: true,
-				fieldName: 'security_skill_core',
-				onRender: (item) => {
+				accessor: 'security_skill_core',
+				Cell: (p) => { let item = p.original;
 					return (<SkillCell skill={item.security_skill} />);
 				}
 			},
 			{
 				key: 'traits',
-				name: 'Traits',
+				Header: 'Traits',
 				minWidth: 120,
 				isResizable: true,
-				fieldName: 'traits'
+				accessor: 'traits'
 			});
 
 		let sortColumn = props.sortColumn ? props.sortColumn : 'max_rarity';
@@ -411,14 +414,10 @@ export class CrewList extends React.Component {
 
 		return (
 			<div className={this.props.overrideClassName ? this.props.overrideClassName : 'data-grid'} data-is-scrollable='true'>
-				<DetailsList
-					items={items}
-					groups={groups}
+				<ReactTable
+					data={items}
 					columns={columns}
-					setKey='set'
-					selectionMode={SelectionMode.none}
-					layoutMode={DetailsListLayoutMode.justified}
-					onColumnHeaderClick={this._onColumnClick}
+					className="-striped -highlight"
 				/>
 				<ActiveCrewDialog ref='activeCrewDialog' />
 			</div>
@@ -466,7 +465,7 @@ export class CrewList extends React.Component {
 	}
 
 	_onColumnClick(ev, column) {
-		if (column.fieldName != this.state.groupedColumn) {
+		if (column.accessor != this.state.groupedColumn) {
 			this.setGroupedColumn('');
 		}
 
