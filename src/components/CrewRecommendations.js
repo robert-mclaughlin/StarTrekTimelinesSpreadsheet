@@ -119,25 +119,18 @@ export class NeededEquipment extends React.Component {
 	constructor(props) {
 		super(props);
 
-		/**
-		 * Notes:
-		 * Probably also want to update the REF of the STTApi submodule with the change.
-		 */
-
-		// filter out `crew.buyback` by default
-		const crew = STTApi.roster.filter(({buyback}) => buyback === false);
-
 		this.state = {
-			crew: crew,
 			neededEquipment: [],
 			filters: {
-				onlyFavorite: false
+				onlyFavorite: false,
+				onlyNeeded: false
 			}
 		};
 	}
 
 	_getFilteredCrew(filters) {
-		const { crew } = this.state;
+		// filter out `crew.buyback` by default
+		const crew = STTApi.roster.filter(({buyback}) => buyback === false);
 
 		// ideally we would iterate thru all filters - for now, maunally looking for onlyFavorite
 		const filteredCrew = [].concat((! filters.onlyFavorite) ? crew : crew.filter(({favorite}) => favorite === filters.onlyFavorite));
@@ -145,7 +138,7 @@ export class NeededEquipment extends React.Component {
 		return filteredCrew;
 	}
 
-	_getNeededEquipment(filteredCrew) {
+	_getNeededEquipment(filteredCrew, filters) {
 		let unparsedEquipment = [];
 		for (let crew of filteredCrew) {
 
@@ -181,12 +174,16 @@ export class NeededEquipment extends React.Component {
 		let arr = Object.values(mapUnowned);
 		arr.sort((a, b) => b.needed - a.needed);
 
+		if (filters.onlyNeeded) {
+			arr = arr.filter((entry) => entry.have < entry.needed);
+		}
+
 		return arr;
 	}
 
 	_filterNeededEquipment(filters) {
 		const filteredCrew = this._getFilteredCrew(filters);
-		const neededEquipment = this._getNeededEquipment(filteredCrew);
+		const neededEquipment = this._getNeededEquipment(filteredCrew, filters);
 
 		return this.setState({
 			neededEquipment: neededEquipment
@@ -196,6 +193,16 @@ export class NeededEquipment extends React.Component {
 	_toggleOnlyFavorite(isChecked) {
 		const newFilters = Object.assign({}, this.state.filters);
 		newFilters.onlyFavorite = isChecked;
+		this.setState({
+			filters: newFilters
+		});
+
+		return this._filterNeededEquipment(newFilters);
+	}
+
+	_toggleOnlyNeeded(isChecked) {
+		const newFilters = Object.assign({}, this.state.filters);
+		newFilters.onlyNeeded = isChecked;
 		this.setState({
 			filters: newFilters
 		});
@@ -248,9 +255,13 @@ export class NeededEquipment extends React.Component {
 		if (this.state.neededEquipment) {
 			return (<CollapsibleSection title={this.props.title}>
 				<p>Equipment required to fill all open slots for all crew currently in your roster.</p>
-				<Checkbox label='Show only crew that are marked as favorite' checked={this.state.filters.onlyFavorite}
+				<Checkbox label='Show only for favorite crew' checked={this.state.filters.onlyFavorite}
 					onChange={(e, isChecked) => { this._toggleOnlyFavorite(isChecked); }}
-				/><br />
+				/>
+				<Checkbox label='Show only insufficient equipment' checked={this.state.filters.onlyNeeded}
+					onChange={(e, isChecked) => { this._toggleOnlyNeeded(isChecked); }}
+				/>
+				<br />
 				<PrimaryButton onClick={() => this._exportCSV()} text='Export as CSV...' /><br /><br />
 				{this.state.neededEquipment.map((entry, idx) =>
 					<div key={idx} style={{ display: 'grid', gridTemplateColumns: '128px auto', gridTemplateAreas: `'icon name' 'icon details'` }}>

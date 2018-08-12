@@ -71,7 +71,7 @@
     "buffer": "5.0.8",
     "dexie": "latest",
     "fb": "latest",
-    "json2csv": "^4.1.5",
+    "json2csv": "^4.2.1",
     "office-ui-fabric-react": "^6.29.0",
     "pubnub": "latest",
     "semver": "latest",
