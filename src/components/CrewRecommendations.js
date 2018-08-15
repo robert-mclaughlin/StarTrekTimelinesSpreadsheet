@@ -52,23 +52,57 @@ export class CrewDuplicates extends React.Component {
 	constructor(props) {
 		super(props);
 
-		var uniq = STTApi.roster.map((crew) => { return { count: 1, crewId: crew.id }; })
+		this.state = {
+			duplicates: this._loadDuplicates(),
+			selectedIds: undefined
+		};
+
+		this._loadDuplicates = this._loadDuplicates.bind(this);
+		this._onSelectionChange = this._onSelectionChange.bind(this);
+		this._dismissDupes = this._dismissDupes.bind(this);
+	}
+
+	_loadDuplicates() {
+		let uniq = STTApi.roster.filter((crew) => !crew.buyback)
+			.map((crew) => { return { count: 1, crewId: crew.id }; })
 			.reduce((a, b) => {
 				a[b.crewId] = (a[b.crewId] || 0) + b.count;
 				return a;
 			}, {});
 
-		var duplicateIds = Object.keys(uniq).filter((a) => uniq[a] > 1);
+		let duplicateIds = Object.keys(uniq).filter((a) => uniq[a] > 1);
 
-		this.state = {
-			duplicates: STTApi.roster.filter(function (crew) { return duplicateIds.includes(crew.id.toString()); })
-		};
+		return STTApi.roster.filter((crew) => duplicateIds.includes(crew.id.toString()));
+	}
+
+	_onSelectionChange(selectedIds) {
+		this.setState({selectedIds});
+	}
+
+	_dismissDupes() {
+		//TODO: add "are you sure" dialog
+
+		let promises = [];
+		this.state.selectedIds.forEach(id => {
+			promises.push(STTApi.sellCrew(id));
+		});
+
+		Promise.all(promises).then(() => STTApi.refreshRoster()).then(() => {
+			this.setState({
+				duplicates: this._loadDuplicates(),
+				selectedIds: undefined
+			});
+		});
 	}
 
 	render() {
 		if (this.state.duplicates.length > 0) {
 			return (<CollapsibleSection title={this.props.title}>
-				<CrewList data={this.state.duplicates} grouped={false} sortColumn='name' overrideClassName='embedded-crew-grid' />
+				{(this.state.selectedIds && (this.state.selectedIds.size > 0)) && <div>
+					<PrimaryButton onClick={() => this._dismissDupes()} text={`Dismiss ${this.state.selectedIds.size} dupes`} />
+					<p><span style={{ color: 'red', fontWeight: 'bold' }}>NOTE </span>Use extreme care with this dismissal function. There is no confirmation dialog. Make sure you select only crew you want gone!</p>
+					</div>}
+				<CrewList data={this.state.duplicates} duplicatelist={true} sortColumn='name' selectedIds={this.state.selectedIds} onSelectionChange={this._onSelectionChange} overrideClassName='embedded-crew-grid' />
 			</CollapsibleSection>);
 		}
 		else {
