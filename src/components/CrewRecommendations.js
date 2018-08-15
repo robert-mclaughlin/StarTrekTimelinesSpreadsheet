@@ -1,6 +1,7 @@
 import React from 'react';
 import { Image } from 'office-ui-fabric-react/lib/Image';
-import { PrimaryButton } from 'office-ui-fabric-react/lib/Button';
+import { PrimaryButton, DefaultButton } from 'office-ui-fabric-react/lib/Button';
+import { Dialog, DialogType, DialogFooter } from 'office-ui-fabric-react/lib/Dialog';
 import { Checkbox } from 'office-ui-fabric-react/lib/Checkbox';
 
 import { CrewList } from './CrewList.js';
@@ -53,6 +54,7 @@ export class CrewDuplicates extends React.Component {
 		super(props);
 
 		this.state = {
+			hideConfirmationDialog: true,
 			duplicates: this._loadDuplicates(),
 			selectedIds: undefined
 		};
@@ -60,6 +62,9 @@ export class CrewDuplicates extends React.Component {
 		this._loadDuplicates = this._loadDuplicates.bind(this);
 		this._onSelectionChange = this._onSelectionChange.bind(this);
 		this._dismissDupes = this._dismissDupes.bind(this);
+		this._closeConfirmationDialog = this._closeConfirmationDialog.bind(this);
+		this._dismissConfirmationDialog = this._dismissConfirmationDialog.bind(this);
+		this._openConfirmationDialog = this._openConfirmationDialog.bind(this);
 	}
 
 	_loadDuplicates() {
@@ -76,7 +81,7 @@ export class CrewDuplicates extends React.Component {
 	}
 
 	_onSelectionChange(selectedIds) {
-		this.setState({selectedIds});
+		this.setState({ selectedIds });
 	}
 
 	_dismissDupes() {
@@ -87,7 +92,7 @@ export class CrewDuplicates extends React.Component {
 			promises.push(STTApi.sellCrew(id));
 		});
 
-		Promise.all(promises).then(() => STTApi.refreshRoster()).then(() => {
+		return Promise.all(promises).then(() => STTApi.refreshRoster()).then(() => {
 			this.setState({
 				duplicates: this._loadDuplicates(),
 				selectedIds: undefined
@@ -95,13 +100,67 @@ export class CrewDuplicates extends React.Component {
 		});
 	}
 
+	_dismissConfirmationDialog() {
+		this._dismissDupes().then(() => 
+		{
+			this.setState({ hideConfirmationDialog: true });
+		});
+	}
+
+	_openConfirmationDialog() {
+		this.setState({ hideConfirmationDialog: false });
+	}
+
+	_closeConfirmationDialog() {
+		this.setState({ hideConfirmationDialog: true });
+	}
+
+	renderConfirmationDialogContent() {
+		let crewList = [];
+		this.state.selectedIds.forEach(id => {
+			let crew = STTApi.roster.find(c => c.crew_id === id);
+			if (!crew) return;
+
+			if ((crew.level === 1) && (crew.rarity === 1)) {
+				crewList.push(<span>
+					<b>{crew.name}</b> (level {crew.level}, rarity {crew.rarity})
+				</span>);
+			} else {
+				crewList.push(<span style={{ color: 'red', fontWeight: 'bold' }}>
+					<b>{crew.name}</b> (level {crew.level}, rarity {crew.rarity})
+				</span>);
+			}
+		});
+
+		return <div>{crewList.reduce((prev, curr) => [prev, ', ', curr])}</div>;
+	}
+
 	render() {
 		if (this.state.duplicates.length > 0) {
 			return (<CollapsibleSection title={this.props.title}>
 				{(this.state.selectedIds && (this.state.selectedIds.size > 0)) && <div>
-					<PrimaryButton onClick={() => this._dismissDupes()} text={`Dismiss ${this.state.selectedIds.size} dupes`} />
-					<p><span style={{ color: 'red', fontWeight: 'bold' }}>NOTE </span>Use extreme care with this dismissal function. There is no confirmation dialog. Make sure you select only crew you want gone!</p>
-					</div>}
+					<PrimaryButton onClick={() => this._openConfirmationDialog()} text={`Dismiss ${this.state.selectedIds.size} dupes`} />
+					<Dialog
+						hidden={this.state.hideConfirmationDialog}
+						onDismiss={this._closeConfirmationDialog}
+						dialogContentProps={{
+							type: DialogType.normal,
+							title: 'Are you sure?',
+							subText: `You are about to dismiss ${this.state.selectedIds.size} crew.`
+						}}
+						modalProps={{
+							isBlocking: true
+						}}
+					>
+						<div>
+							{this.renderConfirmationDialogContent()}
+						</div>
+						<DialogFooter>
+							<PrimaryButton onClick={this._dismissConfirmationDialog} text="Dismiss" />
+							<DefaultButton onClick={this._closeConfirmationDialog} text="Cancel" />
+						</DialogFooter>
+					</Dialog>
+				</div>}
 				<CrewList data={this.state.duplicates} duplicatelist={true} sortColumn='name' selectedIds={this.state.selectedIds} onSelectionChange={this._onSelectionChange} overrideClassName='embedded-crew-grid' />
 			</CollapsibleSection>);
 		}
@@ -164,10 +223,10 @@ export class NeededEquipment extends React.Component {
 
 	_getFilteredCrew(filters) {
 		// filter out `crew.buyback` by default
-		const crew = STTApi.roster.filter(({buyback}) => buyback === false);
+		const crew = STTApi.roster.filter(({ buyback }) => buyback === false);
 
 		// ideally we would iterate thru all filters - for now, maunally looking for onlyFavorite
-		const filteredCrew = [].concat((! filters.onlyFavorite) ? crew : crew.filter(({favorite}) => favorite === filters.onlyFavorite));
+		const filteredCrew = [].concat((!filters.onlyFavorite) ? crew : crew.filter(({ favorite }) => favorite === filters.onlyFavorite));
 
 		return filteredCrew;
 	}
