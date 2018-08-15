@@ -308,6 +308,7 @@ export class MissionExplorer extends React.Component {
         if (this.state.dataAvailable)
             return (
                 <div className='tab-panel' data-is-scrollable='true'>
+                    <p><b>Note: </b>These calculations only search crew necessary for completing the missions with the epic mastery.</p>
                     <Dropdown
                         selectedKey={this.state.selectedItem && this.state.selectedItem.key}
                         onChanged={item => {this.setState({ selectedItem: item }); this.refs.missionDetails.loadMissionDetails(item.data.questId); }}

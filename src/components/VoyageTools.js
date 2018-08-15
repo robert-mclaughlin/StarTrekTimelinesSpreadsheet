@@ -600,16 +600,12 @@ export class VoyageLog extends React.Component {
 							}
 						})}
 
-						{/* #!if ENV === 'electron' */}
-						<span />
-						{/* #!else */}
 						<div className="item" key={-1} onClick={() => this._chooseDilemma(this.state.voyage.id, this.state.voyage.dilemma.id, -1 * this.state.voyage.dilemma.resolutions.length)}>
 							<Image src={CONFIG.SPRITES['question_icon'].url} height={18} />
 							<div className="content">
 								<div className="header">Random choice!</div>
 							</div>
 						</div>
-						{/* #!endif */}
 					</div>
 				</div>
 			</div>;
