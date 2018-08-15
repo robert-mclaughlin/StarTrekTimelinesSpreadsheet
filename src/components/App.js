@@ -456,37 +456,6 @@ class App extends React.Component {
 				name: 'Share',
 				iconProps: { iconName: 'Share' },
 				onClick: () => { this.refs.shareDialog._showDialog(this.state.captainName); }
-			},
-			{
-				key: 'configure',
-				name: 'Configure',
-				iconProps: { iconName: 'Settings' },
-				subMenuProps: {
-					items: [
-						{
-							key: 'grouping',
-							name: 'Group options',
-							subMenuProps: {
-								items: [
-									{
-										key: 'none',
-										name: 'None',
-										//canCheck: true,
-										//checked: this.refs.crewList ? (this.refs.crewList.getGroupedColumn() == '') : false,
-										onClick: () => { this.refs.crewList.setGroupedColumn(''); }
-									},
-									{
-										key: 'rarity',
-										name: 'Group by rarity',
-										//canCheck: true,
-										//checked: this.refs.crewList ? (this.refs.crewList.getGroupedColumn() == 'max_rarity') : false,
-										onClick: () => { this.refs.crewList.setGroupedColumn('max_rarity'); }
-									}
-								]
-							}
-						}
-					]
-				}
 			}
 		];
 	}

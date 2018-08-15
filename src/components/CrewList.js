@@ -2,13 +2,14 @@ import '../assets/css/fabric.min.css';
 import 'react-table/react-table.css';
 
 import React from 'react';
-import { DetailsList, DetailsListLayoutMode, SelectionMode } from 'office-ui-fabric-react/lib/DetailsList';
 import { Image, ImageFit } from 'office-ui-fabric-react/lib/Image';
 import { Link } from 'office-ui-fabric-react/lib/Link';
 import { Label } from 'office-ui-fabric-react/lib/Label';
 import { Icon } from 'office-ui-fabric-react/lib/Icon';
 import { IconButton } from 'office-ui-fabric-react/lib/Button';
 import { HoverCard } from 'office-ui-fabric-react/lib/HoverCard';
+import { TooltipHost } from 'office-ui-fabric-react/lib/Tooltip';
+import { Checkbox } from 'office-ui-fabric-react/lib/Checkbox';
 
 import ReactTable from "react-table";
 
@@ -17,41 +18,8 @@ import { ActiveCrewDialog } from './ActiveCrewDialog';
 import { RarityStars } from './RarityStars';
 import { ItemDisplay } from './ItemDisplay';
 
-import { sortItems, columnClick } from '../utils/listUtils.js';
-
 import STTApi from 'sttapi';
 import { CONFIG } from 'sttapi';
-
-function groupBy(items, accessor) {
-	let groups = items.reduce((currentGroups, currentItem, index) => {
-		let lastGroup = currentGroups[currentGroups.length - 1];
-		let fieldValue = currentItem[accessor];
-
-		if (!lastGroup || lastGroup.value !== fieldValue) {
-			currentGroups.push({
-				key: 'group' + fieldValue + index,
-				name: CONFIG.RARITIES[fieldValue].name + " crew",
-				value: fieldValue,
-				startIndex: index,
-				level: 0,
-				count: 0
-			});
-		}
-		if (lastGroup) {
-			lastGroup.count = index - lastGroup.startIndex;
-		}
-		return currentGroups;
-	}, []);
-
-	// Fix last group count
-	let lastGroup = groups[groups.length - 1];
-
-	if (lastGroup) {
-		lastGroup.count = items.length - lastGroup.startIndex;
-	}
-
-	return groups;
-}
 
 export class CrewList extends React.Component {
 	constructor(props) {
@@ -59,34 +27,60 @@ export class CrewList extends React.Component {
 
 		let _columns = [];
 
+		if (props.duplicatelist) {
+			_columns.push({
+				id: 'airlock',
+				Header: 'Airlock',
+				minWidth: 100,
+				maxWidth: 100,
+				resizable: false,
+				style: { marginTop: 15 },
+				Cell: (p) => {
+					let crew = p.original;
+
+					if (crew.crew_id)
+						return (<Checkbox label='Airlock'
+							checked={this._isSelected(crew.crew_id)}
+							onChange={(ev, isChecked) => this._onSelectionChange(crew.crew_id, isChecked)} />);
+					else
+						return <span/>;
+				}
+			});
+		}
+
 		_columns.push({
-			id: 'icon',
+				id: 'icon',
 				Header: '',
 				minWidth: 60,
 				maxWidth: 60,
+				resizable: false,
 				accessor: 'name',
-				Cell: (p) => { let item = p.original;
+				Cell: (p) => {
+					let item = p.original;
 					return (<Image src={item.iconUrl} width={50} height={50} imageFit={ImageFit.contain} shouldStartVisible={true} />);
 				}
 			},
 			{
-				key: 'short_name',
+				id: 'short_name',
 				Header: 'Name',
 				minWidth: 90,
 				maxWidth: 110,
-				isResizable: true,
+				resizable: true,
 				accessor: 'short_name',
-				Cell: (p) => { let item = p.original;
+				Cell: (p) => {
+					let item = p.original;
 					return (<Link href={'https://stt.wiki/wiki/' + item.name.split(' ').join('_')} target='_blank'>{item.short_name}</Link>);
 				}
 			},
 			{
-				key: 'name',
+				id: 'name',
 				Header: 'Full name',
 				minWidth: 110,
 				maxWidth: 190,
-				isResizable: true,
-				Cell: (p) => { let item = p.original;
+				resizable: true,
+				accessor: 'name',
+				Cell: (p) => {
+					let item = p.original;
 					return (<HoverCard id="nameHoverCard"
 						expandingCardProps={{
 							compactCardHeight: 180,
@@ -102,21 +96,22 @@ export class CrewList extends React.Component {
 				}
 			},
 			{
-				key: 'level',
+				id: 'level',
 				Header: 'Level',
-				minWidth: 30,
-				maxWidth: 50,
-				isResizable: true,
+				minWidth: 40,
+				maxWidth: 40,
+				resizable: false,
 				accessor: 'level'
 			},
 			{
-				key: 'max_rarity',
+				id: 'max_rarity',
 				Header: 'Rarity',
 				accessor: 'max_rarity',
-				minWidth: 60,
-				maxWidth: 90,
-				isResizable: true,
-				Cell: (p) => { let item = p.original;
+				minWidth: 75,
+				maxWidth: 75,
+				resizable: false,
+				Cell: (p) => {
+					let item = p.original;
 					return (
 						<RarityStars
 							min={1}
@@ -124,68 +119,74 @@ export class CrewList extends React.Component {
 							value={item.rarity ? item.rarity : null}
 						/>
 					);
-				},
-				isPadded: true
+				}
 			},
 			{
-				key: 'favorite',
+				id: 'favorite',
 				Header: () => <Icon iconName='FavoriteStar' />,
-				minWidth: 26,
-				maxWidth: 26,
-				iconName: 'FavoriteStar',
-				isIconOnly: true,
+				minWidth: 30,
+				maxWidth: 30,
+				style: { paddingLeft: 0, paddingRight: 0, textAlign: 'center'},
+				resizable: false,
 				accessor: 'favorite',
-				Cell: (p) => { let item = p.original;
-					if (item.favorite)
-						return (<Icon iconName='FavoriteStar' />);
+				Cell: (cell) => {
+					if (cell.value)
+						return (<TooltipHost content={`You marked ${cell.original.short_name} as favorite in the game`} calloutProps={{ gapSpace: 0 }}>
+          						<Icon iconName='FavoriteStar' />
+       						</TooltipHost>);
 					else
 						return (<p />);
 				}
 			},
 			{
-				key: 'frozen',
+				id: 'frozen',
 				Header: () => <Icon iconName='Snowflake' />,
-				minWidth: 26,
-				maxWidth: 26,
-				iconName: 'Snowflake',
-				isIconOnly: true,
+				minWidth: 30,
+				maxWidth: 30,
+				style: { paddingLeft: 0, paddingRight: 0, textAlign: 'center'},
+				resizable: false,
 				accessor: 'frozen',
-				Cell: (p) => { let item = p.original;
-					if (item.frozen)
-						return (<Icon iconName='Snowflake' />);
+				Cell: (cell) => {
+					if (cell.value)
+						return (<TooltipHost content={`You have ${(cell.value === 1) ? 'one copy' : `${cell.value} copies`} of ${cell.original.short_name} frozen (cryo-d)`} calloutProps={{ gapSpace: 0 }}>
+          						<Icon iconName='Snowflake' />
+       						</TooltipHost>);
 					else
 						return (<p />);
 				}
 			});
 
-		// Add global setting / toggle for turning off buy-back crew
-		if (true) {
+		// TODO: add global setting / toggle for turning off buy-back crew
+		if (!props.duplicatelist) {
 			_columns.push({
-					key: 'buyback',
-					Header: () => <Icon iconName='EmptyRecycleBin' />,
-					minWidth: 26,
-					maxWidth: 26,
-					iconName: 'EmptyRecycleBin',
-					isIconOnly: true,
-					accessor: 'buyback',
-					Cell: (p) => { let item = p.original;
-						if (item.buyback)
-							return (<Icon iconName='EmptyRecycleBin' />);
-						else
-							return (<p />);
-					}
-				});
+				id: 'buyback',
+				Header: () => <Icon iconName='EmptyRecycleBin' />,
+				minWidth: 30,
+				maxWidth: 30,
+				style: { paddingLeft: 0, paddingRight: 0, textAlign: 'center'},
+				resizable: false,
+				accessor: 'buyback',
+				Cell: (cell) => {
+					if (cell.value)
+						return (<TooltipHost content={`This copy of ${cell.original.short_name} was dismissed and is available for buyback for a limited time`} calloutProps={{ gapSpace: 0 }}>
+          						<Icon iconName='EmptyRecycleBin' />
+       						</TooltipHost>);
+					else
+						return (<p />);
+				}
+			});
 		}
 
 		_columns.push({
-				key: 'active_id',
+				id: 'active_id',
 				Header: () => <Icon iconName='Balloons' />,
-				minWidth: 26,
-				maxWidth: 26,
-				iconName: 'Balloons',
-				isIconOnly: true,
+				minWidth: 30,
+				maxWidth: 30,
+				style: { paddingLeft: 0, paddingRight: 0, textAlign: 'center'},
+				resizable: false,
 				accessor: 'active_id',
-				Cell: (p) => { let item = p.original;
+				Cell: (p) => {
+					let item = p.original;
 					if (item.active_id)
 						return (<IconButton iconProps={{ iconName: 'Balloons' }} title='Active engagement' onClick={() => this._showActiveDialog(item.active_id, item.name)} />);
 					else
@@ -193,70 +194,58 @@ export class CrewList extends React.Component {
 				}
 			},
 			{
-				key: 'command_skill',
+				id: 'command_skill',
 				Header: 'Command',
 				minWidth: 70,
 				maxWidth: 100,
-				isResizable: true,
+				resizable: true,
 				accessor: 'command_skill_core',
-				Cell: (p) => { let item = p.original;
-					return (<SkillCell skill={item.command_skill} />);
-				}
+				Cell: (cell) => <SkillCell skill={cell.original.command_skill} />
 			},
 			{
-				key: 'diplomacy_skill',
+				id: 'diplomacy_skill',
 				Header: 'Diplomacy',
 				minWidth: 70,
 				maxWidth: 100,
-				isResizable: true,
+				resizable: true,
 				accessor: 'diplomacy_skill_core',
-				Cell: (p) => { let item = p.original;
-					return (<SkillCell skill={item.diplomacy_skill} />);
-				}
+				Cell: (cell) => <SkillCell skill={cell.original.diplomacy_skill} />
 			},
 			{
-				key: 'engineering_skill',
+				id: 'engineering_skill',
 				Header: 'Engineering',
 				minWidth: 75,
 				maxWidth: 100,
-				isResizable: true,
+				resizable: true,
 				accessor: 'engineering_skill_core',
-				Cell: (p) => { let item = p.original;
-					return (<SkillCell skill={item.engineering_skill} />);
-				}
+				Cell: (cell) => <SkillCell skill={cell.original.engineering_skill} />
 			},
 			{
-				key: 'medicine_skill',
+				id: 'medicine_skill',
 				Header: 'Medicine',
 				minWidth: 70,
 				maxWidth: 100,
-				isResizable: true,
+				resizable: true,
 				accessor: 'medicine_skill_core',
-				Cell: (p) => { let item = p.original;
-					return (<SkillCell skill={item.medicine_skill} />);
-				}
+				Cell: (cell) => <SkillCell skill={cell.original.medicine_skill} />
 			},
 			{
-				key: 'science_skill',
+				id: 'science_skill',
 				Header: 'Science',
 				minWidth: 70,
 				maxWidth: 100,
-				isResizable: true,
+				resizable: true,
 				accessor: 'science_skill_core',
-				Cell: (p) => { let item = p.original;
-					return (<SkillCell skill={item.science_skill} />);
-				}
+				Cell: (cell) => <SkillCell skill={cell.original.science_skill} />
 			},
 			{
-				key: 'security_skill',
+				id: 'security_skill',
 				Header: 'Security',
 				minWidth: 70,
 				maxWidth: 100,
-				isResizable: true,
+				resizable: true,
 				accessor: 'security_skill_core',
-				Cell: (p) => { let item = p.original;
-					return (<SkillCell skill={item.security_skill} />);
-				}
+				Cell: (cell) => <SkillCell skill={cell.original.security_skill} />
 			},
 			{
 				key: 'traits',
@@ -268,40 +257,50 @@ export class CrewList extends React.Component {
 
 		let sortColumn = props.sortColumn ? props.sortColumn : 'max_rarity';
 
-		_columns.forEach(function (column) {
-			if (column.key == sortColumn) {
-				column.isSorted = true;
-				column.isSortedDescending = false;
-			}
-		});
+		this.state = {
+			items: props.data,
+			sorted: [ { id: sortColumn, desc: false } ],
+			columns: _columns,
+			selection: props.selectedIds ? props.selectedIds : new Set()
+		};
 
-		if (props.grouped === false) {
-			this.state = {
-				items: sortItems(props.data, sortColumn),
-				columns: _columns,
-				groups: null,
-				groupedColumn: '',
-				sortColumn: sortColumn,
-				sortedDescending: false,
-				isCompactMode: true
-			};
-		}
-		else {
-			this.state = {
-				items: sortItems(props.data, sortColumn),
-				columns: _columns,
-				groups: groupBy(props.data, 'max_rarity'),
-				groupedColumn: 'max_rarity',
-				sortColumn: sortColumn,
-				sortedDescending: false,
-				isCompactMode: true
-			};
-		}
-
-		this._onColumnClick = this._onColumnClick.bind(this);
 		this._showActiveDialog = this._showActiveDialog.bind(this);
 		this._onRenderExpandedCard = this._onRenderExpandedCard.bind(this);
 		this._onRenderCompactCard = this._onRenderCompactCard.bind(this);
+		this._onSelectionChange = this._onSelectionChange.bind(this);
+		this._isSelected = this._isSelected.bind(this);
+	}
+
+	componentWillReceiveProps(nextProps) {
+		if (nextProps.data !== this.state.items) {
+			this.setState({ items: nextProps.data });
+		}
+
+		if (nextProps.selectedIds !== this.state.selection) {
+			this.setState({ selection: nextProps.selectedIds ? nextProps.selectedIds : new Set()});
+		}
+	}
+
+	_onSelectionChange(id, isChecked) {
+		this.setState((prevState, props) => {
+			let selection = prevState.selection;
+
+			if (isChecked) {
+				selection.add(id);
+			} else {
+				selection.delete(id);
+			}
+
+			if (props.onSelectionChange) {
+				props.onSelectionChange(selection);
+			}
+
+			return {selection};
+		});
+	}
+
+	_isSelected(id) {
+		return this.state.selection && this.state.selection.has(id);
 	}
 
 	_onRenderCompactCard(item) {
@@ -375,7 +374,7 @@ export class CrewList extends React.Component {
 
 	renderChargePhases(charge_phases) {
 		if (!charge_phases) {
-			return <span/>;
+			return <span />;
 		} else {
 			let phases = [];
 			charge_phases.forEach((cp, idx) => {
@@ -410,13 +409,18 @@ export class CrewList extends React.Component {
 	}
 
 	render() {
-		let { columns, items, groups } = this.state;
+		let { columns, items, sorted } = this.state;
 
 		return (
 			<div className={this.props.overrideClassName ? this.props.overrideClassName : 'data-grid'} data-is-scrollable='true'>
 				<ReactTable
 					data={items}
 					columns={columns}
+					defaultPageSize={(items.length <= 50) ? items.length : 50}
+					pageSize={(items.length <= 50) ? items.length : 50}
+					sorted={sorted}
+					onSortedChange={sorted => this.setState({ sorted })}
+					showPagination={(items.length > 50)}
 					className="-striped -highlight"
 				/>
 				<ActiveCrewDialog ref='activeCrewDialog' />
@@ -447,34 +451,10 @@ export class CrewList extends React.Component {
 
 	filter(newValue) {
 		this.setState({
-			items: sortItems((newValue ?
+			items: (newValue ?
 				this.props.data.filter(i => this._filterCrew(i, newValue.toLowerCase())) :
-				this.props.data), this.state.sortColumn, this.state.sortedDescending)
+				this.props.data)
 		});
-	}
-
-	getGroupedColumn() {
-		return this.state.groupedColumn;
-	}
-
-	setGroupedColumn(groupedColumn) {
-		if (groupedColumn == '')
-			this.setState({ groupedColumn: '', groups: null });
-		else
-			this.setState({ groupedColumn: groupedColumn, groups: groupBy(this.state.items, groupedColumn) });
-	}
-
-	_onColumnClick(ev, column) {
-		if (column.accessor != this.state.groupedColumn) {
-			this.setGroupedColumn('');
-		}
-
-		this.setState(columnClick(this.state.items, this.state.columns, column));
-
-		if (this.state.groupedColumn == '')
-			this.setState({ groups: null });
-		else
-			this.setState({ groups: groupBy(this.state.items, this.state.groupedColumn) });
 	}
 
 	_showActiveDialog(active_id, name) {
