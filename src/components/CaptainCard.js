@@ -31,7 +31,6 @@ export class CaptainCard extends React.Component {
 						<div className="ui black large image label">
 							<img src={CONFIG.SPRITES['energy_icon'].url} className="ui" />
 							{Math.min(Math.floor(STTApi.playerData.character.seconds_from_replay_energy_basis / STTApi.playerData.character.replay_energy_rate), STTApi.playerData.character.replay_energy_max) + STTApi.playerData.character.replay_energy_overflow}
-
 						</div>
 
 						<div className="ui black large image label">
@@ -42,7 +41,6 @@ export class CaptainCard extends React.Component {
 						<div className="ui black large image label">
 							<img src={CONFIG.SPRITES['images_currency_pe_currency_0'].url} className="ui" />
 							{STTApi.playerData.premium_earnable}
-
 						</div>
 
 						<div className="ui black large image label">
@@ -58,6 +56,11 @@ export class CaptainCard extends React.Component {
 						<div className="ui black large image label">
 							<img src={CONFIG.SPRITES['cadet_icon'].url} className="ui" />
 							{STTApi.playerData.character.cadet_tickets.current} / {STTApi.playerData.character.cadet_tickets.max}
+						</div>
+
+						<div className="ui black large image label">
+							<img src={CONFIG.SPRITES['sb_hull_repair'].url} className="ui" />
+							{STTApi.playerData.replicator_limit - STTApi.playerData.replicator_uses_today} / {STTApi.playerData.replicator_limit}
 						</div>
 					</div>
 					<button className="ui primary button" onClick={() => this.props.onLogout()}><i className="icon sign out"></i>Logout</button>
