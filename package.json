@@ -38,7 +38,7 @@
     "babel-preset-es2016": "^6.24.1",
     "babel-preset-react": "latest",
     "css-loader": "^1.0.0",
-    "electron": "3.0.0-beta.5",
+    "electron": "2.0.5",
     "electron-builder": "^20.28.1",
     "electron-packager": "latest",
     "electron-rebuild": "^1.8.2",

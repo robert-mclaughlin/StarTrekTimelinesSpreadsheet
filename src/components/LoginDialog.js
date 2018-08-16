@@ -157,7 +157,7 @@ export class LoginDialog extends React.Component {
 		})
 		.catch((error) => {
 			console.error(error);
-			this.setState({ showSpinner: false, hideDialog: false, errorMessage: error });
+			this.setState({ showSpinner: false, hideDialog: false, errorMessage: error.message });
 		});
 	}
 }
