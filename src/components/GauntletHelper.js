@@ -422,7 +422,7 @@ export class GauntletHelper extends React.Component {
 					<h3>Current gauntlet stats</h3>
 					<Label>Crew refeshes in {Math.floor(this.state.gauntlet.seconds_to_next_crew_refresh / 60)} minutes and the gauntlet ends in {Math.floor(this.state.gauntlet.seconds_to_end / 60)} minutes</Label>
 					<Label>Your rank is {this.state.roundOdds.rank} and you have {this.state.roundOdds.consecutive_wins} consecutive wins</Label>
-					<span><h3>Your crew stats <DefaultButton onClick={this._reloadGauntletData} text='Reload data' iconProps={{ iconName: 'Refresh' }} /></h3></span>
+					<span><h3>Your crew stats</h3></span>
 					<div style={{ display: 'flex', width: '95%' }} >
 						{this.state.gauntlet.contest_data.selected_crew.map((crew) => <GauntletCrew key={crew.crew_id} crew={crew} revive={(save) => this._payToReviveCrew(crew.crew_id, save)} />)}
 					</div>
@@ -469,10 +469,18 @@ export class GauntletHelper extends React.Component {
 					{this.state.lastErrorMessage && <p>Error: '{this.state.lastErrorMessage}'</p>}
 
 					<br />
-
-					{(this.state.roundOdds.matches.length > 0) &&
-						<PrimaryButton onClick={this._payForNewOpponents} text='Pay merits for new opponents' iconProps={{ iconName: 'Money' }} />
-					}
+					<table>
+						<tr>
+							<td>						
+								{(this.state.roundOdds.matches.length > 0) &&
+									<PrimaryButton onClick={this._payForNewOpponents} text='Pay merits for new opponents' iconProps={{ iconName: 'Money' }} />
+								}
+							</td>
+							<td>								
+								<DefaultButton onClick={this._reloadGauntletData} text='Reload data' iconProps={{ iconName: 'Refresh' }} />
+							</td>
+						</tr>
+					</table>
 					<br /><br/>
 
 					<div style={{ display: 'grid', gridGap: '10px', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
