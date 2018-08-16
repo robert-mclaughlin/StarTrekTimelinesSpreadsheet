@@ -216,7 +216,8 @@ export class NeededEquipment extends React.Component {
 			neededEquipment: [],
 			filters: {
 				onlyFavorite: false,
-				onlyNeeded: false
+				onlyNeeded: false,
+				onlyFaction: false
 			}
 		};
 	}
@@ -256,7 +257,17 @@ export class NeededEquipment extends React.Component {
 					found.needed += eq.need;
 				} else {
 					let have = STTApi.playerData.character.items.find(item => item.archetype_id === eq.archetype);
-					mapUnowned[eq.archetype] = { equipment, needed: eq.need, have: have ? have.quantity : 0 };
+					let isDisputeMissionObtainable = equipment.item_sources.filter(e => e.type === 0).length > 0;
+					let isShipBattleObtainable = equipment.item_sources.filter(e => e.type === 2).length > 0;
+					let isFactionObtainable = equipment.item_sources.filter(e => e.type === 1).length > 0;
+					mapUnowned[eq.archetype] = { 
+						equipment, 
+						needed: eq.need, 
+						have: have ? have.quantity : 0, 
+						isDisputeMissionObtainable: isDisputeMissionObtainable,  
+						isShipBattleObtainable: isShipBattleObtainable,
+						isFactionObtainable: isFactionObtainable
+					};
 				}
 			} else {
 				console.error(`This equipment has no recipe and no sources: '${equipment.name}'`);
@@ -269,6 +280,10 @@ export class NeededEquipment extends React.Component {
 
 		if (filters.onlyNeeded) {
 			arr = arr.filter((entry) => entry.have < entry.needed);
+		}
+
+		if (filters.onlyFaction) {
+			arr = arr.filter((entry) => !entry.isDisputeMissionObtainable && !entry.isShipBattleObtainable && entry.isFactionObtainable);
 		}
 
 		return arr;
@@ -296,6 +311,16 @@ export class NeededEquipment extends React.Component {
 	_toggleOnlyNeeded(isChecked) {
 		const newFilters = Object.assign({}, this.state.filters);
 		newFilters.onlyNeeded = isChecked;
+		this.setState({
+			filters: newFilters
+		});
+
+		return this._filterNeededEquipment(newFilters);
+	}
+
+	_toggleOnlyFaction(isChecked) {
+		const newFilters = Object.assign({}, this.state.filters);
+		newFilters.onlyFaction = isChecked;
 		this.setState({
 			filters: newFilters
 		});
@@ -353,6 +378,9 @@ export class NeededEquipment extends React.Component {
 				/>
 				<Checkbox label='Show only insufficient equipment' checked={this.state.filters.onlyNeeded}
 					onChange={(e, isChecked) => { this._toggleOnlyNeeded(isChecked); }}
+				/>
+				<Checkbox label='Show items obtainable through faction missions only' checked={this.state.filters.onlyFaction}
+					onChange={(e, isChecked) => { this._toggleOnlyFaction(isChecked); }}
 				/>
 				<br />
 				<PrimaryButton onClick={() => this._exportCSV()} text='Export as CSV...' /><br /><br />
