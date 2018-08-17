@@ -102,7 +102,7 @@ class VoyageCrewRankWorker : public Nan::AsyncProgressWorker
 					ss << (crew.altScores.empty() ? 0 : crew.altScores[iAlt]) << ",";
 				}
 				std::string status;
-				if (crew.crew.frozen)
+				if (crew.crew.traitIds.test(FROZEN_BIT))
 				{
 					status = "F";
 				}

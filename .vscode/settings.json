@@ -1,5 +1,6 @@
 {
     "files.associations": {
+        "*.gs": "javascript",
         "memory": "cpp",
         "algorithm": "cpp",
         "array": "cpp",
@@ -59,6 +60,13 @@
         "xtr1common": "cpp",
         "xtree": "cpp",
         "xutility": "cpp",
-        "mutex": "cpp"
+        "mutex": "cpp",
+        "chrono": "cpp",
+        "bitset": "cpp",
+        "atomic": "cpp",
+        "condition_variable": "cpp",
+        "ratio": "cpp",
+        "set": "cpp",
+        "thread": "cpp"
     }
 }

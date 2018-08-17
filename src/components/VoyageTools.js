@@ -318,7 +318,6 @@ export class VoyageCrew extends React.Component {
 				engineering_skill: crew.engineering_skill,
 				diplomacy_skill: crew.diplomacy_skill,
 				medicine_skill: crew.medicine_skill,
-				iconUrl: crew.iconUrl,
 				active_id: crew.active_id ? crew.active_id : 0
 			})),
 			voyage_skills: STTApi.playerData.character.voyage_descriptions[0].skills,
@@ -342,6 +341,65 @@ export class VoyageCrew extends React.Component {
 
 		// Filter out buy-back crew
 		dataToExport.crew = dataToExport.crew.filter(c => !c.buyback);
+
+		// Find unique traits used in the voyage slots
+		let setTraits = new Set();
+		dataToExport.voyage_crew_slots.forEach(slot => {
+			setTraits.add(slot.trait);
+		});
+
+		let arrTraits = Array.from(setTraits);
+
+		let skills = Object.keys(CONFIG.SKILLS);
+
+		// Replace traits and skills with their id
+		dataToExport.voyage_crew_slots.forEach(slot => {
+			slot.traitId = arrTraits.indexOf(slot.trait);
+			slot.skillId = skills.indexOf(slot.skill);
+			delete slot.skill;
+			delete slot.trait;
+		});
+
+		dataToExport.primary_skill = skills.indexOf(dataToExport.voyage_skills.primary_skill);
+		dataToExport.secondary_skill = skills.indexOf(dataToExport.voyage_skills.secondary_skill);
+		delete dataToExport.voyage_skills;
+
+		// Replace crew traits with their ids
+		dataToExport.crew.forEach(crew => {
+			let traitIds = [];
+			crew.traits.forEach(trait => {
+				if (arrTraits.indexOf(trait) >= 0) {
+					traitIds.push(arrTraits.indexOf(trait));
+				}
+			});
+
+			crew.traitBitMask = 0;
+			for (let nFlag = 0; nFlag < dataToExport.voyage_crew_slots.length; crew.traitBitMask |= (traitIds.indexOf(dataToExport.voyage_crew_slots[nFlag].traitId) !== -1) << nFlag++);
+
+			// We store traits in the first 12 bits, using the next few for flags
+			crew.traitBitMask |= (crew.frozen > 0) << dataToExport.voyage_crew_slots.length;
+			crew.traitBitMask |= (crew.active_id > 0) << (dataToExport.voyage_crew_slots.length + 1);
+
+			delete crew.traits;
+			delete crew.frozen;
+			delete crew.active_id;
+
+			//console.log(`${crew.name}: ${crew.traitBitMask.toString(2)}`);
+
+			// Replace skill data with a binary blob
+			let buffer = new ArrayBuffer(6 /*number of skills */ * 3 /*values per skill*/ * 2 /*we need 2 bytes per value*/);
+			let skillData = new Uint16Array(buffer);
+			for(let i = 0; i < skills.length; i++) {
+				skillData[i*3] = crew[skills[i]].core;
+				skillData[i*3 + 1] = crew[skills[i]].min;
+				skillData[i*3 + 2] = crew[skills[i]].max;
+
+				delete crew[skills[i]];
+			}
+
+			// This won't be necessary once we switch away from Json to pure binary for native invocation
+			crew.skillData = Array.from(skillData);
+		});
 
 		function cppEntries(result) {
 			let entries = [];

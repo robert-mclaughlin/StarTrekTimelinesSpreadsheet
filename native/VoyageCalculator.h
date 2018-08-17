@@ -7,6 +7,7 @@
 #include <chrono>
 #include <set>
 #include <iostream>
+#include <bitset>
 
 #include "Log.h"
 #include "ThreadPool.h"
@@ -18,6 +19,9 @@ extern Log log;
 
 constexpr unsigned int SKILL_COUNT = 6;
 constexpr unsigned int SLOT_COUNT = SKILL_COUNT*2;
+
+constexpr unsigned int FROZEN_BIT = SLOT_COUNT;
+constexpr unsigned int ACTIVE_BIT = SLOT_COUNT + 1;
 
 struct Timer
 {
@@ -64,14 +68,13 @@ struct Crew
 	std::array<unsigned int, SKILL_COUNT> skills;
 	std::array<unsigned int, SKILL_COUNT> skillMaxProfs;
 	std::array<unsigned int, SKILL_COUNT> skillMinProfs;
-	std::set<size_t> traits;
+	std::bitset<SLOT_COUNT + 2> traitIds;
 	// treated as a bool, but avoiding bit masking vector<bool> specialization for multithreading
 	mutable std::vector<int> considered;
 	const Crew *original{nullptr};
 	std::array<const Crew*, SLOT_COUNT> slotCrew;
 	unsigned int score{0};
 	unsigned int max_rarity{0};
-	bool frozen;
 	bool ff100 = false;
 };
 using CrewArray = std::array<const Crew *, SLOT_COUNT>;
@@ -127,7 +130,6 @@ private:
 	std::function<void(const std::array<const Crew *, SLOT_COUNT>&, double)> progressUpdate;
 	std::array<std::string, SLOT_COUNT> slotNames;
 	std::array<size_t, SLOT_COUNT> slotSkills;
-	std::array<std::string, SLOT_COUNT> slotSkillNames;
 	std::array<size_t, SLOT_COUNT> slotTraits;
 	size_t primarySkill;
 	size_t secondarySkill;

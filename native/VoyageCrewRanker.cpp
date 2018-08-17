@@ -62,7 +62,7 @@ RankedResult RankVoyageCrew(const char *jsonInput) noexcept
 	// add in immortalized crew
 	VoyageCalculator calculator(jsonInput);
 	for (const Crew &crew : calculator.GetRoster()) {
-		if (crew.ff100 && !crew.frozen) {
+		if (crew.ff100 && !crew.traitIds.test(FROZEN_BIT)) {
 			RankedCrew &rCrew = rankedCrew[crew.id];
 			rCrew.crew = crew;
 		}

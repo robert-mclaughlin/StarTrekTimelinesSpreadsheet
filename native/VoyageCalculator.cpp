@@ -41,7 +41,7 @@ constexpr float ssChance = 0.25f;
 constexpr float osChance = 0.1f;
 constexpr unsigned int dilPerMin = 5;
 
-unsigned int VoyageCalculator::computeScore(const Crew& crew, size_t skill, size_t trait) const noexcept
+unsigned int VoyageCalculator::computeScore(const Crew& crew, size_t skill, size_t traitSlot) const noexcept
 {
 	if (crew.skills[skill] == 0)
 		return 0;
@@ -66,7 +66,7 @@ unsigned int VoyageCalculator::computeScore(const Crew& crew, size_t skill, size
 		score += skillScore;
 	};
 
-	if (crew.traits.find(trait) != crew.traits.end())
+	if (crew.traitIds.test(traitSlot))
 	{
 		score += config_traitScoreBoost;
 	}
@@ -98,57 +98,45 @@ VoyageCalculator::VoyageCalculator(const char* jsonInput, bool rankMode) noexcep
 	skillMap.insert({"diplomacy_skill",4});
 	skillMap.insert({"medicine_skill",5});
 
-	primarySkill = skillMap[j["voyage_skills"]["primary_skill"]];
-	secondarySkill = skillMap[j["voyage_skills"]["secondary_skill"]];
+	primarySkill = j["primary_skill"];
+	secondarySkill = j["secondary_skill"];
 
 	assert(SLOT_COUNT == j["voyage_crew_slots"].size());
 
-	size_t traitId = 0;
-	std::unordered_map<std::string, size_t> traitMap;
-
-	auto fGetTrait = [&](const std::string &trait) {
-		auto iTrait = traitMap.find(trait);
-		if (iTrait == traitMap.end())
-		{
-			iTrait = traitMap.insert({trait, traitId++}).first;
-		}
-		return iTrait->second;
-	};
-
 	for (const auto &crew : j["crew"])
 	{
-		bool frozen = crew["frozen"] != 0;
-		if (!config_includeFrozenCrew && frozen != 0)
+		std::uint32_t traitBitMask = crew["traitBitMask"];
+		std::bitset<SLOT_COUNT + 2> bitMask {traitBitMask};
+
+		if (!config_includeFrozenCrew && bitMask.test(FROZEN_BIT))
 			continue;
 
-		if (!config_includeAwayCrew && crew["active_id"] != 0)
+		if (!config_includeAwayCrew && bitMask.test(ACTIVE_BIT))
 			continue;
 
 		Crew c;
 		c.id = crew["id"];
 		c.name = crew["name"];
-		c.frozen = frozen;
 		if (crew.find("ff100") != crew.end()) {
 			c.ff100 = crew["ff100"] != 0;
 		}
 		if (crew.find("max_rarity") != crew.end()) {
 			c.max_rarity = crew["max_rarity"];
 		}
+
+		c.traitIds = bitMask;
+
+		std::vector<std::uint16_t> skillData = crew["skillData"];
+
 		for (const auto &skill : skillMap)
 		{
-			c.skillMaxProfs[skill.second] = crew[skill.first]["max"].get<int16_t>();
-			c.skillMinProfs[skill.second] = crew[skill.first]["min"].get<int16_t>();
-			c.skills[skill.second] = crew[skill.first]["core"].get<int16_t>()
-				+ (c.skillMaxProfs[skill.second] + c.skillMinProfs[skill.second]) / 2;
-		}
-
-		for (const std::string &trait : crew["traits"])
-		{
-			c.traits.emplace(fGetTrait(trait));
+			c.skillMaxProfs[skill.second] = skillData[skill.second*3 + 2];
+			c.skillMinProfs[skill.second] = skillData[skill.second*3 + 1];
+			c.skills[skill.second] = skillData[skill.second*3] + (c.skillMaxProfs[skill.second] + c.skillMinProfs[skill.second]) / 2;
 		}
 
 		log << c.name << " " << c.skills[0] << " " << c.skills[1] << " " << c.skills[2] << " "
-			<< c.skills[3] << " " << c.skills[4] << " " << c.skills[5] << " " << /*c.traits <<*/ std::endl;
+			<< c.skills[3] << " " << c.skills[4] << " " << c.skills[5] << " " << std::endl;
 
 		roster.emplace_back(std::move(c));
 	}
@@ -156,12 +144,8 @@ VoyageCalculator::VoyageCalculator(const char* jsonInput, bool rankMode) noexcep
 	for (size_t iSlot = 0; iSlot < SLOT_COUNT; iSlot++)
 	{
 		slotNames[iSlot] = j["voyage_crew_slots"][iSlot]["name"].get<std::string>();
-		slotSkillNames[iSlot] = j["voyage_crew_slots"][iSlot]["skill"].get<std::string>().c_str();
-		slotSkills[iSlot] = skillMap[slotSkillNames[iSlot]];
-		slotTraits[iSlot] = fGetTrait(j["voyage_crew_slots"][iSlot]["trait"].get<std::string>());
+		slotSkills[iSlot] = j["voyage_crew_slots"][iSlot]["skillId"];
 	}
-
-	log << "encountered " << traitId << " traits" << std::endl;
 
 	for (size_t iSlot = 0; iSlot < SLOT_COUNT; iSlot++)
 	{
@@ -176,7 +160,7 @@ VoyageCalculator::VoyageCalculator(const char* jsonInput, bool rankMode) noexcep
 			// compute score - not really used anymore except for checking whether
 			//	crew can fit in slot (score > 0), and perhaps for troubleshooting
 			slotRoster[iCrew].score = 
-				computeScore(slotRoster[iCrew], slotSkills[iSlot], slotTraits[iSlot]);
+				computeScore(slotRoster[iCrew], slotSkills[iSlot], iSlot);
 
 			// set references
 			slotRoster[iCrew].original = &roster[iCrew];
@@ -275,6 +259,27 @@ void VoyageCalculator::updateSlotRosterScores() noexcept
 	}
 }
 
+// Used for logging only
+constexpr const char* SkillName(size_t skillId) noexcept
+{
+	switch(skillId) {
+		case 0:
+			return "Command";
+		case 1:
+			return "Science";
+		case 2:
+			return "Security";
+		case 3:
+			return "Engineering";
+		case 4:
+			return "Diplomacy";
+		case 5:
+			return "Medicine";
+		default:
+			return "";
+	}
+}
+
 void VoyageCalculator::findBest() noexcept
 {
 	// find the nth highest crew score
@@ -297,7 +302,7 @@ void VoyageCalculator::findBest() noexcept
 	size_t maxDepth = 0;
 	for (size_t iSlot = 0; iSlot < SLOT_COUNT; ++iSlot)
 	{
-		log << slotSkillNames[iSlot] << std::endl;
+		log << SkillName(slotSkills[iSlot]) << std::endl;
 		size_t iCrew;
 		for (iCrew = 0; iCrew < sortedSlotRosters[iSlot].size(); ++iCrew)
 		{
@@ -316,9 +321,9 @@ void VoyageCalculator::findBest() noexcept
 		}
 	}
 
-	log << "minScore " << minScore << std::endl;
-	log << "primary " << primarySkill << std::endl;
-	log << "secondary " << secondarySkill << std::endl;
+	log << "minScore: " << minScore << std::endl;
+	log << "primary: " << SkillName(primarySkill) << std::endl;
+	log << "secondary: " << SkillName(secondarySkill) << std::endl;
 	
 	{ Timer::Scope timer(voyageCalcTime);
 		for (size_t iMinDepth = minDepth; iMinDepth < MAX_SCAN_DEPTH; ++iMinDepth)
@@ -528,7 +533,7 @@ float VoyageCalculator::calculateDuration(const std::array<const Crew *, SLOT_CO
 				crew->skillMinProfs[iSkill];
 		}
 
-		if (crew->traits.find(slotTraits[iSlot]) != crew->traits.end())
+		if (crew->traitIds.test(iSlot))
 		{
 			shipAM += ANTIMATTER_FOR_SKILL_MATCH;
 		}
