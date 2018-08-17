@@ -543,7 +543,7 @@ export class VoyageLog extends React.Component {
 
 	renderVoyageState() {
 		if (this.state.voyage.state == "recalled") {
-			return <p>Voyage has lasted for {Math.floor(this.state.voyage_duration / 60)} minutes and it's currently returning.</p>;
+			return <p>Voyage has lasted for {Math.floor(this.state.voyage_duration / 60)} minutes and it's currently returning ({Math.floor(this.state.voyage.recall_time_left / 60)} minutes left).</p>;
 		} else if (this.state.voyage.state == "failed") {
 			return <p>Voyage has run out of antimatter after {Math.floor(this.state.voyage_duration / 60)} minutes and it's waiting to be abandoned or replenished.</p>;
 		} else {

@@ -18,7 +18,7 @@
 'use strict';
 
 // Import parts of electron to use
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, session } = require('electron');
 const path = require('path')
 const url = require('url')
 const FB = require('fb');
@@ -108,10 +108,10 @@ ipcMain.on("fb-authenticate", function (event, arg) {
     mainWindow.webContents.send("fb_closed");
   });
 
-  authWindow.webContents.on('did-get-redirect-request', function (event, oldUrl, newUrl) {
-    var raw_code = /access_token=([^&]*)/.exec(newUrl) || null;
+  session.defaultSession.webRequest.onBeforeRedirect({ urls: ['https://www.facebook.com/*'] }, (details, callback) => {
+    var raw_code = /access_token=([^&]*)/.exec(details.redirectURL) || null;
     var access_token = (raw_code && raw_code.length > 1) ? raw_code[1] : null;
-    var error = /\?error=(.+)$/.exec(newUrl);
+    var error = /\?error=(.+)$/.exec(details.redirectURL);
 
     if (access_token) {
       FB.setAccessToken(access_token);
@@ -121,7 +121,7 @@ ipcMain.on("fb-authenticate", function (event, arg) {
       });
       authWindow.close();
     }
-  });
+  })
 });
 
 app.setAppUserModelId("IAmPicard.StarTrekTimelinesTool");
