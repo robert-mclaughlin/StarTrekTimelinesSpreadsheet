@@ -90,14 +90,6 @@ VoyageCalculator::VoyageCalculator(const char* jsonInput, bool rankMode) noexcep
 
 	bestconsidered.fill(nullptr);
 
-	std::map<std::string, size_t> skillMap;
-	skillMap.insert({"command_skill",0});
-	skillMap.insert({"science_skill",1});
-	skillMap.insert({"security_skill",2});
-	skillMap.insert({"engineering_skill",3});
-	skillMap.insert({"diplomacy_skill",4});
-	skillMap.insert({"medicine_skill",5});
-
 	primarySkill = j["primary_skill"];
 	secondarySkill = j["secondary_skill"];
 
@@ -106,7 +98,7 @@ VoyageCalculator::VoyageCalculator(const char* jsonInput, bool rankMode) noexcep
 	for (const auto &crew : j["crew"])
 	{
 		std::uint32_t traitBitMask = crew["traitBitMask"];
-		std::bitset<SLOT_COUNT + 2> bitMask {traitBitMask};
+		std::bitset<BITMASK_SIZE> bitMask {traitBitMask};
 
 		if (!config_includeFrozenCrew && bitMask.test(FROZEN_BIT))
 			continue;
@@ -117,22 +109,18 @@ VoyageCalculator::VoyageCalculator(const char* jsonInput, bool rankMode) noexcep
 		Crew c;
 		c.id = crew["id"];
 		c.name = crew["name"];
-		if (crew.find("ff100") != crew.end()) {
-			c.ff100 = crew["ff100"] != 0;
-		}
-		if (crew.find("max_rarity") != crew.end()) {
-			c.max_rarity = crew["max_rarity"];
-		}
+		c.ff100 = bitMask.test(FFFE_BIT);
+		c.max_rarity = crew["max_rarity"];
 
 		c.traitIds = bitMask;
 
 		std::vector<std::uint16_t> skillData = crew["skillData"];
 
-		for (const auto &skill : skillMap)
+		for (size_t i = 0; i < SKILL_COUNT; i++)
 		{
-			c.skillMaxProfs[skill.second] = skillData[skill.second*3 + 2];
-			c.skillMinProfs[skill.second] = skillData[skill.second*3 + 1];
-			c.skills[skill.second] = skillData[skill.second*3] + (c.skillMaxProfs[skill.second] + c.skillMinProfs[skill.second]) / 2;
+			c.skillMaxProfs[i] = skillData[i*3 + 2];
+			c.skillMinProfs[i] = skillData[i*3 + 1];
+			c.skills[i] = skillData[i*3] + (c.skillMaxProfs[i] + c.skillMinProfs[i]) / 2;
 		}
 
 		log << c.name << " " << c.skills[0] << " " << c.skills[1] << " " << c.skills[2] << " "

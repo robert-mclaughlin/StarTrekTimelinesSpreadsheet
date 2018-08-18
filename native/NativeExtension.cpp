@@ -51,7 +51,9 @@ class VoyageWorker : public Nan::AsyncProgressWorker
 		nlohmann::json j;
 		for (int i = 0; i < VoyageTools::SLOT_COUNT; i++)
 		{
-			j["selection"][voyageCalculator->GetSlotName(i)] = res[i]->id;
+			if (res[i] != nullptr) {
+				j["selection"][voyageCalculator->GetSlotName(i)] = res[i]->id;
+			}
 		}
 		j["score"] = score;
 		return j.dump();

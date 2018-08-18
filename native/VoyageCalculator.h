@@ -22,6 +22,9 @@ constexpr unsigned int SLOT_COUNT = SKILL_COUNT*2;
 
 constexpr unsigned int FROZEN_BIT = SLOT_COUNT;
 constexpr unsigned int ACTIVE_BIT = SLOT_COUNT + 1;
+constexpr unsigned int FFFE_BIT = SLOT_COUNT + 2;
+
+constexpr unsigned int BITMASK_SIZE = SLOT_COUNT + 3;
 
 struct Timer
 {
@@ -68,7 +71,7 @@ struct Crew
 	std::array<unsigned int, SKILL_COUNT> skills;
 	std::array<unsigned int, SKILL_COUNT> skillMaxProfs;
 	std::array<unsigned int, SKILL_COUNT> skillMinProfs;
-	std::bitset<SLOT_COUNT + 2> traitIds;
+	std::bitset<BITMASK_SIZE> traitIds;
 	// treated as a bool, but avoiding bit masking vector<bool> specialization for multithreading
 	mutable std::vector<int> considered;
 	const Crew *original{nullptr};
