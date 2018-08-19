@@ -214,10 +214,12 @@ export class NeededEquipment extends React.Component {
 
 		this.state = {
 			neededEquipment: [],
+			cadetableItems: undefined,
 			filters: {
 				onlyFavorite: false,
 				onlyNeeded: false,
-				onlyFaction: false
+				onlyFaction: false,
+				cadetable: false
 			}
 		};
 	}
@@ -232,8 +234,39 @@ export class NeededEquipment extends React.Component {
 		return filteredCrew;
 	}
 
+	_getCadetableItems(){
+		if(this.state.cadetableItems == undefined){
+			const cadetableItems = new Map();		
+			//Advanced Cadet Challenges offer the same rewards as Standard ones, so filter them to avoid duplicates
+			let cadetMissions = STTApi.missions.filter(mission => mission.quests.filter(quest => quest.cadet).length > 0).filter(mission => mission.episode_title.indexOf("Adv") === -1);
+			cadetMissions.forEach(cadetMission => {			
+				cadetMission.quests.forEach(quest => {
+					quest.mastery_levels.forEach(masteryLevel => {
+						masteryLevel.rewards.filter(r => r.type === 0).forEach(reward => {
+							reward.potential_rewards.forEach(item => {
+								let info = {
+									name: quest.name + " (" + cadetMission.episode_title + ")",
+									mastery: masteryLevel.id
+								};
+								
+								if(cadetableItems.has(item.id)){
+									cadetableItems.get(item.id).push(info);
+								} else {
+									cadetableItems.set(item.id,[info]);
+								}
+							})					
+						})									
+					})				
+				})
+			});	
+			this.state.cadetableItems = cadetableItems;	
+		}
+		return this.state.cadetableItems;
+	}
+
 	_getNeededEquipment(filteredCrew, filters) {
 		let unparsedEquipment = [];
+		let cadetableItems = this._getCadetableItems();
 		for (let crew of filteredCrew) {
 
 			crew.equipment_slots.forEach((equipment) => {
@@ -251,22 +284,25 @@ export class NeededEquipment extends React.Component {
 			if (equipment.recipe && equipment.recipe.demands && (equipment.recipe.demands.length > 0)) {
 				// Let's add all children in the recipe, so that we can parse them on the next loop iteration
 				equipment.recipe.demands.forEach((item) => unparsedEquipment.push({ archetype: item.archetype_id, need: item.count * eq.need }));
-			} else if (equipment.item_sources && (equipment.item_sources.length > 0)) {
+			} else if (equipment.item_sources && (equipment.item_sources.length > 0) || cadetableItems.has(equipment.id)) {
 				let found = mapUnowned[eq.archetype];
 				if (found) {
 					found.needed += eq.need;
-				} else {
+				} else {					
 					let have = STTApi.playerData.character.items.find(item => item.archetype_id === eq.archetype);
 					let isDisputeMissionObtainable = equipment.item_sources.filter(e => e.type === 0).length > 0;
 					let isShipBattleObtainable = equipment.item_sources.filter(e => e.type === 2).length > 0;
 					let isFactionObtainable = equipment.item_sources.filter(e => e.type === 1).length > 0;
+					let isCadetable = cadetableItems.has(equipment.id);				
+										
 					mapUnowned[eq.archetype] = { 
 						equipment, 
 						needed: eq.need, 
 						have: have ? have.quantity : 0, 
 						isDisputeMissionObtainable: isDisputeMissionObtainable,  
 						isShipBattleObtainable: isShipBattleObtainable,
-						isFactionObtainable: isFactionObtainable
+						isFactionObtainable: isFactionObtainable,
+						isCadetable: isCadetable
 					};
 				}
 			} else {
@@ -284,6 +320,10 @@ export class NeededEquipment extends React.Component {
 
 		if (filters.onlyFaction) {
 			arr = arr.filter((entry) => !entry.isDisputeMissionObtainable && !entry.isShipBattleObtainable && entry.isFactionObtainable);
+		}
+
+		if (filters.cadetable) {
+			arr = arr.filter((entry) => entry.isCadetable);
 		}
 
 		return arr;
@@ -328,6 +368,16 @@ export class NeededEquipment extends React.Component {
 		return this._filterNeededEquipment(newFilters);
 	}
 
+	_toggleCadetable(isChecked) {
+		const newFilters = Object.assign({}, this.state.filters);
+		newFilters.cadetable = isChecked;
+		this.setState({
+			filters: newFilters
+		});
+
+		return this._filterNeededEquipment(newFilters);
+	}
+
 	componentDidMount() {
 		return this._filterNeededEquipment(this.state.filters);
 	}
@@ -336,6 +386,7 @@ export class NeededEquipment extends React.Component {
 		let disputeMissions = equipment.item_sources.filter(e => e.type === 0);
 		let shipBattles = equipment.item_sources.filter(e => e.type === 2);
 		let factions = equipment.item_sources.filter(e => e.type === 1);
+		let cadetableItems = this._getCadetableItems();
 
 		let res = [];
 
@@ -357,6 +408,15 @@ export class NeededEquipment extends React.Component {
 			</div>)
 		}
 
+		if(cadetableItems.has(equipment.id)){
+			res.push(<div key={'cadet'}>
+				<b>Cadet missions: </b>
+				{cadetableItems.get(equipment.id).map((entry, idx) =>
+					<span key={idx}>{entry.name} <span style={{ display: 'inline-block' }}><Image src={CONFIG.MASTERY_LEVELS[entry.mastery].url()} height={16} /></span></span>
+				).reduce((prev, curr) => [prev, ', ', curr])}
+			</div>)
+		}
+
 		if (factions.length > 0) {
 			res.push(<p key={'factions'}>
 				<b>Faction missions: </b>
@@ -364,7 +424,7 @@ export class NeededEquipment extends React.Component {
 					`${entry.name} (${entry.chance_grade}/5, ${(entry.energy_quotient * 100).toFixed(2)}%)`
 				).join(', ')}
 			</p>)
-		}
+		}		
 
 		return <div>{res}</div>;
 	}
@@ -381,6 +441,9 @@ export class NeededEquipment extends React.Component {
 				/>
 				<Checkbox label='Show items obtainable through faction missions only' checked={this.state.filters.onlyFaction}
 					onChange={(e, isChecked) => { this._toggleOnlyFaction(isChecked); }}
+				/>
+				<Checkbox label='Show items obtainable through cadet missions only' checked={this.state.filters.cadetable}
+					onChange={(e, isChecked) => { this._toggleCadetable(isChecked); }}
 				/>
 				<br />
 				<PrimaryButton onClick={() => this._exportCSV()} text='Export as CSV...' /><br /><br />
