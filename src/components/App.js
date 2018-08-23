@@ -116,7 +116,7 @@ class App extends React.Component {
 		STTApi.inWebMode = true;
 
 		// TODO: Get an actual hostname / domain instead of hardcoding the VPS ip here
-		const serverAddress = 'https://sttapi.tekmanro.com:3000/';
+		const serverAddress = 'https://iampicard.com/';
 		STTApi.setImageProviderOverride(new ServerImageProvider(serverAddress));
 		STTApi.networkHelper.setProxy(serverAddress + 'proxy');
 		STTApi.networkHelper.get(serverAddress + 'motd/get', {dummy: true}).then((data) => {
