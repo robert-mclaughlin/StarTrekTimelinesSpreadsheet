@@ -83,8 +83,6 @@ VoyageCalculator::VoyageCalculator(const char* jsonInput, bool rankMode) noexcep
 	config_skillSecondaryMultiplier = j["skillSecondaryMultiplier"];
 	config_skillMatchingMultiplier = j["skillMatchingMultiplier"];
 	config_traitScoreBoost = j["traitScoreBoost"];
-	config_includeAwayCrew = j["includeAwayCrew"];
-	config_includeFrozenCrew = j["includeFrozenCrew"];
 	config_searchDepth = j["search_depth"];
 	config_extendsTarget =j["extends_target"];
 
@@ -99,12 +97,6 @@ VoyageCalculator::VoyageCalculator(const char* jsonInput, bool rankMode) noexcep
 	{
 		std::uint32_t traitBitMask = crew["traitBitMask"];
 		std::bitset<BITMASK_SIZE> bitMask {traitBitMask};
-
-		if (!config_includeFrozenCrew && bitMask.test(FROZEN_BIT))
-			continue;
-
-		if (!config_includeAwayCrew && bitMask.test(ACTIVE_BIT))
-			continue;
 
 		Crew c;
 		c.id = crew["id"];
@@ -131,7 +123,7 @@ VoyageCalculator::VoyageCalculator(const char* jsonInput, bool rankMode) noexcep
 
 	for (size_t iSlot = 0; iSlot < SLOT_COUNT; iSlot++)
 	{
-		slotNames[iSlot] = j["voyage_crew_slots"][iSlot]["name"].get<std::string>();
+		slotIds[iSlot] = j["voyage_crew_slots"][iSlot]["id"];
 		slotSkills[iSlot] = j["voyage_crew_slots"][iSlot]["skillId"];
 	}
 

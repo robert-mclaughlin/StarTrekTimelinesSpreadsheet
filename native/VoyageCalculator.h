@@ -97,9 +97,9 @@ public:
 		std::fill(slotTraits.begin(), slotTraits.end(), (size_t)-1);
 	}
 
-	const std::string& GetSlotName(size_t index) const noexcept
+	size_t GetSlotId(size_t index) const noexcept
 	{
-		return slotNames[index];
+		return slotIds[index];
 	}
 
 	CrewArray Calculate(
@@ -131,7 +131,7 @@ private:
 	bool rankMode; // in rank calculation mode, traits are ignored
 
 	std::function<void(const std::array<const Crew *, SLOT_COUNT>&, double)> progressUpdate;
-	std::array<std::string, SLOT_COUNT> slotNames;
+	std::array<size_t, SLOT_COUNT> slotIds;
 	std::array<size_t, SLOT_COUNT> slotSkills;
 	std::array<size_t, SLOT_COUNT> slotTraits;
 	size_t primarySkill;
@@ -151,8 +151,6 @@ private:
 	float config_skillSecondaryMultiplier{2.5};
 	float config_skillMatchingMultiplier{1.0};
 	unsigned int config_traitScoreBoost{200};
-	bool config_includeAwayCrew{false};
-	bool config_includeFrozenCrew{false};
 
 	std::array<std::vector<const Crew*>, SLOT_COUNT> sortedSlotRosters;
 

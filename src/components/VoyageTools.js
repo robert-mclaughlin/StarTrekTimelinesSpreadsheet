@@ -54,6 +54,7 @@ export class VoyageCrew extends React.Component {
 		this.state.currentSelectedItems = this.state.peopleList.filter(p => this.state.preselectedIgnored.indexOf(p.key) != -1);
 
 		this._exportVoyageData = this._exportVoyageData.bind(this);
+		this._calcVoyageData = this._calcVoyageData.bind(this);
 		this._generateVoyCrewRank = this._generateVoyCrewRank.bind(this);
 		this._startVoyage = this._startVoyage.bind(this);
 		this._onFilterChanged = this._onFilterChanged.bind(this);
@@ -64,8 +65,7 @@ export class VoyageCrew extends React.Component {
 	getIndexBySlotName(slotName) {
 		const crewSlots = STTApi.playerData.character.voyage_descriptions[0].crew_slots;
 		for (let slotIndex = 0; slotIndex < crewSlots.length; slotIndex++) {
-			const slot = crewSlots[slotIndex];
-			if (slot.name == slotName) {
+			if (crewSlots[slotIndex].name === slotName) {
 				return slotIndex;
 			}
 		}
@@ -80,12 +80,12 @@ export class VoyageCrew extends React.Component {
 						key={entry.choice.crew_id || entry.choice.id}
 						imageUrl={entry.choice.iconUrl}
 						text={entry.choice.name}
-						secondaryText={entry.slotName}
+						secondaryText={STTApi.playerData.character.voyage_descriptions[0].crew_slots[entry.slotId].name}
 						tertiaryText={formatCrewStats(entry.choice)}
 						size={PersonaSize.large}
 						presence={(entry.choice.frozen > 0) ? PersonaPresence.dnd : ((entry.choice.active_id > 0) ? PersonaPresence.away : PersonaPresence.online)} />
 
-					crewSpans[this.getIndexBySlotName(crew.props.secondaryText)] = crew;
+					crewSpans[entry.slotId] = crew;
 				} else {
 					console.error(entry);
 				}
@@ -175,7 +175,7 @@ export class VoyageCrew extends React.Component {
 				</div>
 
 				<div style={{ gridArea: 'calcbutton', justifySelf: 'center', alignSelf: 'center' }}>
-					<CompoundButton primary={true} onClick={this._exportVoyageData} secondaryText='Calculate best crew selection' disabled={this.state.state === 'inprogress'}>Calculate</CompoundButton>
+					<CompoundButton primary={true} onClick={this._calcVoyageData} secondaryText='Calculate best crew selection' disabled={this.state.state === 'inprogress'}>Calculate</CompoundButton>
 				</div>
 			</div>
 
@@ -233,8 +233,8 @@ export class VoyageCrew extends React.Component {
 
 	_startVoyage() {
 		let selectedCrewIds = [];
-		for (let slot of STTApi.playerData.character.voyage_descriptions[0].crew_slots) {
-			let entry = this.state.crewSelection.find(entry => entry.slotName == slot.name);
+		for (let i = 0; i < STTApi.playerData.character.voyage_descriptions[0].crew_slots.length; i++) {
+			let entry = this.state.crewSelection.find(entry => entry.slotId === i);
 
 			if ((!entry.choice.crew_id) || entry.choice.active_id > 0) {
 				this.setState({ error: `Cannot start voyage with frozen or active crew '${entry.choice.name}'` });
@@ -254,87 +254,82 @@ export class VoyageCrew extends React.Component {
 
 	_exportVoyageData() {
 		let dataToExport = {
-			crew: STTApi.roster.map(crew => new Object({
-				id: crew.crew_id ? crew.crew_id : crew.id,
-				name: crew.name,
-				frozen: crew.frozen,
-				traits: crew.rawTraits,
-				ff100: (crew.level == 100 && crew.rarity == crew.max_rarity) ? 1 : 0,
-				max_rarity: crew.max_rarity,
-				command_skill: crew.command_skill,
-				science_skill: crew.science_skill,
-				security_skill: crew.security_skill,
-				engineering_skill: crew.engineering_skill,
-				diplomacy_skill: crew.diplomacy_skill,
-				medicine_skill: crew.medicine_skill,
-				active_id: crew.active_id ? crew.active_id : 0
-			})),
-			voyage_skills: STTApi.playerData.character.voyage_descriptions[0].skills,
-			voyage_crew_slots: STTApi.playerData.character.voyage_descriptions[0].crew_slots,
 			search_depth: this.state.searchDepth,
 			extends_target: this.state.extendsTarget,
 			shipAM: this.state.bestShips[0].score,
+
 			// These values should be user-configurable to give folks a chance to tune the scoring function and provide feedback
 			skillPrimaryMultiplier: 3.5,
 			skillSecondaryMultiplier: 2.5,
 			skillMatchingMultiplier: 1.1,
 			traitScoreBoost: 200,
-			includeAwayCrew: this.state.includeActive,
-			includeFrozenCrew: this.state.includeFrozen
+
+			// These values get filled in the following code
+			crew: [],
+			voyage_crew_slots: [],
+			primary_skill: -1,
+			secondary_skill: -1
 		};
 
-		// Filter out crew the user has chosen not to include
-		if (this.state.currentSelectedItems.length > 0) {
-			dataToExport.crew = dataToExport.crew.filter(crew => (this.state.currentSelectedItems.find(ignored => (ignored.text === crew.name)) === undefined));
-		}
-
-		// Filter out buy-back crew
-		dataToExport.crew = dataToExport.crew.filter(c => !c.buyback);
+		let voyage_description = STTApi.playerData.character.voyage_descriptions[0];
 
 		// Find unique traits used in the voyage slots
 		let setTraits = new Set();
-		dataToExport.voyage_crew_slots.forEach(slot => {
+		voyage_description.crew_slots.forEach(slot => {
 			setTraits.add(slot.trait);
 		});
 
 		let arrTraits = Array.from(setTraits);
-
 		let skills = Object.keys(CONFIG.SKILLS);
 
 		// Replace traits and skills with their id
-		dataToExport.voyage_crew_slots.forEach(slot => {
-			slot.traitId = arrTraits.indexOf(slot.trait);
-			slot.skillId = skills.indexOf(slot.skill);
-			delete slot.skill;
-			delete slot.trait;
-		});
+		let slotTraitIds = [];
+		for (let i = 0; i < voyage_description.crew_slots.length; i++) {
+			let slot = voyage_description.crew_slots[i];
+			dataToExport.voyage_crew_slots.push({
+				id: i,
+				skillId: skills.indexOf(slot.skill)
+			});
 
-		dataToExport.primary_skill = skills.indexOf(dataToExport.voyage_skills.primary_skill);
-		dataToExport.secondary_skill = skills.indexOf(dataToExport.voyage_skills.secondary_skill);
-		delete dataToExport.voyage_skills;
+			slotTraitIds[i] = arrTraits.indexOf(slot.trait);
+		}
 
-		// Replace crew traits with their ids
-		dataToExport.crew.forEach(crew => {
+		dataToExport.primary_skill = skills.indexOf(voyage_description.skills.primary_skill);
+		dataToExport.secondary_skill = skills.indexOf(voyage_description.skills.secondary_skill);
+
+		STTApi.roster.forEach(crew => {
+			// Filter out buy-back crew
+			if (crew.buyback) {
+				return;
+			}
+
+			if (!this.state.includeActive && (crew.active_id > 0)) {
+				return;
+			}
+
+			if (!this.state.includeFrozen && (crew.frozen > 0)) {
+				return;
+			}
+
+			// Filter out crew the user has chosen not to include
+			if ((this.state.currentSelectedItems.length > 0) && this.state.currentSelectedItems.some(ignored => (ignored.text === crew.name))) {
+				return;
+			}
+
 			let traitIds = [];
-			crew.traits.forEach(trait => {
+			crew.rawTraits.forEach(trait => {
 				if (arrTraits.indexOf(trait) >= 0) {
 					traitIds.push(arrTraits.indexOf(trait));
 				}
 			});
 
-			crew.traitBitMask = 0;
-			for (let nFlag = 0; nFlag < dataToExport.voyage_crew_slots.length; crew.traitBitMask |= (traitIds.indexOf(dataToExport.voyage_crew_slots[nFlag].traitId) !== -1) << nFlag++);
+			let traitBitMask = 0;
+			for (let nFlag = 0; nFlag < dataToExport.voyage_crew_slots.length; traitBitMask |= (traitIds.indexOf(slotTraitIds[nFlag]) !== -1) << nFlag++);
 
 			// We store traits in the first 12 bits, using the next few for flags
-			crew.traitBitMask |= (crew.frozen > 0) << dataToExport.voyage_crew_slots.length;
-			crew.traitBitMask |= (crew.active_id > 0) << (dataToExport.voyage_crew_slots.length + 1);
-			crew.traitBitMask |= (crew.ff100) << (dataToExport.voyage_crew_slots.length + 2);
-
-			delete crew.traits;
-			delete crew.frozen;
-			delete crew.active_id;
-
-			//console.log(`${crew.name}: ${crew.traitBitMask.toString(2)}`);
+			traitBitMask |= (crew.frozen > 0) << dataToExport.voyage_crew_slots.length;
+			traitBitMask |= (crew.active_id && (crew.active_id > 0)) << (dataToExport.voyage_crew_slots.length + 1);
+			traitBitMask |= (crew.level == 100 && crew.rarity == crew.max_rarity) << (dataToExport.voyage_crew_slots.length + 2); // ff100
 
 			// Replace skill data with a binary blob
 			let buffer = new ArrayBuffer(6 /*number of skills */ * 3 /*values per skill*/ * 2 /*we need 2 bytes per value*/);
@@ -343,22 +338,34 @@ export class VoyageCrew extends React.Component {
 				skillData[i*3] = crew[skills[i]].core;
 				skillData[i*3 + 1] = crew[skills[i]].min;
 				skillData[i*3 + 2] = crew[skills[i]].max;
-
-				delete crew[skills[i]];
 			}
 
 			// This won't be necessary once we switch away from Json to pure binary for native invocation
-			crew.skillData = Array.from(skillData);
+			let newCrew = {
+				id: crew.crew_id ? crew.crew_id : crew.id,
+				name: crew.name,
+				traitBitMask: traitBitMask,
+				max_rarity: crew.max_rarity,
+				skillData: Array.from(skillData)
+			};
+
+			dataToExport.crew.push(newCrew);
 		});
+
+		return dataToExport;
+	}
+
+	_calcVoyageData() {
+		let dataToExport = this._exportVoyageData();
 
 		const parseResults = (resultData, state) => {
 			let result = JSON.parse(resultData);
 
 			let entries = [];
-			for (let slotName in result.selection) {
+			for (let slot of result.selection) {
 				let entry = {
-					slotName: slotName,
-					choice: STTApi.roster.find((crew) => ((crew.crew_id === result.selection[slotName]) || (crew.id === result.selection[slotName])))
+					slotId: slot.slotId,
+					choice: STTApi.roster.find((crew) => ((crew.crew_id === slot.crewId) || (crew.id === slot.crewId)))
 				};
 
 				entries.push(entry);
@@ -395,39 +402,9 @@ export class VoyageCrew extends React.Component {
 	}
 
 	_generateVoyCrewRank() {
+		let dataToExport = this._exportVoyageData();
+
 		const NativeExtension = require('electron').remote.require('stt-native');
-
-		let dataToExport = {
-			crew: STTApi.roster.map(crew => new Object({
-				id: crew.crew_id || crew.id,
-				name: crew.name,
-				frozen: crew.frozen,
-				ff100: (crew.level == 100 && crew.rarity == crew.max_rarity) ? 1 : 0,
-				max_rarity: crew.max_rarity,
-				traits: crew.rawTraits,
-				command_skill: crew.command_skill,
-				science_skill: crew.science_skill,
-				security_skill: crew.security_skill,
-				engineering_skill: crew.engineering_skill,
-				diplomacy_skill: crew.diplomacy_skill,
-				medicine_skill: crew.medicine_skill,
-				iconUrl: crew.iconUrl,
-				active_id: crew.active_id ? crew.active_id : 0
-			})),
-			voyage_skills: STTApi.playerData.character.voyage_descriptions[0].skills, // not used
-			voyage_crew_slots: STTApi.playerData.character.voyage_descriptions[0].crew_slots, // not used
-			search_depth: this.state.searchDepth, // TODO: it takes too long to use default search depth for this...
-			extends_target: this.state.extendsTarget, // used... for now
-			shipAM: this.state.bestShips[0].score,
-			// These values should be user-configurable to give folks a chance to tune the scoring function and provide feedback
-			skillPrimaryMultiplier: 3.5,
-			skillSecondaryMultiplier: 2.5,
-			skillMatchingMultiplier: 1.1,
-			traitScoreBoost: 200,
-			includeAwayCrew: this.state.includeActive, // used, but user should typically enable
-			includeFrozenCrew: this.state.includeFrozen
-		};
-
 		NativeExtension.calculateVoyageCrewRank(JSON.stringify(dataToExport), (rankResult, estimateResult) => {
 			this.setState({ state: 'calculating' });
 

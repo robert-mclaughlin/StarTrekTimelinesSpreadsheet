@@ -49,13 +49,13 @@ class VoyageWorker : public Nan::AsyncProgressWorker
 	std::string ResultToString(const std::array<const VoyageTools::Crew *, VoyageTools::SLOT_COUNT> &res, double score) noexcept
 	{
 		nlohmann::json j;
+		j["score"] = score;
+		j["selection"] = nlohmann::json::array();
 		for (int i = 0; i < VoyageTools::SLOT_COUNT; i++)
 		{
-			if (res[i] != nullptr) {
-				j["selection"][voyageCalculator->GetSlotName(i)] = res[i]->id;
-			}
+			j["selection"].push_back(nlohmann::json::object({ {"slotId", voyageCalculator->GetSlotId(i)}, {"crewId", res[i]->id} }));
 		}
-		j["score"] = score;
+
 		return j.dump();
 	}
 
