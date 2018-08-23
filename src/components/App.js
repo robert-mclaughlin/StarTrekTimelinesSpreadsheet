@@ -37,7 +37,7 @@ import { shareCrew } from '../utils/pastebin.js';
 // #!if ENV === 'electron'
 import { FileImageCache } from '../utils/fileImageCache.js';
 // #!else
-import { AzureImageProvider } from '../utils/azureImageCache.js';
+import { ServerImageProvider } from '../utils/serverImageCache.js';
 // #!endif
 import { createIssue } from '../utils/githubUtils';
 
@@ -87,7 +87,7 @@ class App extends React.Component {
 			errorMessage: '',
 			updateUrl: undefined,
 			theme: undefined,
-			cost: undefined,
+			motd: undefined,
 			darkTheme: false
 		};
 
@@ -114,11 +114,13 @@ class App extends React.Component {
 		STTApi.setImageProvider(true, new FileImageCache());
 // #!else
 		STTApi.inWebMode = true;
-		STTApi.setImageProviderOverride(new AzureImageProvider());
-		STTApi.networkHelper.setProxy('https://stttools.azurewebsites.net/api/sttproxy');
 
-		STTApi.networkHelper.get('https://stttools.azurewebsites.net/api/getcost', { thismonth: true}).then((data) => {
-			this.setState({ cost: data });
+		// TODO: Get an actual hostname / domain instead of hardcoding the VPS ip here
+		const serverAddress = 'https://sttapi.tekmanro.com:3000/';
+		STTApi.setImageProviderOverride(new ServerImageProvider(serverAddress));
+		STTApi.networkHelper.setProxy(serverAddress + 'proxy');
+		STTApi.networkHelper.get(serverAddress + 'motd/get', {dummy: true}).then((data) => {
+			this.setState({ motd: data });
 		});
 // #!endif
 
@@ -299,24 +301,12 @@ class App extends React.Component {
 					{this.state.updateUrl && <div className='lcars-content-text' style={{ cursor: 'pointer' }}>
 						<a style={{color: 'red'}} onClick={() => openShellExternal(this.state.updateUrl)}>Update available!</a>
 					</div>}
-					{this.state.cost && <div className='lcars-ellipse' />}
-					{this.state.cost && <div className='lcars-content-text' style={{ cursor: 'pointer' }}>
+					{this.state.motd && <div className='lcars-ellipse' />}
+					{this.state.motd && <div className='lcars-content-text' style={{ cursor: 'pointer' }}>
 						<TooltipHost calloutProps={{ gapSpace: 20 }} delay={TooltipDelay.zero} directionalHint={DirectionalHint.bottomCenter}
 							tooltipProps={{ onRenderContent: () => {
-								return ( <div>
-									<span>Costs to operate the website this month:</span>
-									<br/>
-									<span>Azure storage: ${this.state.cost.instances['stttoolsstorage']}</span>
-									<br/>
-									<span>Azure functions: ${this.state.cost.instances['stttools']}</span>
-									<br/>
-									<span>Azure cache: ${this.state.cost.instances['sttcache']}</span>
-									<br/>
-									<span>Azure diagnostics: ${this.state.cost.instances['stttools-logs']}</span>
-									<br/>
-									<span>After evaluation / beta, I'll either shut down the website or introduce a donation system to cover the costs.</span>
-								</div> ); }}} >
-							<span className={ColorClassNames.orangeLighter}>Cost: ${this.state.cost.cost}</span>
+								return ( <div dangerouslySetInnerHTML={{__html: this.state.motd.contents}} /> ); }}} >
+							<span className={ColorClassNames.orangeLighter}>{this.state.motd.title}</span>
 						</TooltipHost>
 					</div>}
 					<div className='lcars-box' />

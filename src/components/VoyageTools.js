@@ -532,6 +532,7 @@ export class VoyageLog extends React.Component {
 	}
 
 	_chooseDilemma(voyageId, dilemmaId, index) {
+// #!if ENV === 'electron'
 		if (index < 0) {
 			// TODO: this should pick a random index out of the unlocked resolutions
 			let promises = [];
@@ -545,15 +546,17 @@ export class VoyageLog extends React.Component {
 
 				this.reloadVoyageState();
 			});
-		}
-		else {
-			resolveDilemma(voyageId, dilemmaId, index).then(() => {
-				// Remove the dilemma that was just resolved
-				STTApi.playerData.character.voyage[0].dilemma = null;
 
-				this.reloadVoyageState();
-			});
+			return;
 		}
+// #!endif
+
+		resolveDilemma(voyageId, dilemmaId, index).then(() => {
+			// Remove the dilemma that was just resolved
+			STTApi.playerData.character.voyage[0].dilemma = null;
+
+			this.reloadVoyageState();
+		});
 	}
 
 	renderDilemma() {

@@ -1,12 +1,14 @@
 import STTApi from 'sttapi';
 import { CONFIG } from 'sttapi';
 
-export class AzureImageProvider {
+export class ServerImageProvider {
     _baseURLAsset;
     _cachedAssets;
+    _serverURL;
 
-    constructor() {
-        this._baseURLAsset = 'https://stttoolsstorage.blob.core.windows.net/assets/';
+    constructor(serverURL) {
+        this._serverURL = serverURL;;
+        this._baseURLAsset = this._serverURL + 'assets/';
 
         this._cachedAssets = new Set();
 
@@ -14,21 +16,15 @@ export class AzureImageProvider {
     }
 
     async fillCache() {
-        let response = await STTApi.networkHelper.postjson('https://stttools.azurewebsites.net/api/getasset', {
-            "list_assets": true
-        });
-
-        if (response.ok) {
-            let assetList = await response.json();
-
-            let assetNames = assetList.entries.map((entry) => entry.name.replace(this._baseURLAsset, ''));
-
-            this._cachedAssets = new Set(assetNames);
-        }
+        let assetList = await STTApi.networkHelper.get(this._serverURL + 'asset/list', { dummy: true });
+        this._cachedAssets = new Set(assetList);
     }
 
     formatUrl(url) {
-		return url.replace(new RegExp('/', 'g'), '_') + '.png';
+        let imageName = url.replace(new RegExp('/', 'g'), '_') + '.png';
+        imageName = imageName.startsWith('_') ? imageName.substr(1) : imageName;
+
+        return imageName;
 	}
 
     getCached(withIcon) {
@@ -58,7 +54,7 @@ export class AzureImageProvider {
             return this.internalGetCached(spriteName);
         }
 
-        return this.internalGetCached('_' + ((assetName.length > 0) ? (assetName + '_') : '') + spriteName);
+        return this.internalGetCached(((assetName.length > 0) ? (assetName + '_') : '') + spriteName);
     }
 
     getCrewImageUrl(crew, fullBody, id) {
@@ -83,7 +79,7 @@ export class AzureImageProvider {
             return { id, url: cachedUrl };
         }
 
-        let response = await STTApi.networkHelper.postjson('https://stttools.azurewebsites.net/api/getasset', {
+        let assetUrl = await STTApi.networkHelper.get(this._serverURL + 'asset/get', {
             "client_platform": CONFIG.CLIENT_PLATFORM,
             "client_version": CONFIG.CLIENT_VERSION,
             "asset_server": STTApi.serverConfig.config.asset_server,
@@ -91,10 +87,9 @@ export class AzureImageProvider {
             "asset_file": assetName,
             "sprite_name": spriteName
         });
-        
-        let assetUrl = await response.text();
 
-        return { id, url: assetUrl };
+        this._cachedAssets.add(assetUrl);
+        return { id, url: this._baseURLAsset + assetUrl };
     }
 
     async getImageUrl(iconFile, id) {
@@ -103,7 +98,7 @@ export class AzureImageProvider {
             return { id, url: cachedUrl };
         }
 
-        let response = await STTApi.networkHelper.postjson('https://stttools.azurewebsites.net/api/getasset', {
+        let assetUrl = await STTApi.networkHelper.get(this._serverURL + 'asset/get', {
             "client_platform": CONFIG.CLIENT_PLATFORM,
             "client_version": CONFIG.CLIENT_VERSION,
             "asset_server": STTApi.serverConfig.config.asset_server,
@@ -111,8 +106,7 @@ export class AzureImageProvider {
             "asset_file": iconFile
         });
 
-        let assetUrl = await response.text();
-
-        return { id, url: assetUrl };
+        this._cachedAssets.add(assetUrl);
+        return { id, url: this._baseURLAsset + assetUrl };
     }
 }
