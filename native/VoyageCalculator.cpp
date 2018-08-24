@@ -655,7 +655,7 @@ float VoyageCalculator::calculateDuration(const std::array<const Crew *, SLOT_CO
 	float refillTime = shipAM / (hazPerHour*hazAmFail + activityAmPerHour);
 	float refillCost = std::ceil(voyTime*60/dilPerMin);*/
 
-	assert(isfinite(voyTime));
+	assert(std::isfinite(voyTime));
 	return voyTime;
 }
 

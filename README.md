@@ -96,15 +96,17 @@ You can inspect the active state of crew by clicking on the little "baloon" icon
 ## Development environment
 
 ### To get started:
-Clone the repo and build.
+Clone the repo and build with `node.js` v 10.
 
 Minimal set of steps required (on a Windows machine)
 * `git clone --recurse-submodules https://github.com/IAmPicard/StarTrekTimelinesSpreadsheet.git`
-* `cd StarTrekTimelinesSpreadsheet\sttapi`
+* `cd StarTrekTimelinesSpreadsheet\STTApi`
 * `npm install`
 * `cd ..`
 * `npm install`
+  * You may also need to `npm install electron` if you see the message `Error: Electron failed to install correctly, please delete node_modules/electron and try installing again`
 * `node_modules\.bin\electron-rebuild.cmd`
+  * `node_modules/.bin/electron-rebuild` on Ubuntu
 * `npm run dev`
 
 *Note*: if for some reason the above steps are not sufficient, you may need to manually build in STTApi\AssetParser (with npm install) before building STTApi.

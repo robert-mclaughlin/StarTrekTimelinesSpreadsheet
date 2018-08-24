@@ -5,3 +5,4 @@ builds/
 /.vs
 /notes.txt
 mobile/build.json
+native/bin/
