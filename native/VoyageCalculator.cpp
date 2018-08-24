@@ -121,13 +121,13 @@ VoyageCalculator::VoyageCalculator(const char* jsonInput, bool rankMode) noexcep
 		roster.emplace_back(std::move(c));
 	}
 
-	for (size_t iSlot = 0; iSlot < SLOT_COUNT; iSlot++)
+	for (std::uint8_t iSlot = 0; iSlot < SLOT_COUNT; iSlot++)
 	{
 		slotIds[iSlot] = j["voyage_crew_slots"][iSlot]["id"];
 		slotSkills[iSlot] = j["voyage_crew_slots"][iSlot]["skillId"];
 	}
 
-	for (size_t iSlot = 0; iSlot < SLOT_COUNT; iSlot++)
+	for (std::uint8_t iSlot = 0; iSlot < SLOT_COUNT; iSlot++)
 	{
 		// populate per slot rosters with copies of the crew
 		auto &slotRoster = slotRosters[iSlot];

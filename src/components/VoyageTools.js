@@ -358,9 +358,7 @@ export class VoyageCrew extends React.Component {
 	_calcVoyageData() {
 		let dataToExport = this._exportVoyageData();
 
-		const parseResults = (resultData, state) => {
-			let result = JSON.parse(resultData);
-
+		const parseResults = (result, state) => {
 			let entries = [];
 			for (let slot of result.selection) {
 				let entry = {
@@ -381,9 +379,22 @@ export class VoyageCrew extends React.Component {
 // #!if ENV === 'electron'
 		const NativeExtension = require('electron').remote.require('stt-native');
 		NativeExtension.calculateVoyageRecommendations(JSON.stringify(dataToExport), result => {
-			parseResults(result, 'done');
+			parseResults(JSON.parse(result), 'done');
 		}, progressResult => {
-			parseResults(progressResult, 'inprogress');
+			let dv = new DataView(progressResult.buffer);
+			let unpacked = {
+				score: dv.getFloat32(0, true),
+				selection: []
+			};
+
+			for (let i = 0; i < 12; i++) {
+				unpacked.selection[i] = {
+					slotId: dv.getUint8(4 + i),
+					crewId: dv.getUint32(4 + 12 + (i*4), true)
+				};
+			}
+
+			parseResults(unpacked, 'inprogress');
 		});
 // #!else
 		let ComputeWorker = require("worker-loader?name=wasmWorker.js!./wasmWorker");

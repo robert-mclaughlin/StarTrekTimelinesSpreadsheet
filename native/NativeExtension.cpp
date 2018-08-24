@@ -21,12 +21,11 @@ class VoyageWorker : public Nan::AsyncProgressWorker
 
 	void Execute(const Nan::AsyncProgressWorker::ExecutionProgress &progress) override
 	{
-		double finalScore;
-		auto finalResult = voyageCalculator->Calculate([&](const std::array<const VoyageTools::Crew *, VoyageTools::SLOT_COUNT> &bestSoFar, double bestScore) {
-			auto resultSoFar = ResultToString(bestSoFar, bestScore);
-			progress.Send(resultSoFar.c_str(), resultSoFar.size());
-		},
-													   finalScore);
+		float finalScore;
+		auto finalResult = voyageCalculator->Calculate([&](const std::array<const VoyageTools::Crew *, VoyageTools::SLOT_COUNT> &bestSoFar, float bestScore) {
+			auto resultSoFar = ResultToStruct(bestSoFar, bestScore);
+			progress.Send(reinterpret_cast<char*>(&resultSoFar), sizeof(resultSoFar) / sizeof(char));
+		}, finalScore);
 
 		result = ResultToString(finalResult, finalScore);
 	}
@@ -36,17 +35,24 @@ class VoyageWorker : public Nan::AsyncProgressWorker
 		Nan::HandleScope scope;
 		v8::Local<v8::Value> argv[] = {Nan::New(result.c_str(), result.size()).ToLocalChecked()};
 		callback->Call(1, argv, async_resource);
-	};
+	}
 
 	void HandleProgressCallback(const char *data, size_t size) override
 	{
 		Nan::HandleScope scope;
-		v8::Local<v8::Value> argv[] = {Nan::New(data, size).ToLocalChecked()};
+
+		// This looks strange, but the v8 Buffer takes ownership of the memory and will release it when the Js object
+		// goes out of scope; hence, we can't use smart pointers and stuff
+		char* transferMyOwnership = new char[size];
+		memcpy(transferMyOwnership, data, size);
+
+		Nan::MaybeLocal<v8::Object> newBuf = Nan::NewBuffer(transferMyOwnership, size);
+		v8::Local<v8::Value> argv[] = {newBuf.ToLocalChecked()};
 		progressCallback->Call(1, argv, async_resource);
 	}
 
   private:
-	std::string ResultToString(const std::array<const VoyageTools::Crew *, VoyageTools::SLOT_COUNT> &res, double score) noexcept
+	std::string ResultToString(const std::array<const VoyageTools::Crew *, VoyageTools::SLOT_COUNT> &res, float score) noexcept
 	{
 		nlohmann::json j;
 		j["score"] = score;
@@ -57,6 +63,27 @@ class VoyageWorker : public Nan::AsyncProgressWorker
 		}
 
 		return j.dump();
+	}
+
+	struct PackedResult
+	{
+		float score;
+		std::uint8_t slotIds[VoyageTools::SLOT_COUNT];
+		std::uint32_t crewIds[VoyageTools::SLOT_COUNT];
+	};
+
+	PackedResult ResultToStruct(const std::array<const VoyageTools::Crew *, VoyageTools::SLOT_COUNT> &res, float score) noexcept
+	{
+		PackedResult pkResult;
+		pkResult.score = score;
+
+		for (std::uint8_t i = 0; i < VoyageTools::SLOT_COUNT; i++)
+		{
+			pkResult.slotIds[i] = voyageCalculator->GetSlotId(i);
+			pkResult.crewIds[i] = res[i]->id;
+		}
+
+		return pkResult;
 	}
 
 	Nan::Callback *progressCallback;

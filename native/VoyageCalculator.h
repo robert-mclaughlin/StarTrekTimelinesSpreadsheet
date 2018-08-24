@@ -97,14 +97,14 @@ public:
 		std::fill(slotTraits.begin(), slotTraits.end(), (size_t)-1);
 	}
 
-	size_t GetSlotId(size_t index) const noexcept
+	std::uint8_t GetSlotId(size_t index) const noexcept
 	{
 		return slotIds[index];
 	}
 
 	CrewArray Calculate(
-		std::function<void(const CrewArray&, double)> progressCallback,
-		double& score) noexcept
+		std::function<void(const CrewArray&, float)> progressCallback,
+		float& score) noexcept
 	{
 		progressUpdate = progressCallback;
 		calculate();
@@ -130,8 +130,8 @@ private:
 
 	bool rankMode; // in rank calculation mode, traits are ignored
 
-	std::function<void(const std::array<const Crew *, SLOT_COUNT>&, double)> progressUpdate;
-	std::array<size_t, SLOT_COUNT> slotIds;
+	std::function<void(const std::array<const Crew *, SLOT_COUNT>&, float)> progressUpdate;
+	std::array<std::uint8_t, SLOT_COUNT> slotIds;
 	std::array<size_t, SLOT_COUNT> slotSkills;
 	std::array<size_t, SLOT_COUNT> slotTraits;
 	size_t primarySkill;
