@@ -13,7 +13,8 @@ export class ShipList extends React.Component {
 
 		this.state = {
 			items: sortItems(STTApi.ships, 'name'),
-			schematics: STTApi.playerData.character.items.filter(item => item.type === 8),
+			schematics: STTApi.shipSchematics,
+			playerSchematics: STTApi.playerData.character.items.filter(item => item.type === 8),			
 			columns: [
 				{
 					key: 'icon',
@@ -22,10 +23,10 @@ export class ShipList extends React.Component {
 					maxWidth: 48,
 					fieldName: 'name',
 					onRender: (item) => {
-						if (item.iconUrl){
-							//Has to use flavor for the comparision because some schematics names don't match ship names (IE: Borg Sphere 878)
-							const schematic = this.state.schematics.find(schematic => schematic.flavor.indexOf(item.name) != -1)
-							const numberOfSchematics = schematic ? schematic.quantity : 0;
+						if (item.iconUrl){							
+							const schematic = this.state.schematics.find(schematic => schematic.ship.archetype_id === item.archetype_id)
+							const playerSchematic = this.state.playerSchematics.find(playerSchematic => playerSchematic.archetype_id === schematic.id)
+							const numberOfSchematics = playerSchematic ? playerSchematic.quantity : 0;
 							return (
 								<div>								
 									<Image src={item.iconUrl} width={48} height={48} imageFit={ImageFit.contain} />
