@@ -11,8 +11,8 @@ RankedResult RankVoyageCrew(const char *jsonInput) noexcept
 	std::unordered_map<int, RankedCrew> rankedCrew;
 
 	// compute for all voyage skill combos
-	for (size_t primarySkill = 0; primarySkill < SKILL_COUNT; ++primarySkill)
-	for (size_t secondarySkill = 0; secondarySkill < SKILL_COUNT; ++secondarySkill)
+	for (std::uint8_t primarySkill = 0; primarySkill < SKILL_COUNT; ++primarySkill)
+	for (std::uint8_t secondarySkill = 0; secondarySkill < SKILL_COUNT; ++secondarySkill)
 	{
 		if (primarySkill == secondarySkill)
 			continue;

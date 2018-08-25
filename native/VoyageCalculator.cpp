@@ -41,7 +41,7 @@ constexpr float ssChance = 0.25f;
 constexpr float osChance = 0.1f;
 constexpr unsigned int dilPerMin = 5;
 
-unsigned int VoyageCalculator::computeScore(const Crew& crew, size_t skill, size_t traitSlot) const noexcept
+unsigned int VoyageCalculator::computeScore(const Crew& crew, std::uint8_t skill, size_t traitSlot) const noexcept
 {
 	if (crew.skills[skill] == 0)
 		return 0;
@@ -50,17 +50,17 @@ unsigned int VoyageCalculator::computeScore(const Crew& crew, size_t skill, size
 	for (size_t iSkill = 0; iSkill < SKILL_COUNT; ++iSkill)
 	{
 		unsigned int skillScore = crew.skills[iSkill];
-		if (iSkill == primarySkill)
+		if (iSkill == binaryConfig.primarySkill)
 		{
-			skillScore = lround(skillScore * config_skillPrimaryMultiplier);
+			skillScore = lround(skillScore * binaryConfig.skillPrimaryMultiplier);
 		}
-		else if (iSkill == secondarySkill)
+		else if (iSkill == binaryConfig.secondarySkill)
 		{
-			skillScore = lround(skillScore * config_skillSecondaryMultiplier);
+			skillScore = lround(skillScore * binaryConfig.skillSecondaryMultiplier);
 		}
 		else if (iSkill == skill)
 		{
-			skillScore = lround(skillScore * config_skillMatchingMultiplier);
+			skillScore = lround(skillScore * binaryConfig.skillMatchingMultiplier);
 		}
 
 		score += skillScore;
@@ -68,7 +68,7 @@ unsigned int VoyageCalculator::computeScore(const Crew& crew, size_t skill, size
 
 	if (crew.traitIds.test(traitSlot))
 	{
-		score += config_traitScoreBoost;
+		score += binaryConfig.traitScoreBoost;
 	}
 
 	return score;
@@ -78,20 +78,11 @@ VoyageCalculator::VoyageCalculator(const char* jsonInput, bool rankMode) noexcep
 	rankMode(rankMode)
 {
 	nlohmann::json j = json::parse(jsonInput);
-	shipAntiMatter = j["shipAM"];
-	config_skillPrimaryMultiplier = j["skillPrimaryMultiplier"];
-	config_skillSecondaryMultiplier = j["skillSecondaryMultiplier"];
-	config_skillMatchingMultiplier = j["skillMatchingMultiplier"];
-	config_traitScoreBoost = j["traitScoreBoost"];
-	config_searchDepth = j["search_depth"];
-	config_extendsTarget =j["extends_target"];
 
 	bestconsidered.fill(nullptr);
 
-	primarySkill = j["primary_skill"];
-	secondarySkill = j["secondary_skill"];
-
-	assert(SLOT_COUNT == j["voyage_crew_slots"].size());
+	std::vector<uint8_t> temp = j["binaryConfig"];
+	memcpy(&binaryConfig, temp.data(), temp.size());
 
 	for (const auto &crew : j["crew"])
 	{
@@ -123,12 +114,6 @@ VoyageCalculator::VoyageCalculator(const char* jsonInput, bool rankMode) noexcep
 
 	for (std::uint8_t iSlot = 0; iSlot < SLOT_COUNT; iSlot++)
 	{
-		slotIds[iSlot] = j["voyage_crew_slots"][iSlot]["id"];
-		slotSkills[iSlot] = j["voyage_crew_slots"][iSlot]["skillId"];
-	}
-
-	for (std::uint8_t iSlot = 0; iSlot < SLOT_COUNT; iSlot++)
-	{
 		// populate per slot rosters with copies of the crew
 		auto &slotRoster = slotRosters[iSlot];
 		slotRoster.resize(roster.size());
@@ -140,7 +125,7 @@ VoyageCalculator::VoyageCalculator(const char* jsonInput, bool rankMode) noexcep
 			// compute score - not really used anymore except for checking whether
 			//	crew can fit in slot (score > 0), and perhaps for troubleshooting
 			slotRoster[iCrew].score = 
-				computeScore(slotRoster[iCrew], slotSkills[iSlot], iSlot);
+				computeScore(slotRoster[iCrew], binaryConfig.slotSkills[iSlot], iSlot);
 
 			// set references
 			slotRoster[iCrew].original = &roster[iCrew];
@@ -240,7 +225,7 @@ void VoyageCalculator::updateSlotRosterScores() noexcept
 }
 
 // Used for logging only
-constexpr const char* SkillName(size_t skillId) noexcept
+constexpr const char* SkillName(std::uint8_t skillId) noexcept
 {
 	switch(skillId) {
 		case 0:
@@ -273,8 +258,7 @@ void VoyageCalculator::findBest() noexcept
 
 	std::sort(slotCrewScores.begin(), slotCrewScores.end(), std::greater<unsigned int>());
 
-	unsigned int minScore = slotCrewScores[
-		std::min(slotCrewScores.size() - 1, config_searchDepth * SLOT_COUNT)];
+	unsigned int minScore = slotCrewScores[std::min(slotCrewScores.size() - 1, static_cast<size_t>(binaryConfig.searchDepth * SLOT_COUNT))];
 	size_t minDepth = MIN_SCAN_DEPTH;
 
 	// find the deepest slot
@@ -282,7 +266,7 @@ void VoyageCalculator::findBest() noexcept
 	size_t maxDepth = 0;
 	for (size_t iSlot = 0; iSlot < SLOT_COUNT; ++iSlot)
 	{
-		log << SkillName(slotSkills[iSlot]) << std::endl;
+		log << SkillName(binaryConfig.slotSkills[iSlot]) << std::endl;
 		size_t iCrew;
 		for (iCrew = 0; iCrew < sortedSlotRosters[iSlot].size(); ++iCrew)
 		{
@@ -302,8 +286,8 @@ void VoyageCalculator::findBest() noexcept
 	}
 
 	log << "minScore: " << minScore << std::endl;
-	log << "primary: " << SkillName(primarySkill) << std::endl;
-	log << "secondary: " << SkillName(secondarySkill) << std::endl;
+	log << "primary: " << SkillName(binaryConfig.primarySkill) << std::endl;
+	log << "secondary: " << SkillName(binaryConfig.secondarySkill) << std::endl;
 	
 	{ Timer::Scope timer(voyageCalcTime);
 		for (size_t iMinDepth = minDepth; iMinDepth < MAX_SCAN_DEPTH; ++iMinDepth)
@@ -482,7 +466,7 @@ void VoyageCalculator::refine() noexcept
 
 float VoyageCalculator::calculateDuration(const std::array<const Crew *, SLOT_COUNT> &complement, bool debug) noexcept
 {
-	unsigned int shipAM = shipAntiMatter;
+	unsigned int shipAM = binaryConfig.shipAntiMatter;
 	Crew totals;
 	totals.skills.fill(0);
 
@@ -531,8 +515,8 @@ float VoyageCalculator::calculateDuration(const std::array<const Crew *, SLOT_CO
 			<< totals.skills[3] << " " << totals.skills[4] << " " << totals.skills[5] << std::endl;
 	}
 
-	unsigned int PrimarySkill = totals.skills[primarySkill];
-	unsigned int SecondarySkill = totals.skills[secondarySkill];
+	unsigned int PrimarySkill = totals.skills[binaryConfig.primarySkill];
+	unsigned int SecondarySkill = totals.skills[binaryConfig.secondarySkill];
 	unsigned int MaxSkill = 0;
 
 	std::array<float, SKILL_COUNT> hazSkillVariance;
@@ -550,14 +534,14 @@ float VoyageCalculator::calculateDuration(const std::array<const Crew *, SLOT_CO
 
 	if (debug)
 	{
-		log << "primary skill prof variance: " << hazSkillVariance[primarySkill] << std::endl;
+		log << "primary skill prof variance: " << hazSkillVariance[binaryConfig.primarySkill] << std::endl;
 	}
 
 	unsigned int elapsedHours = 0; // TODO: deal with this later
 	unsigned int elapsedHazSkill = elapsedHours * hazSkillPerHour;
 
 	MaxSkill = std::max((unsigned int)0, MaxSkill - elapsedHazSkill);
-	float endVoySkill = MaxSkill * (1 + hazSkillVariance[primarySkill]);
+	float endVoySkill = MaxSkill * (1 + hazSkillVariance[binaryConfig.primarySkill]);
 
 	const std::array<unsigned int, SKILL_COUNT> &skills = totals.skills;
 	std::array<float, 6> skillChances;
@@ -565,7 +549,7 @@ float VoyageCalculator::calculateDuration(const std::array<const Crew *, SLOT_CO
 
 	for (size_t iSkill = 0; iSkill < skills.size(); iSkill++)
 	{
-		if (iSkill == primarySkill)
+		if (iSkill == binaryConfig.primarySkill)
 		{
 			skillChances[iSkill] = psChance;
 			if (debug)
@@ -573,7 +557,7 @@ float VoyageCalculator::calculateDuration(const std::array<const Crew *, SLOT_CO
 				log << "pri: " << skills[iSkill] << std::endl;
 			}
 		}
-		else if (iSkill == secondarySkill)
+		else if (iSkill == binaryConfig.secondarySkill)
 		{
 			skillChances[iSkill] = ssChance;
 			if (debug)
@@ -599,7 +583,7 @@ float VoyageCalculator::calculateDuration(const std::array<const Crew *, SLOT_CO
 		}
 
 		//test.text += Math.floor(endVoySkill) + " "
-		float am = (float)(shipAM + shipAM * config_extendsTarget);
+		float am = (float)(shipAM + shipAM * binaryConfig.extendsTarget);
 		for (size_t iSkill = 0; iSkill < SKILL_COUNT; iSkill++)
 		{
 			unsigned int skill = skills[iSkill];

@@ -87,19 +87,14 @@ class VoyageCalculator
 public:
 	VoyageCalculator(const char* jsonInput, bool rankMode = false) noexcept;
 
-	void SetInput(size_t primarySkill, size_t secondarySkill) noexcept
+	void SetInput(std::uint8_t primarySkill, std::uint8_t secondarySkill) noexcept
 	{
-		this->primarySkill = primarySkill;
-		this->secondarySkill = secondarySkill;
+		this->binaryConfig.primarySkill = primarySkill;
+		this->binaryConfig.secondarySkill = secondarySkill;
 	}
 	void DisableTraits()
 	{
 		std::fill(slotTraits.begin(), slotTraits.end(), (size_t)-1);
-	}
-
-	std::uint8_t GetSlotId(size_t index) const noexcept
-	{
-		return slotIds[index];
 	}
 
 	CrewArray Calculate(
@@ -126,17 +121,12 @@ private:
 	
 	// old disused functions
 	void refine() noexcept;
-	unsigned int computeScore(const Crew& crew, size_t skill, size_t trait) const noexcept;
+	unsigned int computeScore(const Crew& crew, std::uint8_t skill, size_t trait) const noexcept;
 
 	bool rankMode; // in rank calculation mode, traits are ignored
 
 	std::function<void(const std::array<const Crew *, SLOT_COUNT>&, float)> progressUpdate;
-	std::array<std::uint8_t, SLOT_COUNT> slotIds;
-	std::array<size_t, SLOT_COUNT> slotSkills;
 	std::array<size_t, SLOT_COUNT> slotTraits;
-	size_t primarySkill;
-	size_t secondarySkill;
-	unsigned int shipAntiMatter;
 	std::vector<Crew> roster;
 	std::array<std::vector<Crew>, SLOT_COUNT> slotRosters;
 
@@ -145,12 +135,24 @@ private:
 	ThreadPool threadPool;
 	std::mutex calcMutex;
 
-	size_t config_searchDepth{6};
-	size_t config_extendsTarget{2};
-	float config_skillPrimaryMultiplier{3.5};
-	float config_skillSecondaryMultiplier{2.5};
-	float config_skillMatchingMultiplier{1.0};
-	unsigned int config_traitScoreBoost{200};
+	#pragma pack(push, 1)
+	struct BinaryConfig
+	{
+		std::uint8_t searchDepth;
+		std::uint8_t extendsTarget;
+		std::uint16_t shipAntiMatter;
+		float skillPrimaryMultiplier;
+		float skillSecondaryMultiplier;
+		float skillMatchingMultiplier;
+		std::uint16_t traitScoreBoost;
+		std::uint8_t primarySkill;
+		std::uint8_t secondarySkill;
+		std::uint8_t slotSkills[SLOT_COUNT];
+		std::uint16_t crewSize;
+	};
+	#pragma pack(pop)
+
+	BinaryConfig binaryConfig;
 
 	std::array<std::vector<const Crew*>, SLOT_COUNT> sortedSlotRosters;
 
