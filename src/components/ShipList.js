@@ -13,6 +13,8 @@ export class ShipList extends React.Component {
 
 		this.state = {
 			items: sortItems(STTApi.ships, 'name'),
+			schematics: STTApi.shipSchematics,
+			playerSchematics: STTApi.playerData.character.items.filter(item => item.type === 8),			
 			columns: [
 				{
 					key: 'icon',
@@ -21,8 +23,17 @@ export class ShipList extends React.Component {
 					maxWidth: 48,
 					fieldName: 'name',
 					onRender: (item) => {
-						if (item.iconUrl)
-							return (<Image src={item.iconUrl} width={48} height={48} imageFit={ImageFit.contain} />);
+						if (item.iconUrl){							
+							const schematic = this.state.schematics.find(schematic => schematic.ship.archetype_id === item.archetype_id)
+							const playerSchematic = this.state.playerSchematics.find(playerSchematic => playerSchematic.archetype_id === schematic.id)
+							const numberOfSchematics = playerSchematic ? playerSchematic.quantity : 0;
+							return (
+								<div>								
+									<Image src={item.iconUrl} width={48} height={48} imageFit={ImageFit.contain} />
+									<center>{numberOfSchematics}</center>
+								</div>
+							);
+						}
 						else
 							return <span />
 					}
