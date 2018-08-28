@@ -17,6 +17,20 @@
       "category": "public.app-category.games"
     }
   },
+  "babel": {
+    "presets": [
+      "@babel/react",
+      [
+        "@babel/env",
+        {
+          "targets": {
+            "chrome": "66"
+          }
+        }
+      ]
+    ],
+    "plugins": ["@babel/plugin-proposal-class-properties"]
+  },
   "main": "main.js",
   "scripts": {
     "prod": "webpack --mode production --config webpack.build.electron.config.js && electron --noDevServer .",
@@ -29,15 +43,14 @@
     "installer": "node createinstaller.js"
   },
   "devDependencies": {
-    "@uifabric/styling": "^6.17.0",
-    "babel-cli": "^6.26.0",
-    "babel-core": "latest",
-    "babel-loader": "^7.1.5",
-    "babel-minify-webpack-plugin": "latest",
-    "babel-plugin-transform-object-rest-spread": "latest",
-    "babel-preset-es2015-node": "latest",
-    "babel-preset-es2016": "^6.24.1",
-    "babel-preset-react": "latest",
+    "@babel/cli": "7.0.0-beta.54",
+    "@babel/core": "7.0.0-beta.54",
+    "@babel/plugin-proposal-class-properties": "^7.0.0",
+    "@babel/plugin-proposal-object-rest-spread": "7.0.0-beta.54",
+    "@babel/preset-env": "7.0.0-beta.54",
+    "@babel/preset-react": "7.0.0-beta.54",
+    "@uifabric/styling": "^6.19.0",
+    "babel-loader": "^8.0.0-beta.0",
     "css-loader": "^1.0.0",
     "electron": "3.0.0-beta.7",
     "electron-builder": "^20.28.2",
@@ -47,8 +60,8 @@
     "html-webpack-plugin": "latest",
     "ifdef-loader": "^2.0.3",
     "mini-css-extract-plugin": "^0.4.2",
-    "nan": "latest",
-    "office-ui-fabric-react": "^6.53.0",
+    "nan": "^2.11.0",
+    "office-ui-fabric-react": "^6.56.0",
     "pubnub": "^4.21.5",
     "react": "^16.4.2",
     "react-dom": "^16.4.2",
@@ -64,7 +77,7 @@
     "webpack-bundle-analyzer": "^2.13.1",
     "webpack-cdn-plugin": "^2.2.1",
     "webpack-cli": "latest",
-    "webpack-dev-server": "^3.1.5",
+    "webpack-dev-server": "^3.1.6",
     "webpack-merge": "^4.1.4",
     "webpack-preprocessor-loader": "^1.0.4",
     "webpack-serve": "^2.0.2",
