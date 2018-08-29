@@ -13,9 +13,9 @@ import STTApi from 'sttapi';
 import { CONFIG, calculateQuestRecommendations } from 'sttapi';
 
 export class MissionDetails extends React.Component {
-	constructor(props) {
+    constructor(props) {
         super(props);
-        
+
         this.loadMissionDetails = this.loadMissionDetails.bind(this);
         this.loadMissionDetailsInternal = this.loadMissionDetailsInternal.bind(this);
         this.updateGraph = this.updateGraph.bind(this);
@@ -41,7 +41,7 @@ export class MissionDetails extends React.Component {
     componentDidUpdate() {
         this.updateGraph();
     }
-    
+
     loadMissionDetails(questId) {
         this.setState(this.loadMissionDetailsInternal(questId));
     }
@@ -69,7 +69,7 @@ export class MissionDetails extends React.Component {
                     }
                 }
 
-                nodes.push({ id: challenge.id, label: '(' + challenge.id + ') ' + challenge.name, level: challenge.grid_x, image: CONFIG.SPRITES['icon_' + challenge.skill].url, shape: 'image', font: {color : color } });
+                nodes.push({ id: challenge.id, label: '(' + challenge.id + ') ' + challenge.name, level: challenge.grid_x, image: CONFIG.SPRITES['icon_' + challenge.skill].url, shape: 'image', font: { color: color } });
                 if (challenge.children) {
                     challenge.children.forEach(child => {
                         edges.push({ from: challenge.id, to: child });
@@ -165,12 +165,12 @@ export class MissionDetails extends React.Component {
         };
     }
 
-	render() {
+    render() {
         if (!this.state.mission) {
-            return <span/>;
+            return <span />;
         }
 
-		var crewSelectionLog;
+        var crewSelectionLog;
         if (this.state.bestCrewPaths.length == 0) {
             if (this.state.allFinished) {
                 crewSelectionLog = <span>You already completed all nodes on this mission. Congrats!</span>;
@@ -203,51 +203,51 @@ export class MissionDetails extends React.Component {
         return (<div>
             <table style={{ width: '100%' }}>
                 <tbody>
-                <tr style={{ minWidth: '300px' }}><td style={{ width: '50%' }}>
-                    <h3>{this.state.mission.name}</h3>
-                    <p>{this.state.mission.description}</p>
+                    <tr style={{ minWidth: '300px' }}><td style={{ width: '50%' }}>
+                        <h3>{this.state.mission.name}</h3>
+                        <p>{this.state.mission.description}</p>
 
-                    <div>
-                        Mastery required: <span className='quest-mastery'>
-                            <Image src={CONFIG.MASTERY_LEVELS[0].url()} height={20} />({this.state.mission.difficulty_by_mastery[0]})
+                        <div>
+                            Mastery required: <span className='quest-mastery'>
+                                <Image src={CONFIG.MASTERY_LEVELS[0].url()} height={20} />({this.state.mission.difficulty_by_mastery[0]})
                             <Image src={CONFIG.MASTERY_LEVELS[1].url()} height={20} />({this.state.mission.difficulty_by_mastery[1]})
                             <Image src={CONFIG.MASTERY_LEVELS[2].url()} height={20} />({this.state.mission.difficulty_by_mastery[2]})
                         </span>
-                    </div>
-                    <div>
-                        Completed: <span className='quest-mastery'>
-                            <Image src={CONFIG.MASTERY_LEVELS[0].url()} height={20} />({this.state.mission.mastery_levels[0].progress.goal_progress} / {this.state.mission.mastery_levels[0].progress.goals})
+                        </div>
+                        <div>
+                            Completed: <span className='quest-mastery'>
+                                <Image src={CONFIG.MASTERY_LEVELS[0].url()} height={20} />({this.state.mission.mastery_levels[0].progress.goal_progress} / {this.state.mission.mastery_levels[0].progress.goals})
                             <Image src={CONFIG.MASTERY_LEVELS[1].url()} height={20} />({this.state.mission.mastery_levels[1].progress.goal_progress} / {this.state.mission.mastery_levels[1].progress.goals})
                             <Image src={CONFIG.MASTERY_LEVELS[2].url()} height={20} />({this.state.mission.mastery_levels[2].progress.goal_progress} / {this.state.mission.mastery_levels[2].progress.goals})
                         </span>
-                    </div>
-                    <div>
-                        Trait bonuses: <span className='quest-mastery'>
-                            <Image src={CONFIG.MASTERY_LEVELS[0].url()} height={20} />({this.state.mission.trait_bonuses[0]})
+                        </div>
+                        <div>
+                            Trait bonuses: <span className='quest-mastery'>
+                                <Image src={CONFIG.MASTERY_LEVELS[0].url()} height={20} />({this.state.mission.trait_bonuses[0]})
                             <Image src={CONFIG.MASTERY_LEVELS[1].url()} height={20} />({this.state.mission.trait_bonuses[1]})
                             <Image src={CONFIG.MASTERY_LEVELS[2].url()} height={20} />({this.state.mission.trait_bonuses[2]})
                         </span>
-                    </div>
-                    <div>
-                        Critical threshold: {this.state.mission.critical_threshold ? this.state.mission.critical_threshold : 'none'}
-                    </div>
-                    {this.state.mission.cadet && (
-                        <div>
-                            Cadet requirements: <span dangerouslySetInnerHTML={this.htmlDecode(this.state.mission.crew_requirement.description)} />
                         </div>
-                    )}
-                </td><td style={{ width: '50%', minHeight:'280px' }}>
-                        <div ref='visGraph' style={{ border: '1px solid lightgray' }} />
-                </td></tr>
-                <tr><td colSpan={2}>
-                    {crewSelectionLog}
-                    {(this.state.selectedChallenge != undefined) && this.renderChallengeDetails()}
-                </td>
-                </tr>
+                        <div>
+                            Critical threshold: {this.state.mission.critical_threshold ? this.state.mission.critical_threshold : 'none'}
+                        </div>
+                        {this.state.mission.cadet && (
+                            <div>
+                                Cadet requirements: <span dangerouslySetInnerHTML={this.htmlDecode(this.state.mission.crew_requirement.description)} />
+                            </div>
+                        )}
+                    </td><td style={{ width: '50%', minHeight: '280px' }}>
+                            <div ref='visGraph' style={{ border: '1px solid lightgray' }} />
+                        </td></tr>
+                    <tr><td colSpan={2}>
+                        {crewSelectionLog}
+                        {(this.state.selectedChallenge != undefined) && this.renderChallengeDetails()}
+                    </td>
+                    </tr>
                 </tbody>
             </table>
         </div>);
-	}
+    }
 }
 
 export class MissionExplorer extends React.Component {
@@ -265,13 +265,29 @@ export class MissionExplorer extends React.Component {
     }
 
     componentDidMount() {
-        if (this.props.onMounted) {
-            this.props.onMounted([{
+        this._updateCommandItems();
+    }
+
+    _updateCommandItems() {
+        if (this.props.onCommandItemsUpdate) {
+            this.props.onCommandItemsUpdate([{
                 key: 'settings',
-                name: 'Settings',
-                iconProps: { iconName: 'Settings' },
-                onClick: () => {
-                    alert('todo');
+                text: 'Settings',
+                iconProps: { iconName: 'Equalizer' },
+                subMenuProps: {
+                    items: [{
+                        key: 'onlyIncomplete',
+                        text: 'Show only unfinished missions',
+                        canCheck: true,
+                        isChecked: this.state.onlyIncomplete,
+                        onClick: () => {
+                            let isChecked = !this.state.onlyIncomplete;
+                            this.setState({
+                                options: this.loadOptions(isChecked),
+                                onlyIncomplete: isChecked
+                            }, () => { this._updateCommandItems(); });
+                        }
+                    }]
                 }
             }]);
         }
@@ -324,13 +340,10 @@ export class MissionExplorer extends React.Component {
                     <p><b>Note: </b>These calculations only search crew necessary for completing the missions with the epic mastery.</p>
                     <Dropdown
                         selectedKey={this.state.selectedItem && this.state.selectedItem.key}
-                        onChanged={item => {this.setState({ selectedItem: item }); this.refs.missionDetails.loadMissionDetails(item.data.questId); }}
+                        onChanged={item => { this.setState({ selectedItem: item }); this.refs.missionDetails.loadMissionDetails(item.data.questId); }}
                         onRenderTitle={this._onRenderTitle}
                         placeHolder='Select a mission'
                         options={this.state.options}
-                    />
-                    <Checkbox label='Show only missions that are not fully complete' checked={this.state.onlyIncomplete}
-                        onChange={ (ev, isChecked) => this.setState({options: this.loadOptions(isChecked), onlyIncomplete: isChecked}) }
                     />
                     <MissionDetails questId={this.state.selectedItem} ref='missionDetails' />
                 </div>

@@ -6,7 +6,7 @@ import { Image, ImageFit } from 'office-ui-fabric-react/lib/Image';
 import { Link } from 'office-ui-fabric-react/lib/Link';
 import { Label } from 'office-ui-fabric-react/lib/Label';
 import { Icon } from 'office-ui-fabric-react/lib/Icon';
-import { IconButton } from 'office-ui-fabric-react/lib/Button';
+import { IconButton, DefaultButton } from 'office-ui-fabric-react/lib/Button';
 import { HoverCard } from 'office-ui-fabric-react/lib/HoverCard';
 import { TooltipHost } from 'office-ui-fabric-react/lib/Tooltip';
 import { Checkbox } from 'office-ui-fabric-react/lib/Checkbox';
@@ -411,8 +411,10 @@ export class CrewList extends React.Component {
 	render() {
 		let { columns, items, sorted } = this.state;
 
+		const defaultButton = props => <DefaultButton {...props} text={props.children} style={{width: '100%'}} />;
+
 		return (
-			<div className={this.props.overrideClassName ? this.props.overrideClassName : 'data-grid'} data-is-scrollable='true'>
+			<div className={this.props.embedded ? 'embedded-crew-grid' : 'data-grid'} data-is-scrollable='true'>
 				<ReactTable
 					data={items}
 					columns={columns}
@@ -421,7 +423,11 @@ export class CrewList extends React.Component {
 					sorted={sorted}
 					onSortedChange={sorted => this.setState({ sorted })}
 					showPagination={(items.length > 50)}
+					showPageSizeOptions={false}
 					className="-striped -highlight"
+					NextComponent={defaultButton}
+					PreviousComponent={defaultButton}
+					style={(!this.props.embedded && (items.length > 50)) ? { height: 'calc(100vh - 88px)' } : {}}
 				/>
 				<ActiveCrewDialog ref='activeCrewDialog' />
 			</div>
