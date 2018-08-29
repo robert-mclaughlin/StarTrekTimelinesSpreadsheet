@@ -20,7 +20,6 @@ import React from 'react';
 import { Fabric } from 'office-ui-fabric-react/lib/Fabric';
 import { CommandBar } from 'office-ui-fabric-react/lib/CommandBar';
 import { Spinner, SpinnerSize } from 'office-ui-fabric-react/lib/Spinner';
-import { Pivot, PivotItem, PivotLinkFormat, PivotLinkSize } from 'office-ui-fabric-react/lib/Pivot';
 import { Dialog, DialogType, DialogFooter } from 'office-ui-fabric-react/lib/Dialog';
 import { Image } from 'office-ui-fabric-react/lib/Image';
 import { Callout } from 'office-ui-fabric-react/lib/Callout';
@@ -107,22 +106,28 @@ class App extends React.Component {
 		this._onSwitchTheme = this._onSwitchTheme.bind(this);
 		this._onDismissBootMessage = this._onDismissBootMessage.bind(this);
 
+		this._getNavItems = this._getNavItems.bind(this);
+		this._getNavOverflowItems = this._getNavOverflowItems.bind(this);
+		this._getNavFarItems = this._getNavFarItems.bind(this);
+		this._switchTab = this._switchTab.bind(this);
+		this.renderItem = this.renderItem.bind(this);
+
 		initializeIcons(/* optional base url */);
 
-// #!if ENV === 'electron'
+		// #!if ENV === 'electron'
 		STTApi.inWebMode = false;
 		STTApi.setImageProvider(true, new FileImageCache());
-// #!else
+		// #!else
 		STTApi.inWebMode = true;
 
 		// TODO: Get an actual hostname / domain instead of hardcoding the VPS ip here
 		const serverAddress = 'https://iampicard.com/';
 		STTApi.setImageProviderOverride(new ServerImageProvider(serverAddress));
 		STTApi.networkHelper.setProxy(serverAddress + 'proxy');
-		STTApi.networkHelper.get(serverAddress + 'motd/get', {dummy: true}).then((data) => {
+		STTApi.networkHelper.get(serverAddress + 'motd/get', { dummy: true }).then((data) => {
 			this.setState({ motd: data });
 		});
-// #!endif
+		// #!endif
 
 		STTApi.config.where('key').equals('ui.darkTheme').first().then((entry) => {
 			this.setState({ darkTheme: entry && entry.value });
@@ -225,7 +230,7 @@ class App extends React.Component {
 		document.body.style.color = finalTheme.semanticColors.bodyText;
 
 		if (shouldForceUpdate) {
-			this.setState({theme: finalTheme});
+			this.setState({ theme: finalTheme });
 			STTApi.config.put({ key: 'ui.darkTheme', value: this.state.darkTheme });
 			this.forceUpdate();
 		} else {
@@ -257,6 +262,7 @@ class App extends React.Component {
 
 	componentDidMount() {
 		this.intervalPlayerResync = setInterval(this._playerResync, 5 * 60 * 1000);
+		this._switchTab('Crew');
 	}
 
 	componentWillUnmount() {
@@ -271,83 +277,99 @@ class App extends React.Component {
 	}
 
 	render() {
+		if (this.state.showSpinner) {
+			return <Spinner size={SpinnerSize.large} label={this.state.spinnerLabel} />;
+		}
+
 		return (
 			<Fabric style={{ color: this.state.theme.semanticColors.bodyText, backgroundColor: this.state.theme.semanticColors.bodyBackground }} className='App'>
-				<div className='lcars'>
-					<div className='lcars-corner-left' />
-					<div className='lcars-content'>
-						<Image src={this.state.captainAvatarUrl} height={25} />
-					</div>
-					<div className='lcars-ellipse' />
-					<div className='lcars-content-text'>
-						<span style={{ cursor: 'pointer' }} onClick={this._onCaptainClicked} ref={(menuButton) => this._captainButtonElement = menuButton}>{this.state.captainName}</span>
-						{this.state.isCaptainCalloutVisible && (
-							<Callout className='CaptainCard-callout'
-								role={'alertdialog'}
-								gapSpace={0}
-								targetElement={this._captainButtonElement}
-								onDismiss={this._onCaptainCalloutDismiss}
-								setInitialFocus={true}
-							>
-								<CaptainCard captainAvatarBodyUrl={this.state.captainAvatarBodyUrl} onLogout={this._onLogout} onRefresh={this._onRefresh} />
-							</Callout>
-						)}
-					</div>
-					<div className='lcars-ellipse' />
-					<div className='lcars-content-text'>
-						{this.state.secondLine}
-					</div>
-					{this.state.updateUrl && <div className='lcars-ellipse' />}
-					{this.state.updateUrl && <div className='lcars-content-text' style={{ cursor: 'pointer' }}>
-						<a style={{color: 'red'}} onClick={() => openShellExternal(this.state.updateUrl)}>Update available!</a>
-					</div>}
-					{this.state.motd && <div className='lcars-ellipse' />}
-					{this.state.motd && <div className='lcars-content-text' style={{ cursor: 'pointer' }}>
-						<TooltipHost calloutProps={{ gapSpace: 20 }} delay={TooltipDelay.zero} directionalHint={DirectionalHint.bottomCenter}
-							tooltipProps={{ onRenderContent: () => {
-								return ( <div dangerouslySetInnerHTML={{__html: this.state.motd.contents}} /> ); }}} >
-							<span className={ColorClassNames.orangeLighter}>{this.state.motd.title}</span>
-						</TooltipHost>
-					</div>}
-					<div className='lcars-box' />
-					<div className='lcars-content'>
-						<IconButton iconProps={{ iconName: 'Light' }} title='Switch theme' onClick={() => {
-							this.setState({darkTheme: !this.state.darkTheme}, () => this._onSwitchTheme(true));
+				<div style={{display:'flex', flexFlow:'column', height: '100%'}}>
+					<div className='lcars' style={{flex:'0 1 auto'}}>
+						<div className='lcars-corner-left' />
+						<div className='lcars-content'>
+							<Image src={this.state.captainAvatarUrl} height={25} />
+						</div>
+						<div className='lcars-ellipse' />
+						<div className='lcars-content-text'>
+							<span style={{ cursor: 'pointer' }} onClick={this._onCaptainClicked} ref={(menuButton) => this._captainButtonElement = menuButton}>{this.state.captainName}</span>
+							{this.state.isCaptainCalloutVisible && (
+								<Callout className='CaptainCard-callout'
+									role={'alertdialog'}
+									gapSpace={0}
+									targetElement={this._captainButtonElement}
+									onDismiss={this._onCaptainCalloutDismiss}
+									setInitialFocus={true}
+								>
+									<CaptainCard captainAvatarBodyUrl={this.state.captainAvatarBodyUrl} onLogout={this._onLogout} onRefresh={this._onRefresh} />
+								</Callout>
+							)}
+						</div>
+						<div className='lcars-ellipse' />
+						<div className='lcars-content-text'>
+							{this.state.secondLine}
+						</div>
+						{this.state.updateUrl && <div className='lcars-ellipse' />}
+						{this.state.updateUrl && <div className='lcars-content-text' style={{ cursor: 'pointer' }}>
+							<a style={{ color: 'red' }} onClick={() => openShellExternal(this.state.updateUrl)}>Update available!</a>
+						</div>}
+						{this.state.motd && <div className='lcars-ellipse' />}
+						{this.state.motd && <div className='lcars-content-text' style={{ cursor: 'pointer' }}>
+							<TooltipHost calloutProps={{ gapSpace: 20 }} delay={TooltipDelay.zero} directionalHint={DirectionalHint.bottomCenter}
+								tooltipProps={{
+									onRenderContent: () => {
+										return (<div dangerouslySetInnerHTML={{ __html: this.state.motd.contents }} />);
+									}
+								}} >
+								<span className={ColorClassNames.orangeLighter}>{this.state.motd.title}</span>
+							</TooltipHost>
+						</div>}
+						<div className='lcars-box' />
+						<div className='lcars-content'>
+							<IconButton iconProps={{ iconName: 'Light' }} title='Switch theme' onClick={() => {
+								this.setState({ darkTheme: !this.state.darkTheme }, () => this._onSwitchTheme(true));
 							}} className={ColorClassNames.neutralDark} />
+						</div>
+						<div className='lcars-ellipse' />
+						<div className='lcars-content' ref={(menuButton) => this._feedbackButtonElement = menuButton}>
+							<ShakingButton iconName='Emoji2' title='Feedback' interval={20000} onClick={() => this.refs.feedbackPanel.show()} />
+						</div>
+						<div className='lcars-corner-right' />
 					</div>
-					<div className='lcars-ellipse' />
-					<div className='lcars-content' ref={(menuButton) => this._feedbackButtonElement = menuButton}>
-						<ShakingButton iconName='Emoji2' title='Feedback' interval={20000} onClick={() => this.refs.feedbackPanel.show()} />
+
+					<div style={{flex:'1 1 auto'}}>
+						{this.state.dataLoaded && <CommandBar items={this._getNavItems()} overflowItems={this._getNavOverflowItems()} farItems={this.state.extraCommandItems} /> }
 					</div>
-					<div className='lcars-corner-right' />
+					<div style={{flex:'0 1 auto'}}>
+						{this.renderItem()}
+					</div>
 				</div>
 
 				<Dialog
-					hidden={ this.state.hideErrorDialog }
-					onDismiss={ () => { this.setState({ hideErrorDialog: true });} }
-					dialogContentProps={ {
+					hidden={this.state.hideErrorDialog}
+					onDismiss={() => { this.setState({ hideErrorDialog: true }); }}
+					dialogContentProps={{
 						type: DialogType.normal,
 						title: 'An error occured while loading data!',
 						subText: 'Try restarting the application; if the error persists, please log a bug. Details: ' + this.state.errorMessage
-					} }
-					modalProps={{ isBlocking: true}}
-					>
+					}}
+					modalProps={{ isBlocking: true }}
+				>
 					<DialogFooter>
-						<PrimaryButton onClick={ () => { createIssue(false, this.state.errorMessage); }} text='Create bug report' />
-						<DefaultButton onClick={ () => { this.setState({ hideErrorDialog: true });} } text='Cancel' />
+						<PrimaryButton onClick={() => { createIssue(false, this.state.errorMessage); }} text='Create bug report' />
+						<DefaultButton onClick={() => { this.setState({ hideErrorDialog: true }); }} text='Cancel' />
 					</DialogFooter>
 				</Dialog>
 
 				<Dialog
-					hidden={ this.state.hideBootMessage }
-					onDismiss={ () => { this._onDismissBootMessage(); } }
-					dialogContentProps={ {
+					hidden={this.state.hideBootMessage}
+					onDismiss={() => { this._onDismissBootMessage(); }}
+					dialogContentProps={{
 						type: DialogType.normal,
 						title: 'Please read me',
 						subText: 'Star Trek Timelines is not designed to be accessed on multiple clients simultaneously!'
-					} }
+					}}
 					modalProps={{ isBlocking: true }}
-					>
+				>
 					<div>
 						<p>In order to avoid synchronization issues, please only have <b>one active client at a time</b> (this includes the game on any platform and/or the tool). Close / shut down all other clients, or restart them upon making changes somewhere else.</p>
 						<p><i>Note:</i>If you're only using the tool to look at stats (and are ok with potentially out of date info), and don't use the Gauntlet or Voyage features, you can keep it running alongside the game.</p>
@@ -356,69 +378,149 @@ class App extends React.Component {
 							onChange={(e, isChecked) => { this.setState({ showBootMessage: !isChecked }); }}
 						/>
 
-						<br/>
+						<br />
 					</div>
 					<DialogFooter>
-						<PrimaryButton onClick={ () => { openShellExternal('https://github.com/IAmPicard/StarTrekTimelinesSpreadsheet/blob/master/README.md'); }} text='Read more...' />
-						<DefaultButton onClick={ () => { this._onDismissBootMessage(); } } text='Ok' />
+						<PrimaryButton onClick={() => { openShellExternal('https://github.com/IAmPicard/StarTrekTimelinesSpreadsheet/blob/master/README.md'); }} text='Read more...' />
+						<DefaultButton onClick={() => { this._onDismissBootMessage(); }} text='Ok' />
 					</DialogFooter>
 				</Dialog>
 
 				<FeedbackPanel ref='feedbackPanel' targetElement={this._feedbackButtonElement} />
-
-				{this.state.showSpinner && (
-					<Spinner size={SpinnerSize.large} label={this.state.spinnerLabel} />
-				)}
-
-				{this.state.dataLoaded && (
-					<Pivot linkFormat={PivotLinkFormat.tabs} linkSize={PivotLinkSize.large}>
-						<PivotItem linkText='Crew' itemIcon='Teamwork'>
-							<CommandBar items={this._getCommandItems()} />
-							<SearchBox placeholder='Search by name or trait...'
-								onChange={(newValue) => this.refs.crewList.filter(newValue)}
-								onSearch={(newValue) => this.refs.crewList.filter(newValue)}
-							/>
-							<CrewList data={STTApi.roster} grouped={false} ref='crewList' />
-						</PivotItem>
-						<PivotItem linkText='Items' itemIcon='Boards'>
-							<CommandBar items={this._getInventoryCommandItems()} />
-							<SearchBox placeholder='Search by name or description...'
-								onChange={(newValue) => this.refs.itemList.filter(newValue)}
-								onSearch={(newValue) => this.refs.itemList.filter(newValue)}
-							/>
-							<ItemList data={STTApi.playerData.character.items} ref='itemList' />
-						</PivotItem>
-						<PivotItem linkText='Equipment' itemIcon='CheckList'>
-							<EquipmentDetails />
-						</PivotItem>
-						<PivotItem linkText='Ships' itemIcon='Airplane'>
-							<ShipList />
-						</PivotItem>
-						<PivotItem linkText='Missions' itemIcon='Trophy'>
-							<MissionExplorer />
-						</PivotItem>
-						<PivotItem linkText='Recommendations' itemIcon='Lightbulb'>
-							<CrewRecommendations />
-						</PivotItem>
-						<PivotItem linkText='Voyage' itemIcon='Rocket'>
-							<VoyageTools />
-						</PivotItem>
-						<PivotItem linkText='Gauntlet' itemIcon='DeveloperTools'>
-							<GauntletHelper />
-						</PivotItem>
-						<PivotItem linkText='Fleet' itemIcon='WindDirection'>
-							<FleetDetails />
-						</PivotItem>
-						<PivotItem linkText='About' itemIcon='Help'>
-							<AboutAndHelp />
-						</PivotItem>
-					</Pivot>
-				)}
-
 				<LoginDialog ref='loginDialog' onAccessToken={this._onAccessToken} shownByDefault={this.state.showLoginDialog} />
 				<ShareDialog ref='shareDialog' onShare={this._onShare} />
 			</Fabric>
 		);
+	}
+
+	renderItem() {
+		if (!this.state.dataLoaded) {
+			return <span/>;
+		}
+
+		let refUpdater = extraItems => {
+			this.setState({
+				extraCommandItems: this._getNavFarItems(this.state.currentTab, extraItems)
+			});
+		};
+
+		switch (this.state.currentTab) {
+			case 'Crew':
+				return <div>
+					<SearchBox placeholder='Search by name or trait...'
+						onChange={(newValue) => this.refs.crewList.filter(newValue)}
+						onSearch={(newValue) => this.refs.crewList.filter(newValue)}
+					/>
+					<CrewList data={STTApi.roster} grouped={false} ref='crewList' />
+				</div>;
+
+			case 'Items':
+				return <div>
+					<SearchBox placeholder='Search by name or description...'
+						onChange={(newValue) => this.refs.itemList.filter(newValue)}
+						onSearch={(newValue) => this.refs.itemList.filter(newValue)}
+					/>
+					<ItemList data={STTApi.playerData.character.items} ref='itemList' />
+				</div>;
+
+			case 'Equipment':
+				return <EquipmentDetails />;
+
+			case 'Ships':
+				return <ShipList />;
+
+			case 'Missions':
+				return <MissionExplorer onMounted={refUpdater} />;
+
+			case 'Recommendations':
+				return <CrewRecommendations />;
+
+			case 'Voyage':
+				return <VoyageTools />;
+
+			case 'Gauntlet':
+				return <GauntletHelper />;
+
+			case 'Fleet':
+				return <FleetDetails />;
+
+			case 'About':
+				return <AboutAndHelp />;
+
+			default:
+				return <span>Error! Unknown tab selected.</span>;
+		}
+	}
+
+	_getNavOverflowItems() {
+		let tabs = [
+			{ name: 'Items', itemIcon: 'Boards' },
+			{ name: 'Equipment', itemIcon: 'CheckList' },
+			{ name: 'Ships', itemIcon: 'Airplane' },
+			{ name: 'Fleet', itemIcon: 'WindDirection' }];
+
+		return tabs.map(tab => { return {
+			key: tab.name,
+			name: tab.name,
+			iconProps: { iconName: tab.itemIcon },
+			onClick: () => {
+				this._switchTab(tab.name);
+			}};
+		});
+	}
+
+	_switchTab(newTab) {
+		this.setState({
+			currentTab: newTab,
+			extraCommandItems: this._getNavFarItems(newTab)
+		});
+	}
+
+	_getNavFarItems(currentTab, extraItems) {
+		let commandItems = [];
+		switch (currentTab) {
+			case 'Crew':
+				commandItems = this._getCommandItems();
+				break;
+
+			case 'Items':
+				commandItems = this._getInventoryCommandItems();
+				break;
+		}
+
+		if (extraItems) {
+			commandItems = commandItems.concat(extraItems);
+		}
+
+		commandItems.push({
+			key: 'About',
+			name: 'Help and About',
+			iconProps: { iconName: 'Help' },
+			iconOnly: true,
+			onClick: () => {
+				this._switchTab('About');
+			}
+		});
+
+		return commandItems;
+	}
+
+	_getNavItems() {
+		let tabs = [
+			{ name: 'Crew', itemIcon: 'Teamwork' },
+			{ name: 'Voyage', itemIcon: 'Rocket' },
+			{ name: 'Gauntlet', itemIcon: 'DeveloperTools' },
+			{ name: 'Missions', itemIcon: 'Trophy' },
+			{ name: 'Recommendations', itemIcon: 'Lightbulb' }];
+
+		return tabs.map(tab => { return {
+			key: tab.name,
+			name: tab.name,
+			iconProps: { iconName: tab.itemIcon },
+			onClick: () => {
+				this._switchTab(tab.name);
+			}};
+		});
 	}
 
 	_getCommandItems() {
@@ -497,14 +599,14 @@ class App extends React.Component {
 	}
 
 	async _onDataFinished() {
-// #!if ENV === 'electron'
+		// #!if ENV === 'electron'
 		// This resets with every new version, in case the message is updated or folks forget
 		let entry = await STTApi.config.where('key').equals('ui.showBootMessage' + getAppVersion()).first();
 		let shouldShowBootMessage = !entry || entry.value;
-// #!else
+		// #!else
 		// TODO: This ifdef should be the same on web, but Safari crashes and burns with dexie indexeddb transactions (potentially Promise-related)
 		let shouldShowBootMessage = false;
-// #!endif
+		// #!endif
 		this.setState({
 			showSpinner: false,
 			captainName: STTApi.playerData.character.display_name,
@@ -514,7 +616,7 @@ class App extends React.Component {
 			dataLoaded: true
 		});
 
-// #!if ENV === 'electron'
+		// #!if ENV === 'electron'
 		let data = await STTApi.getGithubReleases();
 		let versions = data.map((release) => release.tag_name.replace('v', ''));
 		let maxVersion = versions.sort(rcompare)[0];
@@ -525,7 +627,7 @@ class App extends React.Component {
 				updateUrl: data[0].html_url
 			});
 		}
-// #!endif
+		// #!endif
 
 		if (STTApi.playerData.character.crew_avatar) {
 			STTApi.imageProvider.getCrewImageUrl(STTApi.playerData.character.crew_avatar, false, 0).then(({ id, url }) => {

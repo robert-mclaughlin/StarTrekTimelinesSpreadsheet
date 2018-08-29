@@ -103,19 +103,19 @@
 
 .data-grid {
     -webkit-overflow-scrolling: touch;
-    max-height: calc(100vh - 165px);
+    max-height: calc(100vh - 112px);
     overflow-x: hidden;
     overflow-y: auto;
-    padding: 20px 0;
+    padding: 5px 0;
     position: relative;
 }
 
 .tab-panel {
     -webkit-overflow-scrolling: touch;
-    max-height: calc(100vh - 90px);
+    max-height: calc(100vh - 80px);
     overflow-x: hidden;
     overflow-y: auto;
-    padding: 20px 0;
+    padding: 5px 0;
     position: relative;
 }
 

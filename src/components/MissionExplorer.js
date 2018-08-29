@@ -264,6 +264,19 @@ export class MissionExplorer extends React.Component {
         };
     }
 
+    componentDidMount() {
+        if (this.props.onMounted) {
+            this.props.onMounted([{
+                key: 'settings',
+                name: 'Settings',
+                iconProps: { iconName: 'Settings' },
+                onClick: () => {
+                    alert('todo');
+                }
+            }]);
+        }
+    }
+
     loadOptions(onlyIncomplete) {
         let options = [];
         STTApi.missions.forEach(function (mission) {
