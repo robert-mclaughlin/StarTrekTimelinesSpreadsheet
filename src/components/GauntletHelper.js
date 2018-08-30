@@ -100,7 +100,7 @@ class GauntletMatch extends React.Component {
 			"pcrewimage button button button ocrewimage"`};
 
 		return <div style={containerStyle} className={ColorClassNames.themeLighterBackground}>
-			<span style={{ gridArea: 'pcrewname', justifySelf: 'center' }}>{STTApi.getCrewAvatarBySymbol(this.props.match.crewOdd.archetype_symbol).name}</span>
+			<span style={{ gridArea: 'pcrewname', justifySelf: 'center' }}>{STTApi.getCrewAvatarBySymbol(this.props.match.crewOdd.archetype_symbol).name} ({this.props.match.crewOdd.crit_chance}%)</span>
 			<div style={{ gridArea: 'pcrewimage' }}><Image src={this.props.match.crewOdd.iconUrl} height={128} /></div>
 
 			<div style={{ gridArea: 'stats' }}>
@@ -130,7 +130,7 @@ class GauntletMatch extends React.Component {
 			</div>
 
 			<div style={{ gridArea: 'ocrewimage' }}><Image src={this.props.match.opponent.iconUrl} height={128} /></div>
-			<span style={{ gridArea: 'ocrewname', justifySelf: 'center' }}>{STTApi.getCrewAvatarBySymbol(this.props.match.opponent.archetype_symbol).name}</span>
+			<span style={{ gridArea: 'ocrewname', justifySelf: 'center' }}>{STTApi.getCrewAvatarBySymbol(this.props.match.opponent.archetype_symbol).name} ({this.props.match.opponent.crit_chance}%)</span>
 		</div>;
 	}
 }
