@@ -420,6 +420,8 @@ export class GauntletHelper extends React.Component {
 			return (
 				<div className='tab-panel' data-is-scrollable='true'>
 					<h3>Current gauntlet stats</h3>
+					<Label>Featured skill is <Image src={CONFIG.SPRITES['icon_' + this.state.gauntlet.contest_data.featured_skill].url} height={18} /> {CONFIG.SKILLS[this.state.gauntlet.contest_data.featured_skill]}</Label>
+					<Label>Featured traits are {this.state.gauntlet.contest_data.traits.map(trait => STTApi.getTraitName(trait)).join(", ")}</Label>
 					<Label>Crew refeshes in {Math.floor(this.state.gauntlet.seconds_to_next_crew_refresh / 60)} minutes and the gauntlet ends in {Math.floor(this.state.gauntlet.seconds_to_end / 60)} minutes</Label>
 					<Label>Your rank is {this.state.roundOdds.rank} and you have {this.state.roundOdds.consecutive_wins} consecutive wins</Label>
 					<span><h3>Your crew stats</h3></span>
