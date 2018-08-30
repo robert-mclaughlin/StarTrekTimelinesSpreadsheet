@@ -12,7 +12,7 @@ addons:
       - g++-6
 
 before_install:
-# - docker run -dit --name emscripten -v $(pwd):/src trzeci/emscripten:sdk-incoming-64bit bash
+ - docker run -dit --name emscripten -v $(pwd):/src trzeci/emscripten:sdk-incoming-64bit bash
  - cd STTApi
  - npm install
  - cd ..
@@ -21,6 +21,5 @@ install:
  - npm install
 
 script:
-# - docker exec -it em++ ../native/VoyageCalculator.cpp main.cpp -o out/voymod.js --bind -O1  -std=c++1y -s ASSERTIONS=1 -s DISABLE_EXCEPTION_CATCHING=0 -s NO_EXIT_RUNTIME=1 -s WASM=1 -s ALLOW_MEMORY_GROWTH=1 -s MODULARIZE=1 -s EXPORT_NAME="VoyMod" -I "." -I "../native"
-# - npm install
  - npm run buildweb
+ - docker exec -it em++ ../native/VoyageCalculator.cpp main.cpp -o out/voymod.js --bind -O1  -std=c++1y -s ASSERTIONS=1 -s DISABLE_EXCEPTION_CATCHING=0 -s NO_EXIT_RUNTIME=1 -s WASM=1 -s ALLOW_MEMORY_GROWTH=1 -s MODULARIZE=1 -s EXPORT_NAME="VoyMod" -I "." -I "../native"
