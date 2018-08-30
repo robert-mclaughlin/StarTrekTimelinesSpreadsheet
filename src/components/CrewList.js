@@ -104,9 +104,10 @@ export class CrewList extends React.Component {
 				accessor: 'level'
 			},
 			{
-				id: 'max_rarity',
+				id: 'rarity',
 				Header: 'Rarity',
-				accessor: 'max_rarity',
+				// Sort all by max fusion level, then fractional part by current fusion level
+				accessor: (c) => c.max_rarity + (c.rarity / c.max_rarity),
 				minWidth: 75,
 				maxWidth: 75,
 				resizable: false,
