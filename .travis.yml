@@ -4,6 +4,9 @@ node_js:
 
 before_install:
  - docker run -dit --name emscripten -v $(pwd):/src trzeci/emscripten:sdk-incoming-64bit bash
+ - cd STTApi
+ - npm install
+ - cd..
 
 install:
  - npm install
