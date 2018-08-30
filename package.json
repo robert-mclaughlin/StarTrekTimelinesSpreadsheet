@@ -90,6 +90,7 @@
     "buffer": "5.0.8",
     "dexie": "latest",
     "fb": "latest",
+    "history": "^4.7.2",
     "json2csv": "^4.2.1",
     "react-table": "^6.8.6",
     "semver": "^5.5.1",

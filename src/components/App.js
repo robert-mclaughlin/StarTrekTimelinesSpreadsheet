@@ -24,10 +24,11 @@ import { Dialog, DialogType, DialogFooter } from 'office-ui-fabric-react/lib/Dia
 import { ContextualMenuItemType } from 'office-ui-fabric-react/lib/ContextualMenu';
 import { Image } from 'office-ui-fabric-react/lib/Image';
 import { Callout } from 'office-ui-fabric-react/lib/Callout';
-import { IconButton, PrimaryButton, DefaultButton } from 'office-ui-fabric-react/lib/Button';
+import { PrimaryButton, DefaultButton } from 'office-ui-fabric-react/lib/Button';
 import { Checkbox } from 'office-ui-fabric-react/lib/Checkbox';
 import { TooltipHost, TooltipDelay, DirectionalHint } from 'office-ui-fabric-react/lib/Tooltip';
 import { initializeIcons } from 'office-ui-fabric-react/lib/Icons';
+import createHistory from 'history/createBrowserHistory';
 
 // #!if ENV === 'electron'
 import { FileImageCache } from '../utils/fileImageCache.js';
@@ -90,6 +91,11 @@ class App extends React.Component {
 			motd: undefined,
 			darkTheme: false
 		};
+
+		this.history = createHistory();
+		this.history.listen(location => {
+			this._switchTab(location.hash.substr(1));
+		});
 
 		this._captainButtonElement = React.createRef();
 		this._feedbackButtonElement = null;
@@ -427,6 +433,10 @@ class App extends React.Component {
 		this.setState({
 			currentTab: newTab,
 			extraCommandItems: this._getNavFarItems()
+		}, () => {
+			if (this.history.location.hash.substr(1) !== newTab) {
+				this.history.push({ hash: newTab });
+			}
 		});
 	}
 
@@ -488,7 +498,7 @@ class App extends React.Component {
 				</TooltipHost>
 			</div>;
 		} else {
-			return <span/>;
+			return <span />;
 		}
 	}
 
@@ -512,7 +522,7 @@ class App extends React.Component {
 			navItems.push({
 				key: 'Update',
 				name: 'New version available!',
-				iconProps: { iconName: 'FlameSolid', styles: { root: {color: 'red'}} },
+				iconProps: { iconName: 'FlameSolid', styles: { root: { color: 'red' } } },
 				iconOnly: true,
 				onClick: () => {
 					openShellExternal(this.state.updateUrl);
