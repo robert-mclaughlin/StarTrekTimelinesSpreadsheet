@@ -1,0 +1,9 @@
+language: node_js
+
+before_install:
+  cs STTApi
+  npm install
+
+script:
+  npm install
+  npm run buildweb
