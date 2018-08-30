@@ -1,9 +1,11 @@
 language: node_js
+node_js:
+ - "node"
 
 before_install:
-  cs STTApi
-  npm install
+ - cd STTApi
+ - npm install
 
 script:
-  npm install
-  npm run buildweb
+ - npm install
+ - npm run buildweb
