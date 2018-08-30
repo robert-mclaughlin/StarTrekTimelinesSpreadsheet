@@ -106,7 +106,8 @@ export class CrewList extends React.Component {
 			{
 				id: 'rarity',
 				Header: 'Rarity',
-				accessor: 'sort_rarity',
+				// Sort all by max fusion level, then fractional part by current fusion level
+				accessor: (c) => c.max_rarity + (c.rarity / c.max_rarity),
 				minWidth: 75,
 				maxWidth: 75,
 				resizable: false,
@@ -258,11 +259,7 @@ export class CrewList extends React.Component {
 		let sortColumn = props.sortColumn ? props.sortColumn : 'max_rarity';
 
 		this.state = {
-			items: props.data.map(item => {
-				// Sort all by max fusion level, then fractional part by current fusion level
-				item.sort_rarity = item.max_rarity + (item.rarity / item.max_rarity);
-				return item;
-			}),
+			items: props.data,
 			sorted: [ { id: sortColumn, desc: false } ],
 			columns: _columns,
 			selection: props.selectedIds ? props.selectedIds : new Set()
