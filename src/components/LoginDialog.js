@@ -136,10 +136,6 @@ export class LoginDialog extends React.Component {
 	}
 // #!endif
 
-	_showDialog(errMsg) {
-		this.setState({ hideDialog: false, errorMessage: errMsg });
-	}
-
 	_closeDialog() {
 		this.setState({ showSpinner: true, errorMessage: null });
 

@@ -29,7 +29,9 @@
         }
       ]
     ],
-    "plugins": ["@babel/plugin-proposal-class-properties"]
+    "plugins": [
+      "@babel/plugin-proposal-class-properties"
+    ]
   },
   "main": "main.js",
   "scripts": {
@@ -93,7 +95,7 @@
     "semver": "^5.5.1",
     "stt-native": "file:native",
     "stt-native-wasm": "file:native_wasm",
-    "sttapi": "file:STTApi",
+    "sttapi": "file:sttapi",
     "url-search-params-polyfill": "latest",
     "uuid": "^3.3.2"
   }

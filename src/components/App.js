@@ -36,7 +36,12 @@ import { ServerImageProvider } from '../utils/serverImageCache.js';
 // #!endif
 import { createIssue } from '../utils/githubUtils';
 
+// #!if ENV === 'electron'
 import { LoginDialog } from './LoginDialog.js';
+// #!else
+import { WebLoginDialog } from './WebLoginDialog.js';
+// #!endif
+
 import { ShipList } from './ShipList.js';
 import { ItemPage } from './ItemPage.js';
 import { CrewPage } from './CrewPage.js';
@@ -124,7 +129,7 @@ class App extends React.Component {
 		});
 
 		STTApi.config.where('key').equals('ui.darkTheme').first().then((entry) => {
-			this.setState({ darkTheme: entry && entry.value });
+			this.setState({ darkTheme: !entry || entry.value || (entry.value === undefined) });
 
 			this._onSwitchTheme(true);
 		});
@@ -277,7 +282,7 @@ class App extends React.Component {
 
 		return (
 			<Fabric style={{ color: this.state.theme.semanticColors.bodyText, backgroundColor: this.state.theme.semanticColors.bodyBackground }} className='App'>
-				<div style={{ display: 'flex', flexFlow: 'column', height: '100%' }}>
+				<div style={{ display: 'flex', flexFlow: 'column', height: '100%', padding: '3px' }}>
 					<div style={{ flex: '1 1 auto' }}>
 						{this.state.dataLoaded && <CommandBar items={this._getNavItems()} overflowItems={this._getNavOverflowItems()} farItems={this.state.extraCommandItems} />}
 					</div>
@@ -329,7 +334,12 @@ class App extends React.Component {
 				</Dialog>
 
 				<FeedbackPanel ref='feedbackPanel' targetElement={this._feedbackButtonElement} />
+
+				{/* #!if ENV === 'electron' */}
 				<LoginDialog ref='loginDialog' onAccessToken={this._onAccessToken} shownByDefault={this.state.showLoginDialog} />
+				{/* #!else */}
+				<WebLoginDialog ref='loginDialog' onAccessToken={this._onAccessToken} shownByDefault={this.state.showLoginDialog} />
+				{/* #!endif */}
 			</Fabric>
 		);
 	}
@@ -570,7 +580,7 @@ class App extends React.Component {
 	}
 
 	_onAccessToken() {
-		this.setState({ showSpinner: true });
+		this.setState({ showSpinner: true, showLoginDialog: false });
 
 		loginSequence((progressLabel) => this.setState({ spinnerLabel: progressLabel }))
 			.then(this._onDataFinished)
@@ -580,10 +590,10 @@ class App extends React.Component {
 	}
 
 	_onLogout() {
-		this.setState({ isCaptainCalloutVisible: false });
+		this.setState({ isCaptainCalloutVisible: false, darkTheme: true }, () => { this._onSwitchTheme(true); });
+
 		STTApi.refreshEverything(true);
 		this.setState({ showLoginDialog: true, dataLoaded: false, captainName: 'Welcome!', spinnerLabel: 'Loading...' });
-		this.refs.loginDialog._showDialog('');
 	}
 
 	_onRefresh() {

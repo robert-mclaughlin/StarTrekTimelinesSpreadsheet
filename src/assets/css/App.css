@@ -1,6 +1,5 @@
 .App {
     font-family: "Helvetica Neue", Roboto, "Segoe UI", -apple-system, sans-serif !important;
-    padding: 3px;
 }
 
 .recipe-item-span {
@@ -232,4 +231,54 @@
     left: 100%;
     border-color: transparent;
     border-left-color: #0078d7;
+}
+
+.bmc-button img {
+    width: 27px !important;
+    margin-bottom: 3px !important;
+    box-shadow: none !important;
+    border: none !important;
+    vertical-align: middle !important;
+}
+
+.bmc-button {
+    line-height: 36px !important;
+    height:37px !important;
+    text-decoration: none !important;
+    display:inline-block !important;
+    color:#FFFFFF !important;
+    background-color:#FF813F !important;
+    border-radius: 3px !important;
+    border: 1px solid transparent !important;
+    padding: 1px 9px !important;
+    font-size: 20px !important;
+    letter-spacing: 0.6px !important;
+    box-shadow: 0px 1px 2px rgba(190, 190, 190, 0.5) !important;
+    -webkit-box-shadow: 0px 1px 2px 2px rgba(190, 190, 190, 0.5) !important;
+    margin: 0 auto !important;
+    -webkit-box-sizing: border-box !important;
+    box-sizing: border-box !important;
+    -o-transition: 0.3s all linear !important;
+    -webkit-transition: 0.3s all linear !important;
+    -moz-transition: 0.3s all linear !important;
+    -ms-transition: 0.3s all linear !important;
+    transition: 0.3s all linear !important;
+}
+
+.bmc-button:hover, .bmc-button:active, .bmc-button:focus {
+    -webkit-box-shadow: 0px 1px 2px 2px rgba(190, 190, 190, 0.5) !important;
+    text-decoration: none !important;
+    box-shadow: 0px 1px 2px 2px rgba(190, 190, 190, 0.5) !important;
+    opacity: 0.85 !important;
+    color:#FFFFFF !important;
+}
+
+.blinking_thing {
+    animation: blinker 1s linear infinite;
+}
+  
+@keyframes blinker {
+    50% {
+      opacity: 0;
+    }
 }
