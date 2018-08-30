@@ -12,7 +12,10 @@ export class ShipList extends React.Component {
 		super(props);
 
 		this.state = {
-			items: sortItems(STTApi.ships, 'name'),
+			items: sortItems(STTApi.ships, 'name').map(ship => {
+				ship.sort_level = ship.level / ship.max_level;
+				return ship;
+			}),
 			schematics: STTApi.shipSchematics,
 			playerSchematics: STTApi.playerData.character.items.filter(item => item.type === 8),			
 			columns: [
@@ -49,9 +52,9 @@ export class ShipList extends React.Component {
 					fieldName: 'name'
 				},
 				{
-					key: 'max_level',
+					key: 'level',
 					name: 'Level',
-					fieldName: 'max_level',
+					fieldName: 'sort_level',
 					minWidth: 90,
 					maxWidth: 130,
 					isResizable: true,
