@@ -96,7 +96,7 @@
     "semver": "^5.5.1",
     "stt-native": "file:native",
     "stt-native-wasm": "file:native_wasm",
-    "sttapi": "file:sttapi",
+    "sttapi": "file:STTApi",
     "url-search-params-polyfill": "latest",
     "uuid": "^3.3.2"
   }
