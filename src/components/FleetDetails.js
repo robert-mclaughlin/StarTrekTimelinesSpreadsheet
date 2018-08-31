@@ -2,6 +2,7 @@ import React from 'react';
 import { DetailsList, DetailsListLayoutMode, SelectionMode } from 'office-ui-fabric-react/lib/DetailsList';
 import { Image, ImageFit } from 'office-ui-fabric-react/lib/Image';
 import { PrimaryButton } from 'office-ui-fabric-react/lib/Button';
+import { Spinner, SpinnerSize } from 'office-ui-fabric-react/lib/Spinner';
 
 import { CollapsibleSection } from './CollapsibleSection';
 import { RarityStars } from './RarityStars';
@@ -153,19 +154,64 @@ export class MemberList extends React.Component {
 }
 
 export class Starbase extends React.Component {
+	constructor(props) {
+		super(props);
+
+		let iconPromises = [];
+		STTApi.starbaseRooms.forEach(room => {
+			if ((room.level > 0) && !room.iconUrl) {
+				iconPromises.push(STTApi.imageProvider.getItemImageUrl(room.upgrades[room.level].buffs[0], room).then((found) => {
+					found.id.iconUrl = found.url;
+				}).catch((error) => { /*console.warn(error);*/ }));
+
+				iconPromises.push(STTApi.imageProvider.getImageUrl('/' + room.background, room).then((found) => {
+					found.id.backgroundUrl = found.url;
+				}).catch((error) => { /*console.warn(error);*/ }));
+			}
+		});
+
+		this.state = { showSpinner: true };
+
+		Promise.all(iconPromises).then(() => {
+			this.setState({ showSpinner: false });
+		});
+	}
+
 	render() {
+		if (this.state.showSpinner)
+			return <Spinner size={SpinnerSize.large} label='Loading starbase details...' />;
+
+		const roomContainerStyle = {
+			display: 'grid',
+			maxWidth: '512px',
+			padding: '8px',
+			gridTemplateColumns: 'auto auto',
+			gridTemplateRows: '24px 24px 24px 24px 24px 136px',
+			gridTemplateAreas: `
+			"image roomname"
+			"image roomstars"
+			"image buff1"
+			"image buff2"
+			"image upgrade"
+			"image ."`};
+
+		let rooms = [];
+		STTApi.starbaseRooms.forEach(room => {
+			let upgrade = room.upgrades[room.level];
+
+			rooms.push(<div style={roomContainerStyle} key={room.id}>
+				<img style={{ position: 'absolute', width: '512px', height: '256px', zIndex: 0, opacity: 0.3 }} src={room.backgroundUrl} />
+				<span style={{ gridArea: 'roomname', justifySelf: 'start', fontSize: '1.5em', fontWeight: 700 }}>{room.name}</span>
+				<span style={{ gridArea: 'roomstars', justifySelf: 'start' }}><RarityStars min={1} max={room.max_level} value={(room.level > 0) ? room.level : null} /></span>
+				<span style={{ gridArea: 'buff1', justifySelf: 'start', fontSize: '1.4em', fontWeight: 600 }}>{upgrade.name}</span>
+				<span style={{ gridArea: 'buff2', justifySelf: 'start', fontSize: '1.4em', fontWeight: 600 }}>{(upgrade.buffs && upgrade.buffs.length > 0) ? upgrade.buffs[0].name : ''}</span>
+				<span style={{ gridArea: 'upgrade', justifySelf: 'start', fontSize: '1.4em', fontWeight: 600 }}>{room.recommended ? 'Donations recommended' : ''}</span>
+				<img style={{ gridArea: 'image', width: '128px', height: '128px', justifySelf: 'center' }} src={room.iconUrl} />
+			</div>);
+		});
+
 		return (<CollapsibleSection title={this.props.title}>
-			{STTApi.starbaseRooms.map(function (room) {
-				return <li key={room.id}>
-					<span className='starbase-room'><span className='starbase-room-name'>{room.name}</span><RarityStars min={1} max={room.max_level} value={(room.level > 0) ? room.level : null} /></span>
-					{(room.level > 0) &&
-						<ul>
-							{room.upgrades.slice(0, room.level + 1).map(function (upgrade) {
-								return <li key={upgrade.name}>{upgrade.name} {(upgrade.buffs && upgrade.buffs.length > 0) ? (' (' + upgrade.buffs[0].name + ' )') : ''} </li>
-							})}
-						</ul>}
-				</li>
-			})}
+			{rooms}
 		</CollapsibleSection>);
 	}
 }

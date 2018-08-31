@@ -637,7 +637,7 @@ export class VoyageLog extends React.Component {
 		}
 	}
 
-	_chooseDilemma(voyageId, dilemmaId, index) {
+	async _chooseDilemma(voyageId, dilemmaId, index) {
 // #!if ENV === 'electron'
 		if (index < 0) {
 			// TODO: this should pick a random index out of the unlocked resolutions
@@ -646,23 +646,18 @@ export class VoyageLog extends React.Component {
 				promises.push(resolveDilemma(voyageId, dilemmaId, i % (-1 * index)));
 			}
 
-			Promise.all(promises).then(() => {
-				// Remove the dilemma that was just resolved
-				STTApi.playerData.character.voyage[0].dilemma = null;
-
-				this.reloadVoyageState();
-			});
-
-			return;
-		}
+			await Promise.all(promises);
+		} else {
+// #!else
+		{
 // #!endif
+			await resolveDilemma(voyageId, dilemmaId, index);
+		}
 
-		resolveDilemma(voyageId, dilemmaId, index).then(() => {
-			// Remove the dilemma that was just resolved
-			STTApi.playerData.character.voyage[0].dilemma = null;
+		// Remove the dilemma that was just resolved
+		STTApi.playerData.character.voyage[0].dilemma = null;
 
-			this.reloadVoyageState();
-		});
+		this.reloadVoyageState();
 	}
 
 	renderDilemma() {
