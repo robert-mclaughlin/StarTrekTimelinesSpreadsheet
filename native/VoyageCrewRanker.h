@@ -25,8 +25,8 @@ struct RankedCrew {
 struct VoyageEstimate {
 	std::uint8_t primarySkill;
 	std::uint8_t secondarySkill;
-	float estimate;
-	std::array<Crew, SLOT_COUNT> crew;
+	float estimate {0.0};
+	std::array<Crew, SLOT_COUNT> crew {};
 };
 
 struct RankedResult {
