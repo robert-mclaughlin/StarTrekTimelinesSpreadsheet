@@ -100,7 +100,7 @@ class GauntletMatch extends React.Component {
 			"pcrewimage button button button ocrewimage"`};
 
 		return <div style={containerStyle} className={ColorClassNames.themeLighterBackground}>
-			<span style={{ gridArea: 'pcrewname', justifySelf: 'center' }}>{STTApi.getCrewAvatarBySymbol(this.props.match.crewOdd.archetype_symbol).name}</span>
+			<span style={{ gridArea: 'pcrewname', justifySelf: 'center' }}>{STTApi.getCrewAvatarBySymbol(this.props.match.crewOdd.archetype_symbol).name} ({this.props.match.crewOdd.crit_chance}%)</span>
 			<div style={{ gridArea: 'pcrewimage' }}><Image src={this.props.match.crewOdd.iconUrl} height={128} /></div>
 
 			<div style={{ gridArea: 'stats' }}>
@@ -130,7 +130,7 @@ class GauntletMatch extends React.Component {
 			</div>
 
 			<div style={{ gridArea: 'ocrewimage' }}><Image src={this.props.match.opponent.iconUrl} height={128} /></div>
-			<span style={{ gridArea: 'ocrewname', justifySelf: 'center' }}>{STTApi.getCrewAvatarBySymbol(this.props.match.opponent.archetype_symbol).name}</span>
+			<span style={{ gridArea: 'ocrewname', justifySelf: 'center' }}>{STTApi.getCrewAvatarBySymbol(this.props.match.opponent.archetype_symbol).name} ({this.props.match.opponent.crit_chance}%)</span>
 		</div>;
 	}
 }
@@ -420,7 +420,9 @@ export class GauntletHelper extends React.Component {
 			return (
 				<div className='tab-panel' data-is-scrollable='true'>
 					<h3>Current gauntlet stats</h3>
-					<Label>Crew refeshes in {Math.floor(this.state.gauntlet.seconds_to_next_crew_refresh / 60)} minutes and the gauntlet ends in {Math.floor(this.state.gauntlet.seconds_to_end / 60)} minutes</Label>
+					<Label>Featured skill is <Image src={CONFIG.SPRITES['icon_' + this.state.gauntlet.contest_data.featured_skill].url} height={18} /> {CONFIG.SKILLS[this.state.gauntlet.contest_data.featured_skill]}</Label>
+					<Label>Featured traits are {this.state.gauntlet.contest_data.traits.map(trait => STTApi.getTraitName(trait)).join(", ")}</Label>
+					<Label>Crew refreshes in {Math.floor(this.state.gauntlet.seconds_to_next_crew_refresh / 60)} minutes and the gauntlet ends in {Math.floor(this.state.gauntlet.seconds_to_end / 60)} minutes</Label>
 					<Label>Your rank is {this.state.roundOdds.rank} and you have {this.state.roundOdds.consecutive_wins} consecutive wins</Label>
 					<span><h3>Your crew stats</h3></span>
 					<div style={{ display: 'flex', width: '95%' }} >
