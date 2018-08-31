@@ -147,7 +147,7 @@ CrewArray VoyageCalculator::GetAlternateCrew(unsigned int level) const noexcept
 
 	for (size_t slot = 0; slot < SLOT_COUNT; ++slot) {
 		altCrew[slot] = nullptr;
-		int currentLevel = 0;
+		unsigned int currentLevel = 0;
 		for (const Crew *crew : sortedSlotRosters[slot]) {
 			bool best = false;
 			if (crew->max_rarity == 0) {
@@ -515,8 +515,8 @@ float VoyageCalculator::calculateDuration(const std::array<const Crew *, SLOT_CO
 			<< totals.skills[3] << " " << totals.skills[4] << " " << totals.skills[5] << std::endl;
 	}
 
-	unsigned int PrimarySkill = totals.skills[binaryConfig.primarySkill];
-	unsigned int SecondarySkill = totals.skills[binaryConfig.secondarySkill];
+	//unsigned int PrimarySkill = totals.skills[binaryConfig.primarySkill];
+	//unsigned int SecondarySkill = totals.skills[binaryConfig.secondarySkill];
 	unsigned int MaxSkill = 0;
 
 	std::array<float, SKILL_COUNT> hazSkillVariance;
@@ -567,7 +567,7 @@ float VoyageCalculator::calculateDuration(const std::array<const Crew *, SLOT_CO
 		}
 	}
 
-	float totalRefillCost = 0;
+	//float totalRefillCost = 0;
 	float voyTime = 0;
 
 	// converging loop - refine calculation based on voyage time every iteration

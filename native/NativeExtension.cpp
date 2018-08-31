@@ -68,8 +68,6 @@ class VoyageWorker : public Nan::AsyncProgressWorkerBase<PackedResult>
 
 class VoyageCrewRankWorker : public Nan::AsyncProgressWorker
 {
-	std::string input;
-
   public:
 	VoyageCrewRankWorker(Nan::Callback *callback, Nan::Callback *progressCallback, const char *input)
 		: Nan::AsyncProgressWorker(callback), progressCallback(progressCallback), input(input)
@@ -175,6 +173,7 @@ class VoyageCrewRankWorker : public Nan::AsyncProgressWorker
 	static constexpr std::array<const char *, VoyageTools::SKILL_COUNT> altSkillNames = {"cmd", "sci", "sec", "eng", "dip", "med"};
 
 	Nan::Callback *progressCallback;
+	std::string input;
 	std::string rankResult;
 	std::string estimateResult;
 	std::unique_ptr<VoyageTools::VoyageCalculator> voyageCalculator;
