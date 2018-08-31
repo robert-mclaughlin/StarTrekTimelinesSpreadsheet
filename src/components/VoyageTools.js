@@ -7,11 +7,15 @@ import { Persona, PersonaSize, PersonaPresence } from 'office-ui-fabric-react/li
 import { NormalPeoplePicker } from 'office-ui-fabric-react/lib/Pickers';
 import { Image, ImageFit } from 'office-ui-fabric-react/lib/Image';
 import { Icon } from 'office-ui-fabric-react/lib/Icon';
+import { Link } from 'office-ui-fabric-react/lib/Link';
 import { TextField } from 'office-ui-fabric-react/lib/TextField';
 import { MessageBar, MessageBarType } from 'office-ui-fabric-react/lib/MessageBar';
 
 import STTApi from 'sttapi';
 import { CONFIG, bestVoyageShip, loadVoyage, startVoyage, resolveDilemma, formatCrewStats, bonusCrewForCurrentEvent } from 'sttapi';
+import { CollapsibleSection } from './CollapsibleSection';
+import { RarityStars } from './RarityStars';
+import ReactTable from "react-table";
 
 import { download } from '../utils/pal';
 
@@ -431,7 +435,7 @@ export class VoyageLogEntry extends React.Component {
 		super(props);
 
 		this.props.log.forEach(entry => {
-			// TODO: some log entries have 2 crew 
+			// TODO: some log entries have 2 crew
 			if (entry.crew) {
 				let rc = STTApi.roster.find((rosterCrew) => rosterCrew.symbol == entry.crew[0]);
 				if (rc) entry.crewIconUrl = rc.iconUrl;
@@ -588,6 +592,143 @@ export class VoyageLog extends React.Component {
 		if (this.state.showSpinner)
 			return <Spinner size={SpinnerSize.large} label='Loading voyage details...' />;
 
+		let items = this.state.voyage.pending_rewards.loot.map((loot, index) => {
+			//HACK: wrapper obj because the map was not behaving for some reason
+			let obj = {
+				index: index,
+				loot: loot,
+				color: loot.rarity && CONFIG.RARITIES[loot.rarity].color,
+				rarity: (loot.rarity == null) ? '' : CONFIG.RARITIES[loot.rarity].name
+		}; return obj;});
+
+		const typeMap = {
+			"1": "Crew",
+			"2": "Equipment",
+			"3": "Currency"
+		};
+
+		const typeMapItem = {
+			"3": "Equipment",
+			"7": "Training",
+			"9": "Replicator Rations"
+		};
+
+		let columns = [
+			{
+				id: 'icon',
+				Header: '',
+				minWidth: 30,
+				maxWidth: 30,
+				resizable: false,
+				accessor: (row) => row.loot.full_name,
+				Cell: (p) => {
+					let item = p.original.loot;
+					let equipment = STTApi.itemArchetypeCache.archetypes.find(eq => eq.id === item.id);
+					if (equipment && equipment.iconUrl) {
+						return (<Image src={equipment.iconUrl} width={25} height={25} imageFit={ImageFit.contain} shouldStartVisible={true} />);
+					} else if (equipment) {
+						return ''; // it is equip but no icon for it, so don't search other scopes
+					}
+					let crew = STTApi.crewAvatars.find((crew) => crew.id === item.id);
+					if (crew && crew.iconUrl) {
+						return (<Image src={crew.iconUrl} width={25} height={25} imageFit={ImageFit.contain} shouldStartVisible={true} />);
+					}
+					else if (crew) {
+						return '';
+					}
+
+					//TODO: could get images for: currency, training, replicator rations
+					return '';
+				}
+			},
+			{
+				id: 'quantity',
+				Header: 'Quantity',
+				minWidth: 20,
+				maxWidth: 50,
+				resizable: true,
+				accessor: (row) => row.loot.quantity
+			},
+			{
+				id: 'name',
+				Header: 'Name',
+				minWidth: 150,
+				maxWidth: 250,
+				resizable: true,
+				accessor: (row) => row.loot.full_name,
+				Cell: (p) => {
+					let item = p.original.loot;
+					return (<Link href={'https://stt.wiki/wiki/' + item.full_name.split(' ').join('_')} target='_blank'>{item.full_name}</Link>);
+				}
+			},
+			{
+				id: 'rarity',
+				Header: 'Rarity',
+				accessor: (c) => {
+					if (c.loot.type > 2) {
+						return -1;
+					}
+					return c.loot.rarity;
+				},
+				minWidth: 75,
+				maxWidth: 75,
+				resizable: false,
+				Cell: (p) => {
+					let item = p.original;
+					// 3 is for honor, credits, crons
+					if (item.loot.type > 2) {
+						return '';
+					}
+					return (
+						<span key={item.index} style={{color: item.color }}>
+						<RarityStars
+							min={1}
+							max={item.loot.rarity ? item.loot.rarity : 1}
+							value={item.loot.rarity ? item.loot.rarity : null}
+						/>
+						</span>
+					);
+				}
+			},
+			{
+				id: 'type',
+				Header: 'Type',
+				minWidth: 100,
+				maxWidth: 150,
+				resizable: true,
+				accessor: (row) => {
+					if (row.loot.item_type) {
+						return row.loot.type + "." + row.loot.item_type;
+					}
+					return row.loot.type;
+				},
+				Cell: (p) => {
+					let item = p.original.loot;
+
+					let typeName = typeMapItem[item.item_type];
+					if (typeName) {
+						return typeName;
+					}
+					typeName = typeMap[item.type];
+					if (typeName) {
+						return typeName;
+					}
+
+					// fall-through case for items
+					typeName = item.icon.file.replace("/items", "").split("/")[1];
+					if (typeName) {
+						return typeName;
+					}
+
+					// show something so we know to fix these
+					if (item.item_type) {
+						return item.type + "." + item.item_type;
+					}
+					return item.type;
+				}
+			},
+		];
+
 		return (<div style={{ userSelect: 'initial' }}>
 			<h3>Voyage on the {this.state.ship_name}</h3>
 			{this.renderVoyageState()}
@@ -623,15 +764,26 @@ export class VoyageLog extends React.Component {
 					</tr>
 				</tbody>
 			</table>
-			<h3>{'Pending rewards (' + this.state.voyage.pending_rewards.loot.length + ')'}</h3>
-			{(this.state.voyage.pending_rewards.loot.length > 0) && this.state.voyage.pending_rewards.loot.map((loot, index) => {
-				return (<span key={index} style={{ color: loot.rarity && CONFIG.RARITIES[loot.rarity].color }}>{loot.quantity} {(loot.rarity == null) ? '' : CONFIG.RARITIES[loot.rarity].name} {loot.full_name}</span>);
-			}).reduce((prev, curr) => [prev, ', ', curr])}
 
-			<h3>{'Complete Captain\'s Log (' + Object.keys(this.state.voyageNarrative).length + ')'}</h3>
+			<CollapsibleSection title={'Pending rewards (' + this.state.voyage.pending_rewards.loot.length + ')'}>
+			<div className='data-grid' data-is-scrollable='true'>
+				<ReactTable
+					data={items}
+					columns={columns}
+					className="-striped -highlight"
+					defaultPageSize={15}
+					pageSize={15}
+					showPagination={(items.length > 15)}
+					showPageSizeOptions={false}
+				/>
+			</div>
+			</CollapsibleSection>
+
+			<CollapsibleSection title={'Complete Captain\'s Log (' + Object.keys(this.state.voyageNarrative).length + ')'}>
 			{Object.keys(this.state.voyageNarrative).map((key) => {
 				return <VoyageLogEntry key={key} log={this.state.voyageNarrative[key]} />;
 			})}
+			</CollapsibleSection>
 		</div>);
 	}
 }
