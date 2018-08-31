@@ -11,6 +11,7 @@ import { sortItems, columnClick } from '../utils/listUtils';
 import { download } from '../utils/pal';
 
 import STTApi from 'sttapi';
+import { formatTimeSeconds } from 'sttapi';
 
 import { parse as json2csv } from 'json2csv';
 
@@ -70,11 +71,12 @@ export class MemberList extends React.Component {
 				},
 				{
 					key: 'last_active',
-					name: 'Last active (minutes)',
+					name: 'Last active',
 					minWidth: 70,
 					maxWidth: 100,
 					isResizable: true,
-					fieldName: 'last_active'
+					fieldName: 'last_active',
+					onRender: (item) => <span>{formatTimeSeconds(item.last_active)}</span>
 				},
 				{
 					key: 'daily_activity',
@@ -198,7 +200,7 @@ export class FleetDetails extends React.Component {
 					currentShip: 'unknown',
 					display_name: member.display_name,
 					rank: member.rank,
-					last_active: Math.round(member.last_active / 60),
+					last_active: member.last_active,
 					event_rank: member.event_rank,
 					daily_activity: member.daily_activity,
 					iconUrl: null,

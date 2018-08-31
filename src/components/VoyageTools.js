@@ -12,7 +12,7 @@ import { TextField } from 'office-ui-fabric-react/lib/TextField';
 import { MessageBar, MessageBarType } from 'office-ui-fabric-react/lib/MessageBar';
 
 import STTApi from 'sttapi';
-import { CONFIG, bestVoyageShip, loadVoyage, startVoyage, resolveDilemma, formatCrewStats, bonusCrewForCurrentEvent } from 'sttapi';
+import { CONFIG, bestVoyageShip, loadVoyage, startVoyage, resolveDilemma, formatCrewStats, bonusCrewForCurrentEvent, formatTimeSeconds } from 'sttapi';
 import { CollapsibleSection } from './CollapsibleSection';
 import { RarityStars } from './RarityStars';
 import ReactTable from "react-table";
@@ -629,11 +629,11 @@ export class VoyageLog extends React.Component {
 
 	renderVoyageState() {
 		if (this.state.voyage.state == "recalled") {
-			return <p>Voyage has lasted for {Math.floor(this.state.voyage_duration / 60)} minutes and it's currently returning ({Math.floor(this.state.voyage.recall_time_left / 60)} minutes left).</p>;
+			return <p>Voyage has lasted for {formatTimeSeconds(this.state.voyage_duration)} and it's currently returning ({formatTimeSeconds(this.state.voyage.recall_time_left)} left).</p>;
 		} else if (this.state.voyage.state == "failed") {
-			return <p>Voyage has run out of antimatter after {Math.floor(this.state.voyage_duration / 60)} minutes and it's waiting to be abandoned or replenished.</p>;
+			return <p>Voyage has run out of antimatter after {formatTimeSeconds(this.state.voyage_duration)} and it's waiting to be abandoned or replenished.</p>;
 		} else {
-			return <p>Voyage has been ongoing for {Math.floor(this.state.voyage_duration / 60)} minutes (new dilemma in {Math.floor((this.state.seconds_between_dilemmas - this.state.seconds_since_last_dilemma) / 60)} minutes).</p>;
+			return <p>Voyage has been ongoing for {formatTimeSeconds(this.state.voyage_duration)} (new dilemma in {formatTimeSeconds(this.state.seconds_between_dilemmas - this.state.seconds_since_last_dilemma)}).</p>;
 		}
 	}
 

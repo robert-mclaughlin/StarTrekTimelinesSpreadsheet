@@ -14,10 +14,11 @@ import { ColorClassNames } from '@uifabric/styling';
 import Logger from '../utils/logger';
 // #!endif
 
-import { openShellExternal, download } from '../utils/pal';
+import { download } from '../utils/pal';
 
 import STTApi from 'sttapi';
-import { CONFIG, loadGauntlet, gauntletCrewSelection, gauntletRoundOdds, payToGetNewOpponents, payToReviveCrew, claimRankRewards, playContest, enterGauntlet, formatCrewStats } from 'sttapi';
+import { CONFIG, loadGauntlet, gauntletCrewSelection, gauntletRoundOdds, payToGetNewOpponents,
+	payToReviveCrew, claimRankRewards, playContest, enterGauntlet, formatCrewStats, formatTimeSeconds } from 'sttapi';
 
 class GauntletCrew extends React.Component {
 	render() {
@@ -203,7 +204,7 @@ export class GauntletHelper extends React.Component {
 					gauntlet: data.gauntlet,
 					lastErrorMessage: null,
 					lastResult: null,
-					startsIn: Math.floor(data.gauntlet.seconds_to_join / 60),
+					startsIn: formatTimeSeconds(data.gauntlet.seconds_to_join),
 					featuredSkill: data.gauntlet.contest_data.featured_skill,
 					traits: data.gauntlet.contest_data.traits.map(function (trait) { return STTApi.getTraitName(trait); }.bind(this))
 				});
@@ -348,7 +349,7 @@ export class GauntletHelper extends React.Component {
 		if (this.state.gauntlet && (this.state.gauntlet.state == 'NONE')) {
 			return (
 				<div>
-					<Label>Next gauntlet starts in {this.state.startsIn} minutes.</Label>
+					<Label>Next gauntlet starts in {this.state.startsIn}.</Label>
 					<span className='quest-mastery'>Featured skill: <Image src={CONFIG.SPRITES['icon_' + this.state.featuredSkill].url} height={18} /> {CONFIG.SKILLS[this.state.featuredSkill]}</span>
 					<Label>Featured traits: {this.state.traits.join(', ')}</Label>
 
@@ -420,9 +421,9 @@ export class GauntletHelper extends React.Component {
 			return (
 				<div className='tab-panel' data-is-scrollable='true'>
 					<h3>Current gauntlet stats</h3>
-					<Label>Featured skill is <Image src={CONFIG.SPRITES['icon_' + this.state.gauntlet.contest_data.featured_skill].url} height={18} /> {CONFIG.SKILLS[this.state.gauntlet.contest_data.featured_skill]}</Label>
+					<span className='quest-mastery'>Featured skill is <Image src={CONFIG.SPRITES['icon_' + this.state.gauntlet.contest_data.featured_skill].url} height={18} /> {CONFIG.SKILLS[this.state.gauntlet.contest_data.featured_skill]}</span>
 					<Label>Featured traits are {this.state.gauntlet.contest_data.traits.map(trait => STTApi.getTraitName(trait)).join(", ")}</Label>
-					<Label>Crew refreshes in {Math.floor(this.state.gauntlet.seconds_to_next_crew_refresh / 60)} minutes and the gauntlet ends in {Math.floor(this.state.gauntlet.seconds_to_end / 60)} minutes</Label>
+					<Label>Crew refreshes in {formatTimeSeconds(this.state.gauntlet.seconds_to_next_crew_refresh)} and the gauntlet ends in {formatTimeSeconds(this.state.gauntlet.seconds_to_end)}</Label>
 					<Label>Your rank is {this.state.roundOdds.rank} and you have {this.state.roundOdds.consecutive_wins} consecutive wins</Label>
 					<span><h3>Your crew stats</h3></span>
 					<div style={{ display: 'flex', width: '95%' }} >

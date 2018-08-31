@@ -8,7 +8,7 @@ import { Spinner, SpinnerSize } from 'office-ui-fabric-react/lib/Spinner';
 import { CollapsibleSection } from './CollapsibleSection.js';
 
 import STTApi from 'sttapi';
-import { CONFIG, loadVoyage } from 'sttapi';
+import { CONFIG, loadVoyage, formatTimeSeconds } from 'sttapi';
 
 export class ShuttleAdventure extends React.Component {
     constructor(props) {
@@ -49,7 +49,7 @@ export class ShuttleAdventure extends React.Component {
                     </tr>
                 </tbody>
             </table>
-            <p>Completes in {Math.floor(this.state.completes_in_seconds / 60)} minutes.</p>
+            <p>Completes in {formatTimeSeconds(this.state.completes_in_seconds)}.</p>
             <p>Faction: {this.state.faction.name} ({this.state.faction.completed_shuttle_adventures} completed adventures)</p>
             <p>Challenge rating: {this.state.challenge_rating}.</p>
         </div>);
@@ -130,11 +130,11 @@ export class Voyage extends React.Component {
 
     renderVoyageState() {
         if (this.state.voyage.state == "recalled") {
-            return <p>Voyage has lasted for {Math.floor(this.state.voyage_duration / 60)} minutes and it's currently returning.</p>;
+            return <p>Voyage has lasted for {formatTimeSeconds(this.state.voyage_duration)} and it's currently returning.</p>;
         } else if (this.state.voyage.state == "failed") {
-            return <p>Voyage has run out of antimatter after {Math.floor(this.state.voyage_duration / 60)} minutes and it's waiting to be abandoned or replenished.</p>;
+            return <p>Voyage has run out of antimatter after {formatTimeSeconds(this.state.voyage_duration)} and it's waiting to be abandoned or replenished.</p>;
         } else {
-            return <p>Voyage has been ongoing for {Math.floor(this.state.voyage_duration / 60)} minutes (new dilemma in {Math.floor((this.state.seconds_between_dilemmas - this.state.seconds_since_last_dilemma) / 60)} minutes).</p>;
+            return <p>Voyage has been ongoing for {formatTimeSeconds(this.state.voyage_duration)} (new dilemma in {formatTimeSeconds(this.state.seconds_between_dilemmas - this.state.seconds_since_last_dilemma)}).</p>;
         }
     }
 
