@@ -1,6 +1,8 @@
 # Star Trek Timelines Spreadsheet Tool
 A tool to help with crew management in Star Trek Timelines
 
+[![Build Status](https://travis-ci.org/IAmPicard/StarTrekTimelinesSpreadsheet.svg?branch=master)](https://travis-ci.org/IAmPicard/StarTrekTimelinesSpreadsheet)
+
 > :exclamation: **HELP WANTED** :exclamation: Are you a developer? Do you love Star Trek Timelines and wish this tool could be improved? I need your help, I can't keep up with maintaining and adding new features to the tool by myself! Please get in touch with me, or fork the repo and start playing with the code. Look in the issue list or in the TODO list below for inspiration on a needed fix / feature. :thumbsup:
 
 **NOTE** This tool does not (and will never) automate any part of the game play; its sole purpose is to help players organize their crew using the functionality built within or with a spreadsheet application of their choice.
