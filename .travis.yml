@@ -14,10 +14,12 @@ addons:
 before_install:
  - docker run -dit --name emscripten -v $(pwd):/src trzeci/emscripten:sdk-incoming-64bit bash
  - cd STTApi
+ - rm package-lock.json
  - npm install
  - cd ..
 
 install:
+ - rm package-lock.json
  - npm install
 
 script:
