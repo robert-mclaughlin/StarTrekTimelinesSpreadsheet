@@ -601,18 +601,6 @@ export class VoyageLog extends React.Component {
 				rarity: (loot.rarity == null) ? '' : CONFIG.RARITIES[loot.rarity].name
 		}; return obj;});
 
-		const typeMap = {
-			"1": "Crew",
-			"2": "Equipment",
-			"3": "Currency"
-		};
-
-		const typeMapItem = {
-			"3": "Equipment",
-			"7": "Training",
-			"9": "Replicator Rations"
-		};
-
 		let columns = [
 			{
 				id: 'icon',
@@ -694,7 +682,7 @@ export class VoyageLog extends React.Component {
 				id: 'type',
 				Header: 'Type',
 				minWidth: 100,
-				maxWidth: 150,
+				maxWidth: 250,
 				resizable: true,
 				accessor: (row) => {
 					if (row.loot.item_type) {
@@ -705,11 +693,11 @@ export class VoyageLog extends React.Component {
 				Cell: (p) => {
 					let item = p.original.loot;
 
-					let typeName = typeMapItem[item.item_type];
+					let typeName = CONFIG.REWARDS_ITEM_TYPE[item.item_type];
 					if (typeName) {
 						return typeName;
 					}
-					typeName = typeMap[item.type];
+					typeName = CONFIG.REWARDS_TYPE[item.type];
 					if (typeName) {
 						return typeName;
 					}
@@ -765,7 +753,7 @@ export class VoyageLog extends React.Component {
 				</tbody>
 			</table>
 
-			<CollapsibleSection title={'Pending rewards (' + this.state.voyage.pending_rewards.loot.length + ')'}>
+			<h3>{'Pending rewards (' + this.state.voyage.pending_rewards.loot.length + ')'}</h3>
 			<div className='data-grid' data-is-scrollable='true'>
 				<ReactTable
 					data={items}
@@ -777,7 +765,6 @@ export class VoyageLog extends React.Component {
 					showPageSizeOptions={false}
 				/>
 			</div>
-			</CollapsibleSection>
 
 			<CollapsibleSection title={'Complete Captain\'s Log (' + Object.keys(this.state.voyageNarrative).length + ')'}>
 			{Object.keys(this.state.voyageNarrative).map((key) => {
