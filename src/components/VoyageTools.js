@@ -469,45 +469,160 @@ export class VoyageLog extends React.Component {
 	constructor(props) {
 		super(props);
 
+		let _columns = [
+			{
+				id: 'icon',
+				Header: '',
+				minWidth: 30,
+				maxWidth: 30,
+				resizable: false,
+				accessor: (row) => row.full_name,
+				Cell: (p) => <Image src={p.original.iconUrl} width={25} height={25} imageFit={ImageFit.contain} shouldStartVisible={true} />
+			},
+			{
+				id: 'quantity',
+				Header: 'Quantity',
+				minWidth: 50,
+				maxWidth: 70,
+				resizable: false,
+				accessor: (row) => row.quantity
+			},
+			{
+				id: 'name',
+				Header: 'Name',
+				minWidth: 150,
+				maxWidth: 250,
+				resizable: true,
+				accessor: (row) => row.full_name,
+				Cell: (p) => {
+					let item = p.original;
+					return (<Link href={'https://stt.wiki/wiki/' + item.full_name.split(' ').join('_')} target='_blank'>{item.full_name}</Link>);
+				}
+			},
+			{
+				id: 'rarity',
+				Header: 'Rarity',
+				accessor: (c) => {
+					if (c.type > 2) {
+						return -1;
+					}
+					return c.rarity;
+				},
+				minWidth: 75,
+				maxWidth: 75,
+				resizable: false,
+				Cell: (p) => {
+					let item = p.original;
+					// 3 is for honor, credits, crons
+					if (item.type > 2) {
+						return <span/>;
+					}
+
+					return <span key={item.id} style={{color: item.rarity && CONFIG.RARITIES[item.rarity].color }}>
+						<RarityStars
+							min={1}
+							max={item.rarity ? item.rarity : 1}
+							value={item.rarity ? item.rarity : null}
+						/>
+					</span>;
+				}
+			},
+			{
+				id: 'type',
+				Header: 'Type',
+				minWidth: 100,
+				resizable: true,
+				accessor: (row) => {
+					if (row.item_type) {
+						return row.type + "." + row.item_type;
+					}
+					return row.type;
+				},
+				Cell: (p) => {
+					let item = p.original;
+
+					let typeName = CONFIG.REWARDS_ITEM_TYPE[item.item_type];
+					if (typeName) {
+						return typeName;
+					}
+					typeName = CONFIG.REWARDS_TYPE[item.type];
+					if (typeName) {
+						return typeName;
+					}
+
+					// fall-through case for items
+					typeName = item.icon.file.replace("/items", "").split("/")[1];
+					if (typeName) {
+						return typeName;
+					}
+
+					// show something so we know to fix these
+					if (item.item_type) {
+						return item.type + "." + item.item_type;
+					}
+					return item.type;
+				}
+			},
+		];
+
 		this.state = {
 			showSpinner: true,
-			includeFlavor: false
+			includeFlavor: false,
+			rewardTableColumns: _columns,
+			// By default, sort the voyage rewards table by type and rarity to show crew first
+			sorted: [ { id: 'type', desc: false }, { id: 'rarity', desc: true } ]
 		};
 
 		this.reloadVoyageState();
 	}
 
-	reloadVoyageState() {
+	async reloadVoyageState() {
 		let voyage = STTApi.playerData.character.voyage[0];
 		if (voyage && voyage.id) {
-			loadVoyage(voyage.id, false).then((voyageNarrative) => {
+			let voyageNarrative = await loadVoyage(voyage.id, false);
 
-				//<Checkbox checked={this.state.includeFlavor} label="Include flavor entries" onChange={(e, isChecked) => { this.setState({ includeFlavor: isChecked }); }} />
-				if (!this.state.includeFlavor) {
-					// Remove the "flavor" entries (useless text)
-					voyageNarrative = voyageNarrative.filter(e => e.encounter_type !== 'flavor');
+			//<Checkbox checked={this.state.includeFlavor} label="Include flavor entries" onChange={(e, isChecked) => { this.setState({ includeFlavor: isChecked }); }} />
+			if (!this.state.includeFlavor) {
+				// Remove the "flavor" entries (useless text)
+				voyageNarrative = voyageNarrative.filter(e => e.encounter_type !== 'flavor');
+			}
+
+			// Group by index
+			voyageNarrative = voyageNarrative.reduce(function (r, a) {
+				r[a.index] = r[a.index] || [];
+				r[a.index].push(a);
+				return r;
+			}, Object.create(null));
+
+			let voyageRewards = voyage.pending_rewards.loot;
+			let iconPromises = [];
+			voyageRewards.forEach(reward => {
+				reward.iconUrl = '';
+				if (reward.icon.atlas_info) {
+					// This is not fool-proof, but covers currently known sprites
+					reward.iconUrl = CONFIG.SPRITES[reward.icon.file].url;
+				} else {
+					iconPromises.push(STTApi.imageProvider.getItemImageUrl(reward, reward).then((found) => {
+						found.id.iconUrl = found.url;
+					}).catch((error) => { /*console.warn(error);*/ }));
 				}
+			});
 
-				// Group by index
-				voyageNarrative = voyageNarrative.reduce(function (r, a) {
-					r[a.index] = r[a.index] || [];
-					r[a.index].push(a);
-					return r;
-				}, Object.create(null));
+			await Promise.all(iconPromises);
 
-				this.setState({
-					showSpinner: false,
-					ship_name: voyage.ship_name,
-					ship_id: voyage.ship_id,
-					created_at: voyage.created_at,
-					voyage_duration: voyage.voyage_duration,
-					seconds_since_last_dilemma: voyage.seconds_since_last_dilemma,
-					seconds_between_dilemmas: voyage.seconds_between_dilemmas,
-					skill_aggregates: voyage.skill_aggregates,
-					crew_slots: voyage.crew_slots,
-					voyage: voyage,
-					voyageNarrative: voyageNarrative
-				});
+			this.setState({
+				showSpinner: false,
+				ship_name: voyage.ship_name,
+				ship_id: voyage.ship_id,
+				created_at: voyage.created_at,
+				voyage_duration: voyage.voyage_duration,
+				seconds_since_last_dilemma: voyage.seconds_since_last_dilemma,
+				seconds_between_dilemmas: voyage.seconds_between_dilemmas,
+				skill_aggregates: voyage.skill_aggregates,
+				crew_slots: voyage.crew_slots,
+				voyage: voyage,
+				voyageNarrative: voyageNarrative,
+				voyageRewards: voyageRewards
 			});
 		}
 	}
@@ -554,7 +669,7 @@ export class VoyageLog extends React.Component {
 		if (this.state.voyage.dilemma && this.state.voyage.dilemma.id) {
 			return <div>
 				<h3 key={0} className="ui top attached header">Dilemma - <span dangerouslySetInnerHTML={{ __html: this.state.voyage.dilemma.title }} /></h3>,
-            <div key={1} className="ui center aligned inverted attached segment">
+            	<div key={1} className="ui center aligned inverted attached segment">
 					<div><span dangerouslySetInnerHTML={{ __html: this.state.voyage.dilemma.intro }} /></div>
 					<div className="ui middle aligned selection list inverted">
 						{this.state.voyage.dilemma.resolutions.map((resolution, index) => {
@@ -592,130 +707,7 @@ export class VoyageLog extends React.Component {
 		if (this.state.showSpinner)
 			return <Spinner size={SpinnerSize.large} label='Loading voyage details...' />;
 
-		let items = this.state.voyage.pending_rewards.loot.map((loot, index) => {
-			//HACK: wrapper obj because the map was not behaving for some reason
-			let obj = {
-				index: index,
-				loot: loot,
-				color: loot.rarity && CONFIG.RARITIES[loot.rarity].color,
-				rarity: (loot.rarity == null) ? '' : CONFIG.RARITIES[loot.rarity].name
-		}; return obj;});
-
-		let columns = [
-			{
-				id: 'icon',
-				Header: '',
-				minWidth: 30,
-				maxWidth: 30,
-				resizable: false,
-				accessor: (row) => row.loot.full_name,
-				Cell: (p) => {
-					let item = p.original.loot;
-					let equipment = STTApi.itemArchetypeCache.archetypes.find(eq => eq.id === item.id);
-					if (equipment && equipment.iconUrl) {
-						return (<Image src={equipment.iconUrl} width={25} height={25} imageFit={ImageFit.contain} shouldStartVisible={true} />);
-					} else if (equipment) {
-						return ''; // it is equip but no icon for it, so don't search other scopes
-					}
-					let crew = STTApi.crewAvatars.find((crew) => crew.id === item.id);
-					if (crew && crew.iconUrl) {
-						return (<Image src={crew.iconUrl} width={25} height={25} imageFit={ImageFit.contain} shouldStartVisible={true} />);
-					}
-					else if (crew) {
-						return '';
-					}
-
-					//TODO: could get images for: currency, training, replicator rations
-					return '';
-				}
-			},
-			{
-				id: 'quantity',
-				Header: 'Quantity',
-				minWidth: 20,
-				maxWidth: 50,
-				resizable: true,
-				accessor: (row) => row.loot.quantity
-			},
-			{
-				id: 'name',
-				Header: 'Name',
-				minWidth: 150,
-				maxWidth: 250,
-				resizable: true,
-				accessor: (row) => row.loot.full_name,
-				Cell: (p) => {
-					let item = p.original.loot;
-					return (<Link href={'https://stt.wiki/wiki/' + item.full_name.split(' ').join('_')} target='_blank'>{item.full_name}</Link>);
-				}
-			},
-			{
-				id: 'rarity',
-				Header: 'Rarity',
-				accessor: (c) => {
-					if (c.loot.type > 2) {
-						return -1;
-					}
-					return c.loot.rarity;
-				},
-				minWidth: 75,
-				maxWidth: 75,
-				resizable: false,
-				Cell: (p) => {
-					let item = p.original;
-					// 3 is for honor, credits, crons
-					if (item.loot.type > 2) {
-						return '';
-					}
-					return (
-						<span key={item.index} style={{color: item.color }}>
-						<RarityStars
-							min={1}
-							max={item.loot.rarity ? item.loot.rarity : 1}
-							value={item.loot.rarity ? item.loot.rarity : null}
-						/>
-						</span>
-					);
-				}
-			},
-			{
-				id: 'type',
-				Header: 'Type',
-				minWidth: 100,
-				maxWidth: 250,
-				resizable: true,
-				accessor: (row) => {
-					if (row.loot.item_type) {
-						return row.loot.type + "." + row.loot.item_type;
-					}
-					return row.loot.type;
-				},
-				Cell: (p) => {
-					let item = p.original.loot;
-
-					let typeName = CONFIG.REWARDS_ITEM_TYPE[item.item_type];
-					if (typeName) {
-						return typeName;
-					}
-					typeName = CONFIG.REWARDS_TYPE[item.type];
-					if (typeName) {
-						return typeName;
-					}
-
-					// fall-through case for items
-					typeName = item.icon.file.replace("/items", "").split("/")[1];
-					if (typeName) {
-						return typeName;
-					}
-
-					// show something so we know to fix these
-					if (item.item_type) {
-						return item.type + "." + item.item_type;
-					}
-					return item.type;
-				}
-			},
-		];
+		const defaultButton = props => <DefaultButton {...props} text={props.children} style={{width: '100%'}} />;
 
 		return (<div style={{ userSelect: 'initial' }}>
 			<h3>Voyage on the {this.state.ship_name}</h3>
@@ -753,24 +745,29 @@ export class VoyageLog extends React.Component {
 				</tbody>
 			</table>
 
-			<h3>{'Pending rewards (' + this.state.voyage.pending_rewards.loot.length + ')'}</h3>
-			<div className='data-grid' data-is-scrollable='true'>
+			<h3>{'Pending rewards (' + this.state.voyageRewards.length + ')'}</h3>
+			<div className='voyage-rewards-grid'>
 				<ReactTable
-					data={items}
-					columns={columns}
+					data={this.state.voyageRewards}
+					columns={this.state.rewardTableColumns}
+					sorted={this.state.sorted}
+					onSortedChange={sorted => this.setState({ sorted })}
 					className="-striped -highlight"
-					defaultPageSize={15}
-					pageSize={15}
-					showPagination={(items.length > 15)}
+					defaultPageSize={10}
+					pageSize={10}
+					showPagination={(this.state.voyageRewards.length > 10)}
 					showPageSizeOptions={false}
+					NextComponent={defaultButton}
+					PreviousComponent={defaultButton}
 				/>
 			</div>
-
+			<br/>
 			<CollapsibleSection title={'Complete Captain\'s Log (' + Object.keys(this.state.voyageNarrative).length + ')'}>
 			{Object.keys(this.state.voyageNarrative).map((key) => {
 				return <VoyageLogEntry key={key} log={this.state.voyageNarrative[key]} />;
 			})}
 			</CollapsibleSection>
+			<br/>
 		</div>);
 	}
 }

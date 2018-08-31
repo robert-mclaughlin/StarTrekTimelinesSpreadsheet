@@ -97,6 +97,10 @@
     position: relative;
 }
 
+.voyage-rewards-grid {
+    max-width: 750px;
+}
+
 .tab-panel {
     -webkit-overflow-scrolling: touch;
     max-height: calc(100vh - 46px);
