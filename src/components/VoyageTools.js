@@ -107,7 +107,7 @@ export class VoyageCrew extends React.Component {
 				<div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap' }}>
 					{crewSpans}
 				</div>
-				<h3>Estimated duration: <b>{this.state.estimatedDuration.toFixed(2)} hours</b></h3>
+				<h3>Estimated duration: <b>{formatTimeSeconds(this.state.estimatedDuration * 60 * 60)}</b></h3>
 				<br />
 			</div>);
 		} else {

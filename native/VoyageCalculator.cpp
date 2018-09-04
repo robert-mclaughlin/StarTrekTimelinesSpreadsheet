@@ -83,6 +83,19 @@ VoyageCalculator::VoyageCalculator(const char* jsonInput, bool rankMode) noexcep
 
 	std::vector<uint8_t> temp = j["binaryConfig"];
 	memcpy(&binaryConfig, temp.data(), temp.size());
+	auto tempEstPos = j.find("estimateBinaryConfig");
+	if (tempEstPos != j.end())
+	{
+		std::vector<uint8_t> tempEst = *tempEstPos;
+		memcpy(&estimateBinaryConfig, tempEst.data(), tempEst.size());
+	}
+	else
+	{
+		estimateBinaryConfig.elapsedTimeHours = 0;
+		estimateBinaryConfig.elapsedTimeMinutes = 0;
+		estimateBinaryConfig.remainingAntiMatter = 0;
+		std::fill(estimateBinaryConfig.slotCrewIds, estimateBinaryConfig.slotCrewIds + SLOT_COUNT, 0);
+	}
 
 	for (const auto &crew : j["crew"])
 	{

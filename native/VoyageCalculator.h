@@ -118,7 +118,7 @@ private:
 	void updateSlotRosterScores() noexcept;
 	void resetRosters() noexcept;
 	float calculateDuration(const std::array<const Crew *, SLOT_COUNT> &complement, bool debug = false) noexcept;
-	
+
 	// old disused functions
 	void refine() noexcept;
 	unsigned int computeScore(const Crew& crew, std::uint8_t skill, size_t trait) const noexcept;
@@ -152,7 +152,18 @@ private:
 	};
 	#pragma pack(pop)
 
+	#pragma pack(push, 1)
+	struct EstimateBinaryConfig
+	{
+		std::uint8_t elapsedTimeHours;
+		std::uint8_t elapsedTimeMinutes;
+		std::uint16_t remainingAntiMatter;
+		std::uint32_t slotCrewIds[SLOT_COUNT];
+	};
+	#pragma pack(pop)
+
 	BinaryConfig binaryConfig;
+	EstimateBinaryConfig estimateBinaryConfig;
 
 	std::array<std::vector<const Crew*>, SLOT_COUNT> sortedSlotRosters;
 
