@@ -100,13 +100,14 @@ You can inspect the active state of crew by clicking on the little "baloon" icon
 ### To get started:
 Clone the repo and build with `node.js` v 10.
 
-Minimal set of steps required (on a Windows machine)
+Minimal set of steps required
 * `git clone --recurse-submodules https://github.com/IAmPicard/StarTrekTimelinesSpreadsheet.git`
 * `cd StarTrekTimelinesSpreadsheet\STTApi`
 * `npm install`
 * `cd ..`
 * `npm install`
   * You may also need to `npm install electron` if you see the message `Error: Electron failed to install correctly, please delete node_modules/electron and try installing again`
+  * You may need to `npm install bindings nan` if you see errors using the voyage estimator tool
 * `node_modules\.bin\electron-rebuild.cmd`
   * `node_modules/.bin/electron-rebuild` on Ubuntu
 * `npm run dev`
@@ -115,6 +116,15 @@ Minimal set of steps required (on a Windows machine)
 
 ##### Development
 * Run `npm run dev` to start webpack-dev-server. Electron will launch automatically after compilation.
+
+If changes are made to the C++ native codebase under `/native`:
+* You can compile to see warnings/errors with the following (though it does not build for proper integration with the app)
+  * `$ rm -rf native/build/Release`
+  * `$ cd native/build`
+  * `$ make`
+To rebuild for use with the app run the `electron-rebuild` executable under `node_modules/.bin/`
+
+If you delete `node_modules/stt*` to get back to a cleaner state, `npm install` again to rebuild the C++ modules. If the install fails, revert any local changes to `package-lock.json`.
 
 ##### Production
 _You have two options, an automatic build or two manual steps_
