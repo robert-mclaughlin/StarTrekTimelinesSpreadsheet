@@ -118,21 +118,16 @@ class App extends React.Component {
 
 		initializeIcons(/* optional base url */);
 
-		const serverAddress = 'https://iampicard.com/';
-
 		// #!if ENV === 'electron'
 		STTApi.inWebMode = false;
 		STTApi.setImageProvider(true, new FileImageCache());
 		// #!else
 		STTApi.inWebMode = true;
 
+		const serverAddress = 'https://iampicard.com/';
 		STTApi.setImageProviderOverride(new ServerImageProvider(serverAddress));
 		STTApi.networkHelper.setProxy(serverAddress + 'proxy');
 		// #!endif
-
-		STTApi.networkHelper.get(serverAddress + 'motd/get', { webApp: STTApi.inWebMode }).then((data) => {
-			this.setState({ motd: data });
-		});
 
 		STTApi.config.where('key').equals('ui.darkTheme').first().then((entry) => {
 			this.setState({ darkTheme: !entry || entry.value || (entry.value === undefined) });
@@ -430,6 +425,11 @@ class App extends React.Component {
 	}
 
 	_switchTab(newTab) {
+		if (this.state.currentTab === newTab) {
+			// From the history listener, nothing to do here
+			return;
+		}
+
 		this.setState({
 			currentTab: newTab,
 			extraCommandItems: this._getNavFarItems()
@@ -646,6 +646,10 @@ class App extends React.Component {
 			});
 		}
 		// #!endif
+
+		STTApi.networkHelper.get('https://iampicard.com/motd/get', { webApp: STTApi.inWebMode, dbid: STTApi.playerData.dbid }).then((data) => {
+			this.setState({ motd: data });
+		});
 
 		if (STTApi.playerData.character.crew_avatar) {
 			STTApi.imageProvider.getCrewImageUrl(STTApi.playerData.character.crew_avatar, false, 0).then(({ id, url }) => {
