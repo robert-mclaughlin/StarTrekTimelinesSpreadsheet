@@ -530,7 +530,7 @@ float VoyageCalculator::calculateDuration(const std::array<const Crew *, SLOT_CO
 
 	//unsigned int PrimarySkill = totals.skills[binaryConfig.primarySkill];
 	//unsigned int SecondarySkill = totals.skills[binaryConfig.secondarySkill];
-	unsigned int MaxSkill = 0;
+	float MaxSkill = 0;
 
 	std::array<float, SKILL_COUNT> hazSkillVariance;
 	for (size_t iSkill = 0; iSkill < SKILL_COUNT; ++iSkill)
@@ -550,10 +550,13 @@ float VoyageCalculator::calculateDuration(const std::array<const Crew *, SLOT_CO
 		log << "primary skill prof variance: " << hazSkillVariance[binaryConfig.primarySkill] << std::endl;
 	}
 
-	unsigned int elapsedHours = 0; // TODO: deal with this later
-	unsigned int elapsedHazSkill = elapsedHours * hazSkillPerHour;
+	float elapsedHours = 0; // TODO: deal with this later
+	float elapsedHazSkill = elapsedHours * hazSkillPerHour;
+	unsigned int elapsedShipAM = binaryConfig.remainingAntiMatter;
+	if (elapsedShipAM <= 0)
+		elapsedShipAM = shipAM;
 
-	MaxSkill = std::max((unsigned int)0, MaxSkill - elapsedHazSkill);
+	MaxSkill = std::max(0.0f, MaxSkill - elapsedHazSkill);
 	float endVoySkill = MaxSkill * (1 + hazSkillVariance[binaryConfig.primarySkill]);
 
 	const std::array<unsigned int, SKILL_COUNT> &skills = totals.skills;
@@ -599,8 +602,8 @@ float VoyageCalculator::calculateDuration(const std::array<const Crew *, SLOT_CO
 		float am = (float)(shipAM + shipAM * binaryConfig.extendsTarget);
 		for (size_t iSkill = 0; iSkill < SKILL_COUNT; iSkill++)
 		{
-			unsigned int skill = skills[iSkill];
-			skill = std::max((unsigned int)0, skill - elapsedHazSkill);
+			float skill = skills[iSkill];
+			skill = std::max(0.0f, skill - elapsedHazSkill);
 			float chance = skillChances[iSkill];
 
 			// skill amount for 100% pass
