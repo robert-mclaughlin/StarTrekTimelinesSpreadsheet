@@ -184,6 +184,35 @@ CrewArray VoyageCalculator::GetAlternateCrew(unsigned int level) const noexcept
 
 void VoyageCalculator::calculate() noexcept
 {
+	float elapsedHours = estimateBinaryConfig.elapsedTimeHours + estimateBinaryConfig.elapsedTimeMinutes / 60.0f;
+	if (elapsedHours > 0)
+	{
+		CrewArray assignments;
+		assignments.fill(nullptr);
+
+		for (size_t s=0; s < SLOT_COUNT; ++s)
+		{
+			auto cid = estimateBinaryConfig.slotCrewIds[s];
+			log << "  slot " << s << " crewid: " << cid;
+			for_each(roster.begin(), roster.end(), [&](Crew &c) {
+				if (c.id == cid)
+				{
+					assignments[s] = &c;
+					log << " - " << c.name;
+				}
+			});
+			log << std::endl;
+		}
+
+		float vt = calculateDuration(assignments, true);
+		bestconsidered = assignments;
+		bestscore = vt - elapsedHours;
+		log << "final result: " << vt << " - est time remaining:" << bestscore << std::endl;
+		progressUpdate(bestconsidered, bestscore);
+
+		return;
+	}
+
 	for (unsigned int iteration = 1;;++iteration) {
 		log << "iteration " << iteration << std::endl;
 
@@ -196,8 +225,8 @@ void VoyageCalculator::calculate() noexcept
 		if (bestscore > prevBest) {
 			continue;
 		} else {
-			log << "final result:" << std::endl;
-			calculateDuration(bestconsidered, true);
+			float vt = calculateDuration(bestconsidered, true);
+			log << "final result: " << vt << std::endl;
 			log << "stopping after " << iteration << " iterations" << std::endl;
 			break;
 		}
@@ -550,11 +579,18 @@ float VoyageCalculator::calculateDuration(const std::array<const Crew *, SLOT_CO
 		log << "primary skill prof variance: " << hazSkillVariance[binaryConfig.primarySkill] << std::endl;
 	}
 
-	float elapsedHours = 0; // TODO: deal with this later
+	float elapsedHours = estimateBinaryConfig.elapsedTimeHours + estimateBinaryConfig.elapsedTimeMinutes / 60.0f;
 	float elapsedHazSkill = elapsedHours * hazSkillPerHour;
-	unsigned int elapsedShipAM = binaryConfig.remainingAntiMatter;
+	unsigned int elapsedShipAM = estimateBinaryConfig.remainingAntiMatter;
 	if (elapsedShipAM <= 0)
 		elapsedShipAM = shipAM;
+
+	if (debug && elapsedHours > 0)
+	{
+		log << "  elapsed time: " << (int)estimateBinaryConfig.elapsedTimeHours << ":" << (int)estimateBinaryConfig.elapsedTimeMinutes
+			 << " = " << elapsedHours << std::endl
+			 << "  shipAM: " << (int)shipAM << " elapsedAM: " << (int)elapsedShipAM << " ? " << (int)estimateBinaryConfig.remainingAntiMatter << std::endl;
+	}
 
 	MaxSkill = std::max(0.0f, MaxSkill - elapsedHazSkill);
 	float endVoySkill = MaxSkill * (1 + hazSkillVariance[binaryConfig.primarySkill]);
@@ -599,7 +635,7 @@ float VoyageCalculator::calculateDuration(const std::array<const Crew *, SLOT_CO
 		}
 
 		//test.text += Math.floor(endVoySkill) + " "
-		float am = (float)(shipAM + shipAM * binaryConfig.extendsTarget);
+		float am = (float)(elapsedShipAM + (float)shipAM * binaryConfig.extendsTarget);
 		for (size_t iSkill = 0; iSkill < SKILL_COUNT; iSkill++)
 		{
 			float skill = skills[iSkill];
