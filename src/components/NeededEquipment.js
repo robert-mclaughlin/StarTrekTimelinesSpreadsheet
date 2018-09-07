@@ -74,10 +74,9 @@ export class NeededEquipment extends React.Component {
 		let unparsedEquipment = [];
 		let cadetableItems = this._getCadetableItems();
 		for (let crew of filteredCrew) {
-
 			crew.equipment_slots.forEach((equipment) => {
 				if (!equipment.have) {
-					unparsedEquipment.push({ archetype: equipment.archetype, need: 1 });
+					unparsedEquipment.push({ archetype: equipment.archetype, need: 1, crew: crew });
 				}
 			});
 		}
@@ -89,22 +88,31 @@ export class NeededEquipment extends React.Component {
 
 			if (equipment.recipe && equipment.recipe.demands && (equipment.recipe.demands.length > 0)) {
 				// Let's add all children in the recipe, so that we can parse them on the next loop iteration
-				equipment.recipe.demands.forEach((item) => unparsedEquipment.push({ archetype: item.archetype_id, need: item.count * eq.need }));
+				equipment.recipe.demands.forEach((item) => unparsedEquipment.push({ archetype: item.archetype_id, need: item.count * eq.need, crew: eq.crew }));
 			} else if (equipment.item_sources && (equipment.item_sources.length > 0) || cadetableItems.has(equipment.id)) {
 				let found = mapUnowned[eq.archetype];
 				if (found) {
 					found.needed += eq.need;
-				} else {					
+					let counts = found.counts[eq.crew.id];
+					if (counts) {
+						counts.count += eq.need;
+					} else {					
+						found.counts[eq.crew.id] = { crew: eq.crew, count:eq.need};
+					}
+				} else {
 					let have = STTApi.playerData.character.items.find(item => item.archetype_id === eq.archetype);
 					let isDisputeMissionObtainable = equipment.item_sources.filter(e => e.type === 0).length > 0;
 					let isShipBattleObtainable = equipment.item_sources.filter(e => e.type === 2).length > 0;
 					let isFactionObtainable = equipment.item_sources.filter(e => e.type === 1).length > 0;
 					let isCadetable = cadetableItems.has(equipment.id);				
+					let counts = {};
+					counts[eq.crew.id] = {crew: eq.crew, count: eq.need};
 										
 					mapUnowned[eq.archetype] = { 
 						equipment, 
 						needed: eq.need, 
 						have: have ? have.quantity : 0, 
+						counts: counts,
 						isDisputeMissionObtainable: isDisputeMissionObtainable,  
 						isShipBattleObtainable: isShipBattleObtainable,
 						isFactionObtainable: isFactionObtainable,
@@ -154,13 +162,21 @@ export class NeededEquipment extends React.Component {
 		return this._filterNeededEquipment(newFilters);
     }
 
-	renderSources(equipment) {
+	renderSources(equipment, counts) {
 		let disputeMissions = equipment.item_sources.filter(e => e.type === 0);
 		let shipBattles = equipment.item_sources.filter(e => e.type === 2);
 		let factions = equipment.item_sources.filter(e => e.type === 1);
 		let cadetableItems = this._getCadetableItems();
 
 		let res = [];
+
+		res.push(<div key={'crew'}>
+			<b>Crew: </b>
+			{Object.values(counts).sort((a,b) => b.count-a.count).map((entry, idx) =>
+				<span key={idx}>{entry.crew.name} (x{entry.count})</span>
+			).reduce((prev, curr) => [prev, ', ', curr])}
+		</div>)
+
 		if (disputeMissions.length > 0) {
 			res.push(<div key={'disputeMissions'}>
 				<b>Missions: </b>
@@ -269,7 +285,7 @@ export class NeededEquipment extends React.Component {
 							<h4>{`${entry.equipment.name} (need ${entry.needed}, have ${entry.have})`}</h4>
 						</div>
 						<div style={{ gridArea: 'details', alignSelf: 'start' }}>
-							{this.renderSources(entry.equipment)}
+							{this.renderSources(entry.equipment, entry.counts)}
 						</div>
 					</div>
 				)}
