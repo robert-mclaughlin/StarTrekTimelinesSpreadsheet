@@ -1,3 +1,5 @@
+import '../assets/css/semantic.min.css';
+
 import React from 'react';
 import { Spinner, SpinnerSize } from 'office-ui-fabric-react/lib/Spinner';
 import { SpinButton } from 'office-ui-fabric-react/lib/SpinButton';
@@ -638,8 +640,9 @@ export class VoyageLog extends React.Component {
 			return <div>
 				<p>Voyage has been ongoing for {formatTimeSeconds(this.state.voyage_duration)} (new dilemma in {formatTimeSeconds(this.state.seconds_between_dilemmas - this.state.seconds_since_last_dilemma)}).</p>
 
+				<div className="ui blue label">Estimated time left: {formatTimeSeconds(this.state.estimatedMinutesLeft * 60)}</div>
 				<TooltipHost delay={TooltipDelay.zero} content="Click to calculate more exact estimate!" >
-					<div style={{ cursor: 'pointer' }} className="ui blue label" onClick={() => this._betterEstimate()}>Estimated time left: {formatTimeSeconds(this.state.estimatedMinutesLeft * 60)}</div>
+					<button className="ui mini icon button" onClick={() => this._betterEstimate()}><i className="icon refresh"></i></button>
 				</TooltipHost>
 
                 <div className="ui blue label">Estimated revival cost: {Math.floor((this.state.voyage.voyage_duration / 60 + this.state.estimatedMinutesLeft) / 5)} dilithium</div>
