@@ -9,6 +9,7 @@ import { Image, ImageFit } from 'office-ui-fabric-react/lib/Image';
 import { Icon } from 'office-ui-fabric-react/lib/Icon';
 import { Link } from 'office-ui-fabric-react/lib/Link';
 import { TextField } from 'office-ui-fabric-react/lib/TextField';
+import { TooltipHost, TooltipDelay, DirectionalHint } from 'office-ui-fabric-react/lib/Tooltip';
 import { MessageBar, MessageBarType } from 'office-ui-fabric-react/lib/MessageBar';
 
 import STTApi from 'sttapi';
@@ -622,20 +623,42 @@ export class VoyageLog extends React.Component {
 				crew_slots: voyage.crew_slots,
 				voyage: voyage,
 				voyageNarrative: voyageNarrative,
+				estimatedMinutesLeft: voyage.hp / 21,
 				voyageRewards: voyageRewards
 			});
 		}
 	}
 
 	renderVoyageState() {
-		if (this.state.voyage.state == "recalled") {
+		if (this.state.voyage.state === "recalled") {
 			return <p>Voyage has lasted for {formatTimeSeconds(this.state.voyage_duration)} and it's currently returning ({formatTimeSeconds(this.state.voyage.recall_time_left)} left).</p>;
-		} else if (this.state.voyage.state == "failed") {
+		} else if (this.state.voyage.state === "failed") {
 			return <p>Voyage has run out of antimatter after {formatTimeSeconds(this.state.voyage_duration)} and it's waiting to be abandoned or replenished.</p>;
 		} else {
-			return <p>Voyage has been ongoing for {formatTimeSeconds(this.state.voyage_duration)} (new dilemma in {formatTimeSeconds(this.state.seconds_between_dilemmas - this.state.seconds_since_last_dilemma)}).</p>;
+			return <div>
+				<p>Voyage has been ongoing for {formatTimeSeconds(this.state.voyage_duration)} (new dilemma in {formatTimeSeconds(this.state.seconds_between_dilemmas - this.state.seconds_since_last_dilemma)}).</p>
+
+				<TooltipHost delay={TooltipDelay.zero} content="Click to calculate more exact estimate!" >
+					<div style={{ cursor: 'pointer' }} className="ui blue label" onClick={() => this._betterEstimate()}>Estimated time left: {formatTimeSeconds(this.state.estimatedMinutesLeft * 60)}</div>
+				</TooltipHost>
+
+                <div className="ui blue label">Estimated revival cost: {Math.floor((this.state.voyage.voyage_duration / 60 + this.state.estimatedMinutesLeft) / 5)} dilithium</div>
+				<DefaultButton onClick={() => this._recall()} text={'Recall now'} />
+			</div>;
 		}
 	}
+
+	async _betterEstimate() {
+		// TODO(Paul): calculate here
+		let newValue = this.state.voyage.hp / 21;
+
+		this.setState({ estimatedMinutesLeft: newValue });
+	}
+
+	async _recall() {
+        await STTApi.recallVoyage(STTApi.playerData.character.voyage[0].id);
+        this.reloadVoyageState();
+    }
 
 	async _chooseDilemma(voyageId, dilemmaId, index) {
 // #!if ENV === 'electron'
@@ -647,10 +670,9 @@ export class VoyageLog extends React.Component {
 			}
 
 			await Promise.all(promises);
-		} else {
-// #!else
-		{
+		} else
 // #!endif
+		{
 			await resolveDilemma(voyageId, dilemmaId, index);
 		}
 
