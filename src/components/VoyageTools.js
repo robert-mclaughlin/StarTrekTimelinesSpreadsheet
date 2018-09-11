@@ -11,7 +11,7 @@ import { Image, ImageFit } from 'office-ui-fabric-react/lib/Image';
 import { Icon } from 'office-ui-fabric-react/lib/Icon';
 import { Link } from 'office-ui-fabric-react/lib/Link';
 import { TextField } from 'office-ui-fabric-react/lib/TextField';
-import { TooltipHost, TooltipDelay, DirectionalHint } from 'office-ui-fabric-react/lib/Tooltip';
+import { TooltipHost, TooltipDelay } from 'office-ui-fabric-react/lib/Tooltip';
 import { MessageBar, MessageBarType } from 'office-ui-fabric-react/lib/MessageBar';
 
 import STTApi from 'sttapi';
@@ -21,6 +21,7 @@ import { RarityStars } from './RarityStars';
 import ReactTable from "react-table";
 
 import { download } from '../utils/pal';
+import { calculateVoyage, estimateVoyageRemaining } from '../utils/voyageCalc';
 
 export class VoyageCrew extends React.Component {
 	constructor(props) {
@@ -60,7 +61,6 @@ export class VoyageCrew extends React.Component {
 
 		this.state.currentSelectedItems = this.state.peopleList.filter(p => this.state.preselectedIgnored.indexOf(p.key) != -1);
 
-		this._exportVoyageData = this._exportVoyageData.bind(this);
 		this._calcVoyageData = this._calcVoyageData.bind(this);
 		this._generateVoyCrewRank = this._generateVoyCrewRank.bind(this);
 		this._startVoyage = this._startVoyage.bind(this);
@@ -259,163 +259,55 @@ export class VoyageCrew extends React.Component {
 		});
 	}
 
-	_exportVoyageData() {
-		let dataToExport = {
-			// These values get filled in the following code
-			crew: [],
-			binaryConfig: undefined
-		};
-
-		let binaryConfigBuffer = new ArrayBuffer(34);
-		let binaryConfig = new DataView(binaryConfigBuffer);
-		binaryConfig.setUint8(0, this.state.searchDepth);
-		binaryConfig.setUint8(1, this.state.extendsTarget);
-		binaryConfig.setUint16(2, this.state.bestShips[0].score, true);
-		binaryConfig.setFloat32(4, 3.5 /*skillPrimaryMultiplier*/, true);
-		binaryConfig.setFloat32(8, 2.5 /*skillSecondaryMultiplier*/, true);
-		binaryConfig.setFloat32(12, 1.1 /*skillMatchingMultiplier*/, true);
-		binaryConfig.setUint16(16, 200 /*traitScoreBoost*/, true);
-
-		// 18 is primary_skill
-		// 19 is secondary_skill
-		// 20 - 32 is voyage_crew_slots
-
-		binaryConfig.setUint16(32, 0/*crew.size*/, true);
-
-		let voyage_description = STTApi.playerData.character.voyage_descriptions[0];
-		const SLOT_COUNT = voyage_description.crew_slots.length;
-		console.assert(SLOT_COUNT === 12, 'Ooops, voyages have more than 12 slots !? The algorithm needs changes.');
-
-		// Find unique traits used in the voyage slots
-		let setTraits = new Set();
-		voyage_description.crew_slots.forEach(slot => {
-			setTraits.add(slot.trait);
-		});
-
-		let arrTraits = Array.from(setTraits);
-		let skills = Object.keys(CONFIG.SKILLS);
-
-		// Replace traits and skills with their id
-		let slotTraitIds = [];
-		for (let i = 0; i < voyage_description.crew_slots.length; i++) {
-			let slot = voyage_description.crew_slots[i];
-
-			binaryConfig.setUint8(20 + i, skills.indexOf(slot.skill));
-			slotTraitIds[i] = arrTraits.indexOf(slot.trait);
-		}
-
-		binaryConfig.setUint8(18, skills.indexOf(voyage_description.skills.primary_skill));
-		binaryConfig.setUint8(19, skills.indexOf(voyage_description.skills.secondary_skill));
-
-		STTApi.roster.forEach(crew => {
+	_calcVoyageData() {
+		let filteredRoster = STTApi.roster.filter(crew =>{
 			// Filter out buy-back crew
 			if (crew.buyback) {
-				return;
+				return false;
 			}
 
 			if (!this.state.includeActive && (crew.active_id > 0)) {
-				return;
+				return false;
 			}
 
 			if (!this.state.includeFrozen && (crew.frozen > 0)) {
-				return;
+				return false;
 			}
 
 			// Filter out crew the user has chosen not to include
 			if ((this.state.currentSelectedItems.length > 0) && this.state.currentSelectedItems.some(ignored => (ignored.text === crew.name))) {
-				return;
+				return false;
 			}
 
-			let traitIds = [];
-			crew.rawTraits.forEach(trait => {
-				if (arrTraits.indexOf(trait) >= 0) {
-					traitIds.push(arrTraits.indexOf(trait));
-				}
-			});
-
-			let traitBitMask = 0;
-			for (let nFlag = 0; nFlag < SLOT_COUNT; traitBitMask |= (traitIds.indexOf(slotTraitIds[nFlag]) !== -1) << nFlag++);
-
-			// We store traits in the first 12 bits, using the next few for flags
-			traitBitMask |= (crew.frozen > 0) << SLOT_COUNT;
-			traitBitMask |= (crew.active_id && (crew.active_id > 0)) << (SLOT_COUNT + 1);
-			traitBitMask |= (crew.level == 100 && crew.rarity == crew.max_rarity) << (SLOT_COUNT + 2); // ff100
-
-			// Replace skill data with a binary blob
-			let buffer = new ArrayBuffer(6 /*number of skills */ * 3 /*values per skill*/ * 2 /*we need 2 bytes per value*/);
-			let skillData = new Uint16Array(buffer);
-			for(let i = 0; i < skills.length; i++) {
-				skillData[i*3] = crew[skills[i]].core;
-				skillData[i*3 + 1] = crew[skills[i]].min;
-				skillData[i*3 + 2] = crew[skills[i]].max;
-			}
-
-			// This won't be necessary once we switch away from Json to pure binary for native invocation
-			let newCrew = {
-				id: crew.crew_id ? crew.crew_id : crew.id,
-				name: crew.name,
-				traitBitMask: traitBitMask,
-				max_rarity: crew.max_rarity,
-				skillData: Array.from(skillData)
-			};
-
-			dataToExport.crew.push(newCrew);
+			return true;
 		});
 
-		binaryConfig.setUint16(32, dataToExport.crew.length, true);
+		let options = {
+			searchDepth: this.state.searchDepth,
+			extendsTarget: this.state.extendsTarget,
+			shipAM: this.state.bestShips[0].score,
+			skillPrimaryMultiplier: 3.5,
+			skillSecondaryMultiplier: 2.5,
+    		skillMatchingMultiplier: 1.1,
+			traitScoreBoost: 200,
+			voyage_description: STTApi.playerData.character.voyage_descriptions[0],
+			roster: filteredRoster
+		};
 
-		dataToExport.binaryConfig = Array.from(new Uint8Array(binaryConfigBuffer));
-
-		return dataToExport;
-	}
-
-	_calcVoyageData() {
-		let dataToExport = this._exportVoyageData();
-
-		const parseResults = (result, state) => {
-			let dv = new DataView(result.buffer);
-
-			let score = dv.getFloat32(0, true);
-
-			let entries = [];
-			for (let i = 0; i < 12; i++) {
-				let crewId = dv.getUint32(4 + (i*4), true);
-
-				let entry = {
-					slotId: i,
-					choice: STTApi.roster.find((crew) => ((crew.crew_id === crewId) || (crew.id === crewId)))
-				};
-				entries.push(entry);
-			}
-
+		calculateVoyage(options, (entries, score) => {
 			this.setState({
 				crewSelection: entries,
 				estimatedDuration: score,
-				state: state
+				state: 'inprogress'
 			});
-		}
-
-// #!if ENV === 'electron'
-		const NativeExtension = require('electron').remote.require('stt-native');
-		NativeExtension.calculateVoyageRecommendations(JSON.stringify(dataToExport), result => {
-			parseResults(result, 'done');
-		}, progressResult => {
-			parseResults(progressResult, 'inprogress');
-		});
-// #!else
-		let ComputeWorker = require("worker-loader?name=wasmWorker.js!./wasmWorker");
-
-		const worker = new ComputeWorker();
-		worker.addEventListener('message', (message) => {
-			if (message.data.progressResult) {
-				parseResults(Uint8Array.from(message.data.progressResult), 'inprogress');
-			} else if (message.data.result) {
-				parseResults(Uint8Array.from(message.data.result), 'done');
-			}
-		});
-
-		worker.postMessage(dataToExport);
-// #!endif
+		},
+			(entries, score) => {
+				this.setState({
+					crewSelection: entries,
+					estimatedDuration: score,
+					state: 'done'
+				});
+			});
 	}
 
 	_generateVoyCrewRank() {
@@ -518,10 +410,10 @@ export class VoyageLog extends React.Component {
 					let item = p.original;
 					// 3 is for honor, credits, crons
 					if (item.type > 2) {
-						return <span/>;
+						return <span />;
 					}
 
-					return <span key={item.id} style={{color: item.rarity && CONFIG.RARITIES[item.rarity].color }}>
+					return <span key={item.id} style={{ color: item.rarity && CONFIG.RARITIES[item.rarity].color }}>
 						<RarityStars
 							min={1}
 							max={item.rarity ? item.rarity : 1}
@@ -573,7 +465,7 @@ export class VoyageLog extends React.Component {
 			includeFlavor: false,
 			rewardTableColumns: _columns,
 			// By default, sort the voyage rewards table by type and rarity to show crew first
-			sorted: [ { id: 'type', desc: false }, { id: 'rarity', desc: true } ]
+			sorted: [{ id: 'type', desc: false }, { id: 'rarity', desc: true }]
 		};
 
 		this.reloadVoyageState();
@@ -645,26 +537,41 @@ export class VoyageLog extends React.Component {
 					<button className="ui mini icon button" onClick={() => this._betterEstimate()}><i className="icon refresh"></i></button>
 				</TooltipHost>
 
-                <div className="ui blue label">Estimated revival cost: {Math.floor((this.state.voyage.voyage_duration / 60 + this.state.estimatedMinutesLeft) / 5)} dilithium</div>
+				<div className="ui blue label">Estimated revival cost: {Math.floor((this.state.voyage.voyage_duration / 60 + this.state.estimatedMinutesLeft) / 5)} dilithium</div>
 				<DefaultButton onClick={() => this._recall()} text={'Recall now'} />
 			</div>;
 		}
 	}
 
 	async _betterEstimate() {
-		// TODO(Paul): calculate here
-		let newValue = this.state.voyage.hp / 21;
+		// TODO(Paul): check if these values are actually needed for the estimate calculation
+		let options = {
+			searchDepth: 0,
+			extendsTarget: 0,
+			shipAM: 0,
+			skillPrimaryMultiplier: 3.5,
+			skillSecondaryMultiplier: 2.5,
+    		skillMatchingMultiplier: 1.1,
+			traitScoreBoost: 200,
+			voyage_description: STTApi.playerData.character.voyage_descriptions[0],
+			// TODO: the roster could probably be trimmmed down to just the currently on voyage 12 crew, to save on serialization
+			roster: STTApi.roster,
+			// Estimate-specific values
+			voyage_duration: this.state.voyage.voyage_duration,
+			remainingAntiMatter: this.state.voyage.hp,
+			assignedCrew: this.state.voyage.crew_slots.map(slot => slot.crew.id)
+		};
 
-		this.setState({ estimatedMinutesLeft: newValue });
+		estimateVoyageRemaining(options, (estimate) => this.setState({ estimatedMinutesLeft: estimate }))
 	}
 
 	async _recall() {
-        await STTApi.recallVoyage(STTApi.playerData.character.voyage[0].id);
-        this.reloadVoyageState();
-    }
+		await STTApi.recallVoyage(STTApi.playerData.character.voyage[0].id);
+		this.reloadVoyageState();
+	}
 
 	async _chooseDilemma(voyageId, dilemmaId, index) {
-// #!if ENV === 'electron'
+		// #!if ENV === 'electron'
 		if (index < 0) {
 			// TODO: this should pick a random index out of the unlocked resolutions
 			let promises = [];
@@ -674,7 +581,7 @@ export class VoyageLog extends React.Component {
 
 			await Promise.all(promises);
 		} else
-// #!endif
+		// #!endif
 		{
 			await resolveDilemma(voyageId, dilemmaId, index);
 		}
@@ -727,7 +634,7 @@ export class VoyageLog extends React.Component {
 		if (this.state.showSpinner)
 			return <Spinner size={SpinnerSize.large} label='Loading voyage details...' />;
 
-		const defaultButton = props => <DefaultButton {...props} text={props.children} style={{width: '100%'}} />;
+		const defaultButton = props => <DefaultButton {...props} text={props.children} style={{ width: '100%' }} />;
 
 		return (<div style={{ userSelect: 'initial' }}>
 			<h3>Voyage on the {this.state.ship_name}</h3>
@@ -781,13 +688,13 @@ export class VoyageLog extends React.Component {
 					PreviousComponent={defaultButton}
 				/>
 			</div>
-			<br/>
+			<br />
 			<CollapsibleSection title={'Complete Captain\'s Log (' + Object.keys(this.state.voyageNarrative).length + ')'}>
-			{Object.keys(this.state.voyageNarrative).map((key) => {
-				return <VoyageLogEntry key={key} log={this.state.voyageNarrative[key]} />;
-			})}
+				{Object.keys(this.state.voyageNarrative).map((key) => {
+					return <VoyageLogEntry key={key} log={this.state.voyageNarrative[key]} />;
+				})}
 			</CollapsibleSection>
-			<br/>
+			<br />
 		</div>);
 	}
 }
