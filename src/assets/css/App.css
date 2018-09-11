@@ -33,6 +33,10 @@
     max-width: 700px !important;
 }
 
+.replicatordialogMainOverride {
+    max-width: 600px !important;
+}
+
 .equipment-slot {
     border: 0px;
     margin: 2px;

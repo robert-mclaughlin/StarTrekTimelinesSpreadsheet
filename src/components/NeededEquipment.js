@@ -1,9 +1,9 @@
 import React from 'react';
 import { Image } from 'office-ui-fabric-react/lib/Image';
 import { PrimaryButton } from 'office-ui-fabric-react/lib/Button';
-import { Checkbox } from 'office-ui-fabric-react/lib/Checkbox';
 
 import { ItemDisplay } from './ItemDisplay';
+import { ReplicatorDialog } from './ReplicatorDialog';
 
 import STTApi from 'sttapi';
 import { CONFIG } from 'sttapi';
@@ -26,6 +26,8 @@ export class NeededEquipment extends React.Component {
 				cadetable: false
 			}
 		};
+
+		this._replicateDialog = React.createRef();
 	}
 
 	_getFilteredCrew(filters) {
@@ -159,7 +161,6 @@ export class NeededEquipment extends React.Component {
 		let cadetableItems = this._getCadetableItems();
 
 		let res = [];
-
 		if (disputeMissions.length > 0) {
 			res.push(<div key={'disputeMissions'}>
 				<b>Missions: </b>
@@ -255,17 +256,24 @@ export class NeededEquipment extends React.Component {
 	render() {
 		if (this.state.neededEquipment) {
 			return (<div className='tab-panel' data-is-scrollable='true'>
-				<p>Equipment required to fill all open slots for all crew currently in your roster.</p>
-				<br />
+				<p>Equipment required to fill all open slots for all crew currently in your roster, for their current level band</p>
+				<small>Note that this expands the entire recipe tree and will not account for partially built recipe branches</small>
+
 				{this.state.neededEquipment.map((entry, idx) =>
-					<div key={idx} style={{ display: 'grid', gridTemplateColumns: '128px auto', gridTemplateAreas: `'icon name' 'icon details'` }}>
-						<div style={{ gridArea: 'icon' }}><ItemDisplay src={entry.equipment.iconUrl} size={128} maxRarity={entry.equipment.rarity} rarity={entry.equipment.rarity} /></div>
-						<h4 style={{ gridArea: 'name', alignSelf: 'start', margin: '0' }}>{`${entry.equipment.name} (need ${entry.needed}, have ${entry.have})`}</h4>
+					<div key={idx} className="ui raised segment" style={{ display: 'grid', gridTemplateColumns: '128px auto', gridTemplateAreas: `'icon name' 'icon details'`, padding: '8px 4px', margin: '8px' }}>
+						<div style={{ gridArea: 'icon', textAlign: 'center' }}>
+							<ItemDisplay src={entry.equipment.iconUrl} size={128} maxRarity={entry.equipment.rarity} rarity={entry.equipment.rarity} />
+							<button style={{ marginBottom: '8px' }} className="ui button" onClick={() => this._replicateDialog.current.show(entry.equipment)}>Replicate...</button>
+						</div>
+						<div style={{ gridArea: 'name', alignSelf: 'start', margin: '0' }}>
+							<h4>{`${entry.equipment.name} (need ${entry.needed}, have ${entry.have})`}</h4>
+						</div>
 						<div style={{ gridArea: 'details', alignSelf: 'start' }}>
 							{this.renderSources(entry.equipment)}
 						</div>
 					</div>
 				)}
+				<ReplicatorDialog ref={this._replicateDialog} />
 			</div>);
 		}
 		else {

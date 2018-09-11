@@ -210,7 +210,9 @@ export class GauntletHelper extends React.Component {
 				});
 			}
 			else if (data.gauntlet.state == 'STARTED') {
-				var result = gauntletRoundOdds(data.gauntlet);
+				// TODO: make this a configuration option (lower value will make gauntlet refresh faster, but percentage will be less accurate)
+				let simulatedRounds = 20000;
+				var result = gauntletRoundOdds(data.gauntlet, simulatedRounds);
 				this.setState({
 					gauntlet: data.gauntlet,
 					roundOdds: result
