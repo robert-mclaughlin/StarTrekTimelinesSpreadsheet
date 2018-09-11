@@ -67,6 +67,11 @@
         "condition_variable": "cpp",
         "ratio": "cpp",
         "set": "cpp",
-        "thread": "cpp"
+        "thread": "cpp",
+        "*.tcc": "cpp",
+        "cctype": "cpp",
+        "cwctype": "cpp",
+        "optional": "cpp",
+        "string_view": "cpp"
     }
 }

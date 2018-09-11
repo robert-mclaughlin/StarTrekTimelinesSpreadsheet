@@ -83,6 +83,19 @@ VoyageCalculator::VoyageCalculator(const char* jsonInput, bool rankMode) noexcep
 
 	std::vector<uint8_t> temp = j["binaryConfig"];
 	memcpy(&binaryConfig, temp.data(), temp.size());
+	auto tempEstPos = j.find("estimateBinaryConfig");
+	if (tempEstPos != j.end())
+	{
+		std::vector<uint8_t> tempEst = *tempEstPos;
+		memcpy(&estimateBinaryConfig, tempEst.data(), tempEst.size());
+	}
+	else
+	{
+		estimateBinaryConfig.elapsedTimeHours = 0;
+		estimateBinaryConfig.elapsedTimeMinutes = 0;
+		estimateBinaryConfig.remainingAntiMatter = 0;
+		std::fill(estimateBinaryConfig.slotCrewIds, estimateBinaryConfig.slotCrewIds + SLOT_COUNT, 0);
+	}
 
 	for (const auto &crew : j["crew"])
 	{
@@ -124,7 +137,7 @@ VoyageCalculator::VoyageCalculator(const char* jsonInput, bool rankMode) noexcep
 
 			// compute score - not really used anymore except for checking whether
 			//	crew can fit in slot (score > 0), and perhaps for troubleshooting
-			slotRoster[iCrew].score = 
+			slotRoster[iCrew].score =
 				computeScore(slotRoster[iCrew], binaryConfig.slotSkills[iSlot], iSlot);
 
 			// set references
@@ -171,9 +184,38 @@ CrewArray VoyageCalculator::GetAlternateCrew(unsigned int level) const noexcept
 
 void VoyageCalculator::calculate() noexcept
 {
+	float elapsedHours = estimateBinaryConfig.elapsedTimeHours + estimateBinaryConfig.elapsedTimeMinutes / 60.0f;
+	if (elapsedHours > 0)
+	{
+		CrewArray assignments;
+		assignments.fill(nullptr);
+
+		for (size_t s=0; s < SLOT_COUNT; ++s)
+		{
+			auto cid = estimateBinaryConfig.slotCrewIds[s];
+			log << "  slot " << s << " crewid: " << cid;
+			for_each(roster.begin(), roster.end(), [&](Crew &c) {
+				if (c.id == cid)
+				{
+					assignments[s] = &c;
+					log << " - " << c.name;
+				}
+			});
+			log << std::endl;
+		}
+
+		float vt = calculateDuration(assignments, true);
+		bestconsidered = assignments;
+		bestscore = vt - elapsedHours;
+		log << "final result: " << vt << " - est time remaining:" << bestscore << std::endl;
+		progressUpdate(bestconsidered, bestscore);
+
+		return;
+	}
+
 	for (unsigned int iteration = 1;;++iteration) {
 		log << "iteration " << iteration << std::endl;
-		
+
 		float prevBest = bestscore;
 
 		resetRosters();
@@ -183,8 +225,8 @@ void VoyageCalculator::calculate() noexcept
 		if (bestscore > prevBest) {
 			continue;
 		} else {
-			log << "final result:" << std::endl;
-			calculateDuration(bestconsidered, true);
+			float vt = calculateDuration(bestconsidered, true);
+			log << "final result: " << vt << std::endl;
 			log << "stopping after " << iteration << " iterations" << std::endl;
 			break;
 		}
@@ -288,7 +330,7 @@ void VoyageCalculator::findBest() noexcept
 	log << "minScore: " << minScore << std::endl;
 	log << "primary: " << SkillName(binaryConfig.primarySkill) << std::endl;
 	log << "secondary: " << SkillName(binaryConfig.secondarySkill) << std::endl;
-	
+
 	{ Timer::Scope timer(voyageCalcTime);
 		for (size_t iMinDepth = minDepth; iMinDepth < MAX_SCAN_DEPTH; ++iMinDepth)
 		{
@@ -331,7 +373,7 @@ void VoyageCalculator::fillSlot(size_t iSlot, unsigned int minScore, size_t minD
 
 		if (slot == seedSlot) {
 			thread = iCrew;
-		} else 
+		} else
 		if (crew.original->considered[thread])
 			continue;
 
@@ -387,7 +429,7 @@ void VoyageCalculator::refine() noexcept
 	for (const Crew &crew : roster) {
 		std::fill(crew.considered.begin(), crew.considered.end(), false);
 	}
-	
+
 	auto considered = bestconsidered;
 	for (size_t iSlot = 0; iSlot < SLOT_COUNT; ++iSlot) {
 		considered[iSlot]->original->considered[0] = true;
@@ -396,7 +438,7 @@ void VoyageCalculator::refine() noexcept
 	// refinement loops
 	for (;;) {
 		bool refinementFound = false;
-		
+
 		auto fUpdateBest = [&,this]{
 			refinementFound = true;
 			float score = calculateDuration(considered);
@@ -422,7 +464,7 @@ void VoyageCalculator::refine() noexcept
 					continue;
 				/*if (crew.score < considered[iSlot]->score/2)
 					break;*/
-				
+
 				// try swapping
 				const Crew *prevCrew = considered[iSlot];
 				considered[iSlot] = crew;
@@ -492,7 +534,7 @@ float VoyageCalculator::calculateDuration(const std::array<const Crew *, SLOT_CO
 			totals.skills[iSkill] += crew->skills[iSkill];
 			// apparently it's possible for min to be higher than max:
 			// https://forum.disruptorbeam.com/stt/discussion/4078/guinan-is-so-awesome-her-min-prof-roll-is-higher-than-her-max-prof-roll
-			totalProfRange[iSkill] += 
+			totalProfRange[iSkill] +=
 				std::max(crew->skillMaxProfs[iSkill], crew->skillMinProfs[iSkill]) -
 				crew->skillMinProfs[iSkill];
 		}
@@ -517,7 +559,7 @@ float VoyageCalculator::calculateDuration(const std::array<const Crew *, SLOT_CO
 
 	//unsigned int PrimarySkill = totals.skills[binaryConfig.primarySkill];
 	//unsigned int SecondarySkill = totals.skills[binaryConfig.secondarySkill];
-	unsigned int MaxSkill = 0;
+	float MaxSkill = 0;
 
 	std::array<float, SKILL_COUNT> hazSkillVariance;
 	for (size_t iSkill = 0; iSkill < SKILL_COUNT; ++iSkill)
@@ -537,10 +579,20 @@ float VoyageCalculator::calculateDuration(const std::array<const Crew *, SLOT_CO
 		log << "primary skill prof variance: " << hazSkillVariance[binaryConfig.primarySkill] << std::endl;
 	}
 
-	unsigned int elapsedHours = 0; // TODO: deal with this later
-	unsigned int elapsedHazSkill = elapsedHours * hazSkillPerHour;
+	float elapsedHours = estimateBinaryConfig.elapsedTimeHours + estimateBinaryConfig.elapsedTimeMinutes / 60.0f;
+	float elapsedHazSkill = elapsedHours * hazSkillPerHour;
+	unsigned int elapsedShipAM = estimateBinaryConfig.remainingAntiMatter;
+	if (elapsedShipAM <= 0)
+		elapsedShipAM = shipAM;
 
-	MaxSkill = std::max((unsigned int)0, MaxSkill - elapsedHazSkill);
+	if (debug && elapsedHours > 0)
+	{
+		log << "  elapsed time: " << (int)estimateBinaryConfig.elapsedTimeHours << ":" << (int)estimateBinaryConfig.elapsedTimeMinutes
+			 << " = " << elapsedHours << std::endl
+			 << "  shipAM: " << (int)shipAM << " elapsedAM: " << (int)elapsedShipAM << " ? " << (int)estimateBinaryConfig.remainingAntiMatter << std::endl;
+	}
+
+	MaxSkill = std::max(0.0f, MaxSkill - elapsedHazSkill);
 	float endVoySkill = MaxSkill * (1 + hazSkillVariance[binaryConfig.primarySkill]);
 
 	const std::array<unsigned int, SKILL_COUNT> &skills = totals.skills;
@@ -583,11 +635,11 @@ float VoyageCalculator::calculateDuration(const std::array<const Crew *, SLOT_CO
 		}
 
 		//test.text += Math.floor(endVoySkill) + " "
-		float am = (float)(shipAM + shipAM * binaryConfig.extendsTarget);
+		float am = (float)(elapsedShipAM + (float)shipAM * binaryConfig.extendsTarget);
 		for (size_t iSkill = 0; iSkill < SKILL_COUNT; iSkill++)
 		{
-			unsigned int skill = skills[iSkill];
-			skill = std::max((unsigned int)0, skill - elapsedHazSkill);
+			float skill = skills[iSkill];
+			skill = std::max(0.0f, skill - elapsedHazSkill);
 			float chance = skillChances[iSkill];
 
 			// skill amount for 100% pass

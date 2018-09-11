@@ -144,28 +144,33 @@ export function calculateVoyage(options, progressCallback, doneCallback) {
 export function estimateVoyageRemaining(options, callback) {
     let dataToExport = exportVoyageData(options);
 
-    let binaryConfigBuffer = new ArrayBuffer(54);
+    let binaryConfigBuffer = new ArrayBuffer(52);
     let binaryConfig = new DataView(binaryConfigBuffer);
-    binaryConfig.setFloat32(0, options.voyage_duration, true);
-    binaryConfig.setUint16(4, options.remainingAntiMatter, true);
+
+    let voy_mins = options.voyage_duration / 60;
+    let voy_hours = voy_mins / 60;
+    let offMins = Math.floor(voy_hours) * 60;
+    voy_mins -= offMins;
+
+    // Sent as two parts to avoid float representation mangling on the native side
+    binaryConfig.setUint8(0, Math.floor(voy_hours)); // elapsedTimeHours
+    binaryConfig.setUint8(1, Math.floor(voy_mins)); // elapsedTimeMinutes
+    binaryConfig.setUint16(2, options.remainingAntiMatter, true);
 
     console.assert(options.assignedCrew.length === 12, 'Ooops, voyages have more than 12 slots !? The algorithm needs changes.');
     for (let i = 0; i < options.assignedCrew.length; i++) {
-        binaryConfig.setUint32(6 + 4 * i, options.assignedCrew[i], true);
+        binaryConfig.setUint32(4 + 4 * i, options.assignedCrew[i], true);
     }
 
     dataToExport.estimateBinaryConfig = Array.from(new Uint8Array(binaryConfigBuffer));
 
-    // TODO(Paul): uncomment after you hook up the native side
-    /*
     invokeNative(dataToExport, progressResult => {
         // Don't care
     }, result => {
         let dv = new DataView(result.buffer);
-        let score = dv.getFloat32(0, true);
-        callback(score);
+        let scoreInHours = dv.getFloat32(0, true);
+        callback(scoreInHours * 60);
     });
-    */
 
-    callback(options.remainingAntiMatter / 21);
+    //callback(options.remainingAntiMatter / 21);
 }

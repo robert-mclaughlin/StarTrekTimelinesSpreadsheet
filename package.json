@@ -87,6 +87,7 @@
     "xlsx-populate": "latest"
   },
   "dependencies": {
+    "bindings": "^1.3.0",
     "buffer": "5.0.8",
     "dexie": "latest",
     "fb": "latest",
