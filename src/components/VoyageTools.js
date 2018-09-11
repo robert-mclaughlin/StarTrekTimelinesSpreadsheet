@@ -545,8 +545,11 @@ export class VoyageLog extends React.Component {
 	}
 
 	async _betterEstimate() {
-		// TODO(Paul): check if these values are actually needed for the estimate calculation
+		const assignedCrew = this.state.voyage.crew_slots.map(slot => slot.crew.id);
+		const assignedRoster = STTApi.roster.filter(crew => assignedCrew.includes(crew.crew_id));
+
 		let options = {
+			// first three not needed for estimate calculation
 			searchDepth: 0,
 			extendsTarget: 0,
 			shipAM: 0,
@@ -555,12 +558,11 @@ export class VoyageLog extends React.Component {
     		skillMatchingMultiplier: 1.1,
 			traitScoreBoost: 200,
 			voyage_description: STTApi.playerData.character.voyage_descriptions[0],
-			// TODO: the roster could probably be trimmmed down to just the currently on voyage 12 crew, to save on serialization
-			roster: STTApi.roster,
-			// Estimate-specific values
+			roster: assignedRoster,
+			// Estimate-specific parameters
 			voyage_duration: this.state.voyage.voyage_duration,
 			remainingAntiMatter: this.state.voyage.hp,
-			assignedCrew: this.state.voyage.crew_slots.map(slot => slot.crew.id)
+			assignedCrew
 		};
 
 		estimateVoyageRemaining(options, (estimate) => this.setState({ estimatedMinutesLeft: estimate }))
