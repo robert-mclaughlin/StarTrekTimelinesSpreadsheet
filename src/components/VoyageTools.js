@@ -32,7 +32,8 @@ export class VoyageCrew extends React.Component {
 			bestShips: bestVoyageShips,
 			includeFrozen: false,
 			includeActive: false,
-			shipName: bestVoyageShips[0].ship.name,
+			shipName: undefined,
+			shipNameDefault: bestVoyageShips[0].ship.name,
 			state: undefined,
 			searchDepth: 6,
 			extendsTarget: 0,
@@ -195,7 +196,7 @@ export class VoyageCrew extends React.Component {
 
 			<div style={{ display: 'grid', gridGap: '5px', width: 'fit-content', gridTemplateColumns: 'minmax(5em,min-content) max-content max-content' }}>
 				<span style={{ justifySelf: 'center', alignSelf: 'center' }}>Ship Name</span>
-				<TextField value={this.state.shipName} onChanged={v => this.setState({ shipName: v })} />
+				<TextField value={this.state.shipName} placeholder={this.state.shipNameDefault} onChanged={v => this.setState({ shipName: v })} />
 				<PrimaryButton onClick={this._startVoyage} text='Start voyage with recommendations' disabled={this.state.state !== 'done'} />
 			</div>
 

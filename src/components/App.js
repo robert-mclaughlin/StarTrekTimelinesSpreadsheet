@@ -647,7 +647,7 @@ class App extends React.Component {
 		}
 		// #!endif
 
-		STTApi.networkHelper.get('https://iampicard.com/motd/get', { webApp: STTApi.inWebMode, dbid: STTApi.playerData.dbid }).then((data) => {
+		STTApi.networkHelper.get('https://iampicard.com/motd/get', { webApp: STTApi.inWebMode, dbid: STTApi.playerData.dbid, id: STTApi.playerData.character.id, version: getAppVersion() }).then((data) => {
 			this.setState({ motd: data });
 		});
 
