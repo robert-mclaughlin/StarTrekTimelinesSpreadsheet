@@ -11,11 +11,10 @@ import { Image, ImageFit } from 'office-ui-fabric-react/lib/Image';
 import { Icon } from 'office-ui-fabric-react/lib/Icon';
 import { Link } from 'office-ui-fabric-react/lib/Link';
 import { TextField } from 'office-ui-fabric-react/lib/TextField';
-import { TooltipHost, TooltipDelay } from 'office-ui-fabric-react/lib/Tooltip';
 import { MessageBar, MessageBarType } from 'office-ui-fabric-react/lib/MessageBar';
 
 import STTApi from 'sttapi';
-import { CONFIG, bestVoyageShip, loadVoyage, startVoyage, resolveDilemma, formatCrewStats, bonusCrewForCurrentEvent, formatTimeSeconds } from 'sttapi';
+import { CONFIG, bestVoyageShip, loadVoyage, startVoyage, resolveDilemma, recallVoyage, formatCrewStats, bonusCrewForCurrentEvent, formatTimeSeconds } from 'sttapi';
 import { CollapsibleSection } from './CollapsibleSection';
 import { RarityStars } from './RarityStars';
 import ReactTable from "react-table";
@@ -437,6 +436,20 @@ export class VoyageLog extends React.Component {
 				Cell: (p) => {
 					let item = p.original;
 
+					if (item.type === 1) {
+						// For crew, check if it's useful or not
+						let have = STTApi.roster.filter(crew => crew.symbol === item.symbol);
+						if (have.length > 0) {
+							if (!have.some(c => c.max_rarity === c.rarity)) {
+                                return <span style={{ fontWeight: 'bold' }}>NEW STAR FOR CREW!</span>;
+                            } else {
+								return <span>Duplicate of immortalized crew (airlock-able)</span>;
+							}
+						} else {
+							return <span style={{ fontWeight: 'bold' }}>NEW CREW!</span>;
+						}
+					}
+
 					let typeName = CONFIG.REWARDS_ITEM_TYPE[item.item_type];
 					if (typeName) {
 						return typeName;
@@ -519,8 +532,11 @@ export class VoyageLog extends React.Component {
 				voyage: voyage,
 				voyageNarrative: voyageNarrative,
 				estimatedMinutesLeft: voyage.hp / 21,
+				nativeEstimate: false,
 				voyageRewards: voyageRewards
 			});
+
+			this._betterEstimate();
 		}
 	}
 
@@ -530,16 +546,24 @@ export class VoyageLog extends React.Component {
 		} else if (this.state.voyage.state === "failed") {
 			return <p>Voyage has run out of antimatter after {formatTimeSeconds(this.state.voyage_duration)} and it's waiting to be abandoned or replenished.</p>;
 		} else {
+			let minEstimate = (this.state.estimatedMinutesLeft * 0.9 - 1) * 60;
+			let maxEstimate = (this.state.estimatedMinutesLeft * 1.1 + 1) * 60;
+
+			let chanceDilemma = 100 * ((this.state.seconds_between_dilemmas - this.state.seconds_since_last_dilemma) - minEstimate) / (maxEstimate - minEstimate);
+			chanceDilemma = Math.min(Math.max(this, 0), 100);
+
 			return <div>
 				<p>Voyage has been ongoing for {formatTimeSeconds(this.state.voyage_duration)} (new dilemma in {formatTimeSeconds(this.state.seconds_between_dilemmas - this.state.seconds_since_last_dilemma)}).</p>
 
-				<div className="ui blue label">Estimated time left: {formatTimeSeconds(this.state.estimatedMinutesLeft * 60)}</div>
-				<TooltipHost delay={TooltipDelay.zero} content="Click to calculate more exact estimate!" >
-					<button className="ui mini icon button" onClick={() => this._betterEstimate()}><i className="icon refresh"></i></button>
-				</TooltipHost>
+				<div className="ui blue label">Estimated time left: {formatTimeSeconds(this.state.estimatedMinutesLeft * 60)}
+					{!this.state.nativeEstimate && <i className="spinner loading icon"></i>}
+				</div>
 
 				<div className="ui blue label">Estimated revival cost: {Math.floor((this.state.voyage.voyage_duration / 60 + this.state.estimatedMinutesLeft) / 5)} dilithium</div>
-				<DefaultButton onClick={() => this._recall()} text={'Recall now'} />
+
+				<button className="ui mini button" onClick={() => this._recall()}><i className="icon undo"></i>Recall now</button>
+
+				<p>There is an estimated {chanceDilemma}% chance for the voyage to reach next dilemma.</p>
 			</div>;
 		}
 	}
@@ -565,11 +589,11 @@ export class VoyageLog extends React.Component {
 			assignedCrew
 		};
 
-		estimateVoyageRemaining(options, (estimate) => this.setState({ estimatedMinutesLeft: estimate }))
+		estimateVoyageRemaining(options, (estimate) => this.setState({ estimatedMinutesLeft: estimate, nativeEstimate: true }))
 	}
 
 	async _recall() {
-		await STTApi.recallVoyage(STTApi.playerData.character.voyage[0].id);
+		await recallVoyage(STTApi.playerData.character.voyage[0].id);
 		this.reloadVoyageState();
 	}
 
