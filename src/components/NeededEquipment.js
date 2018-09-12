@@ -127,6 +127,18 @@ export class NeededEquipment extends React.Component {
 							});
 						});
 					}
+					else {
+						//NOTE: this clause can be removed to avoid zero counts for crew members
+						// Track the crew that needs them, but retain zero count (since the item is partially built)
+						// in case the intermediate item gets consumed elsewhere
+						equipment.recipe.demands.forEach((recipeItem) => {
+							unparsedEquipment.push({
+								archetype: recipeItem.archetype_id,
+								need: 0,
+								crew: eq.crew
+							});
+						});
+					}
 
 				}
 			} else if (equipment.item_sources && (equipment.item_sources.length > 0) || cadetableItems.has(equipment.id)) {
@@ -313,6 +325,7 @@ export class NeededEquipment extends React.Component {
 		if (this.state.neededEquipment) {
 			return (<div className='tab-panel' data-is-scrollable='true'>
 				<p>Equipment required to fill all open slots for all crew currently in your roster, for their current level band</p>
+				<small>Note that partially complete recipes result in zero counts for some crew and items</small>
 
 				{this.state.neededEquipment.map((entry, idx) =>
 					<div key={idx} className="ui raised segment" style={{ display: 'grid', gridTemplateColumns: '128px auto', gridTemplateAreas: `'icon name' 'icon details'`, padding: '8px 4px', margin: '8px' }}>
