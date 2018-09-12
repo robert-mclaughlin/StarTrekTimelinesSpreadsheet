@@ -42,10 +42,10 @@ export class NeededEquipment extends React.Component {
 
 	_getCadetableItems(){
 		if(this.state.cadetableItems == undefined){
-			const cadetableItems = new Map();		
+			const cadetableItems = new Map();
 			//Advanced Cadet Challenges offer the same rewards as Standard ones, so filter them to avoid duplicates
 			let cadetMissions = STTApi.missions.filter(mission => mission.quests.filter(quest => quest.cadet).length > 0).filter(mission => mission.episode_title.indexOf("Adv") === -1);
-			cadetMissions.forEach(cadetMission => {			
+			cadetMissions.forEach(cadetMission => {
 				cadetMission.quests.forEach(quest => {
 					quest.mastery_levels.forEach(masteryLevel => {
 						masteryLevel.rewards.filter(r => r.type === 0).forEach(reward => {
@@ -54,18 +54,18 @@ export class NeededEquipment extends React.Component {
 									name: quest.name + " (" + cadetMission.episode_title + ")",
 									mastery: masteryLevel.id
 								};
-								
+
 								if(cadetableItems.has(item.id)){
 									cadetableItems.get(item.id).push(info);
 								} else {
 									cadetableItems.set(item.id,[info]);
 								}
-							})					
-						})									
-					})				
+							})
+						})
+					})
 				})
-			});	
-			this.state.cadetableItems = cadetableItems;	
+			});
+			this.state.cadetableItems = cadetableItems;
 		}
 		return this.state.cadetableItems;
 	}
@@ -82,13 +82,53 @@ export class NeededEquipment extends React.Component {
 		}
 
 		let mapUnowned = {};
+		let mapIncompleteUsed = {};
 		while (unparsedEquipment.length > 0) {
 			let eq = unparsedEquipment.pop();
 			let equipment = STTApi.itemArchetypeCache.archetypes.find(e => e.id === eq.archetype);
 
 			if (equipment.recipe && equipment.recipe.demands && (equipment.recipe.demands.length > 0)) {
-				// Let's add all children in the recipe, so that we can parse them on the next loop iteration
-				equipment.recipe.demands.forEach((item) => unparsedEquipment.push({ archetype: item.archetype_id, need: item.count * eq.need, crew: eq.crew }));
+				let have = STTApi.playerData.character.items.find(item => item.archetype_id === eq.archetype);
+				// don't have any partially built, queue up to break into pieces
+				if (!have || have.quantity <= 0) {
+					// Add all children in the recipe to parse on the next loop iteration
+					equipment.recipe.demands.forEach((recipeItem) => {
+						unparsedEquipment.push({
+							archetype: recipeItem.archetype_id,
+							need: recipeItem.count * eq.need,
+							crew: eq.crew
+						});
+					});
+				}
+				else {
+					// see how many are already accounted for
+					let found = mapIncompleteUsed[eq.archetype];
+					if (found) {
+						found.needed += eq.need;
+					} else {
+						found = {
+							equipment,
+							needed: eq.need - have.quantity,
+							have: have.quantity
+						};
+
+						mapIncompleteUsed[eq.archetype] = found;
+					}
+
+					// if total requirements exceed inventory
+					if (found.needed > 0) {
+						// how many can be filled for this equipment demand
+						let partialNeeded = Math.min(eq.need, found.needed);
+						equipment.recipe.demands.forEach((recipeItem) => {
+							unparsedEquipment.push({
+								archetype: recipeItem.archetype_id,
+								need: recipeItem.count * partialNeeded,
+								crew: eq.crew
+							});
+						});
+					}
+
+				}
 			} else if (equipment.item_sources && (equipment.item_sources.length > 0) || cadetableItems.has(equipment.id)) {
 				let found = mapUnowned[eq.archetype];
 				if (found) {
@@ -96,7 +136,7 @@ export class NeededEquipment extends React.Component {
 					let counts = found.counts[eq.crew.id];
 					if (counts) {
 						counts.count += eq.need;
-					} else {					
+					} else {
 						found.counts[eq.crew.id] = { crew: eq.crew, count:eq.need};
 					}
 				} else {
@@ -104,16 +144,16 @@ export class NeededEquipment extends React.Component {
 					let isDisputeMissionObtainable = equipment.item_sources.filter(e => e.type === 0).length > 0;
 					let isShipBattleObtainable = equipment.item_sources.filter(e => e.type === 2).length > 0;
 					let isFactionObtainable = equipment.item_sources.filter(e => e.type === 1).length > 0;
-					let isCadetable = cadetableItems.has(equipment.id);				
+					let isCadetable = cadetableItems.has(equipment.id);
 					let counts = {};
 					counts[eq.crew.id] = {crew: eq.crew, count: eq.need};
-										
-					mapUnowned[eq.archetype] = { 
-						equipment, 
-						needed: eq.need, 
-						have: have ? have.quantity : 0, 
+
+					mapUnowned[eq.archetype] = {
+						equipment,
+						needed: eq.need,
+						have: have ? have.quantity : 0,
 						counts: counts,
-						isDisputeMissionObtainable: isDisputeMissionObtainable,  
+						isDisputeMissionObtainable: isDisputeMissionObtainable,
 						isShipBattleObtainable: isShipBattleObtainable,
 						isFactionObtainable: isFactionObtainable,
 						isCadetable: isCadetable
@@ -151,7 +191,7 @@ export class NeededEquipment extends React.Component {
 			neededEquipment: neededEquipment
 		});
     }
-    
+
     _toggleFilter(name) {
         const newFilters = Object.assign({}, this.state.filters);
 		newFilters[name] = !newFilters[name];
@@ -211,11 +251,11 @@ export class NeededEquipment extends React.Component {
 					`${entry.name} (${entry.chance_grade}/5, ${(entry.energy_quotient * 100).toFixed(2)}%)`
 				).join(', ')}
 			</p>)
-		}		
+		}
 
 		return <div>{res}</div>;
     }
-    
+
     componentDidMount() {
         this._updateCommandItems();
         this._filterNeededEquipment(this.state.filters);
@@ -273,7 +313,6 @@ export class NeededEquipment extends React.Component {
 		if (this.state.neededEquipment) {
 			return (<div className='tab-panel' data-is-scrollable='true'>
 				<p>Equipment required to fill all open slots for all crew currently in your roster, for their current level band</p>
-				<small>Note that this expands the entire recipe tree and will not account for partially built recipe branches</small>
 
 				{this.state.neededEquipment.map((entry, idx) =>
 					<div key={idx} className="ui raised segment" style={{ display: 'grid', gridTemplateColumns: '128px auto', gridTemplateAreas: `'icon name' 'icon details'`, padding: '8px 4px', margin: '8px' }}>
