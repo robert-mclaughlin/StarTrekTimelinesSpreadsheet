@@ -1,6 +1,7 @@
 import React from 'react';
 import { Image } from 'office-ui-fabric-react/lib/Image';
 import { PrimaryButton } from 'office-ui-fabric-react/lib/Button';
+import { SearchBox } from 'office-ui-fabric-react/lib/SearchBox';
 
 import { ItemDisplay } from './ItemDisplay';
 import { ReplicatorDialog } from './ReplicatorDialog';
@@ -327,6 +328,11 @@ export class NeededEquipment extends React.Component {
 				<p>Equipment required to fill all open slots for all crew currently in your roster, for their current level band</p>
 				<small>Note that partially complete recipes result in zero counts for some crew and items</small>
 
+				<SearchBox placeholder='Filter...'
+					onChange={(newValue) => this._filterText(newValue)}
+					onSearch={(newValue) => this._filterText(newValue)}
+				/>
+
 				{this.state.neededEquipment.map((entry, idx) =>
 					<div key={idx} className="ui raised segment" style={{ display: 'grid', gridTemplateColumns: '128px auto', gridTemplateAreas: `'icon name' 'icon details'`, padding: '8px 4px', margin: '8px' }}>
 						<div style={{ gridArea: 'icon', textAlign: 'center' }}>
@@ -368,5 +374,60 @@ export class NeededEquipment extends React.Component {
 
 		let today = new Date();
 		download('Equipment-' + (today.getUTCMonth() + 1) + '-' + (today.getUTCDate()) + '.csv', csv, 'Export needed equipment', 'Export');
+	}
+
+	_filterText(filterString) {
+		//FIXME: does not refresh when toggle filters change
+		const filteredCrew = this._getFilteredCrew(this.state.filters);
+		const neededEquipment = this._getNeededEquipment(filteredCrew, this.state.filters);
+		let filteredEquipment = neededEquipment;
+
+		if (filterString && filterString.trim().length > 0) {
+			filterString = filterString.toLowerCase();
+			const cadetableItems = this._getCadetableItems();
+
+			filteredEquipment = neededEquipment.filter(entry => {
+				// if value is (parsed into) a number, filter by entry.equipment.rarity, entry.needed, entry.have, entry.counts{}.count
+				let filterInt = parseInt(filterString);
+				if (!isNaN(filterInt)) {
+					if (entry.equipment.rarity == filterInt) {
+						return true;
+					}
+					if (entry.needed == filterInt) {
+						return true;
+					}
+					if (entry.have == filterInt) {
+						return true;
+					}
+					if (Object.values(entry.counts).some(c => c.count == filterInt)) {
+						return true;
+					}
+					return false;
+				}
+
+				// if string, filter by entry.equipment.name, entry.counts{}.crew.name, entry.equipment.item_sources[].name, cadetableItems{}.name
+				if (entry.equipment.name.toLowerCase().includes(filterString)) {
+					return true;
+				}
+				let found = false;
+				if (Object.values(entry.counts).some(c => c.crew.name.toLowerCase().includes(filterString))) {
+					return true;
+				}
+				if (entry.equipment.item_sources.some(s => s.name.toLowerCase().includes(filterString))) {
+					return true;
+				}
+				if (cadetableItems.has(entry.equipment.id)) {
+					if (cadetableItems.get(entry.equipment.id).some(c => c.name.toLowerCase().includes(filterString))) {
+						return true;
+					}
+				}
+
+				return false;
+			});
+		}
+
+		return this.setState({
+			neededEquipment: filteredEquipment
+		});
 	}
 }
