@@ -550,7 +550,7 @@ export class VoyageLog extends React.Component {
 			let maxEstimate = (this.state.estimatedMinutesLeft * 1.1 + 1) * 60;
 
 			let chanceDilemma = 100 * ((this.state.seconds_between_dilemmas - this.state.seconds_since_last_dilemma) - minEstimate) / (maxEstimate - minEstimate);
-			chanceDilemma = Math.min(Math.max(this, 0), 100);
+			chanceDilemma = 100 - Math.min(Math.max(chanceDilemma, 0), 100);
 
 			return <div>
 				<p>Voyage has been ongoing for {formatTimeSeconds(this.state.voyage_duration)} (new dilemma in {formatTimeSeconds(this.state.seconds_between_dilemmas - this.state.seconds_since_last_dilemma)}).</p>
