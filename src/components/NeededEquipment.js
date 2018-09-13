@@ -119,7 +119,11 @@ export class NeededEquipment extends React.Component {
 					// if total requirements exceed inventory
 					if (found.needed > 0) {
 						// how many can be filled for this equipment demand
-						let partialNeeded = Math.min(eq.need, found.needed);
+						let partialNeeded = eq.need;
+						// If this new requirement pushed past inventory amount, only need a partial amount equal to the overlap
+						if (found.needed < eq.need) {
+							partialNeeded = eq.need - found.needed;
+						}
 						equipment.recipe.demands.forEach((recipeItem) => {
 							unparsedEquipment.push({
 								archetype: recipeItem.archetype_id,
