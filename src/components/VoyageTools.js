@@ -546,11 +546,11 @@ export class VoyageLog extends React.Component {
 		} else if (this.state.voyage.state === "failed") {
 			return <p>Voyage has run out of antimatter after {formatTimeSeconds(this.state.voyage_duration)} and it's waiting to be abandoned or replenished.</p>;
 		} else {
-			let minEstimate = (this.state.estimatedMinutesLeft * 0.9 - 1) * 60;
-			let maxEstimate = (this.state.estimatedMinutesLeft * 1.1 + 1) * 60;
+			let minEstimate = (this.state.estimatedMinutesLeft * 0.75 - 1) * 60;
+			let maxEstimate = (this.state.estimatedMinutesLeft * 1.25 + 1) * 60;
 
 			let chanceDilemma = 100 * ((this.state.seconds_between_dilemmas - this.state.seconds_since_last_dilemma) - minEstimate) / (maxEstimate - minEstimate);
-			chanceDilemma = 100 - Math.min(Math.max(chanceDilemma, 0), 100);
+			chanceDilemma = (100 - Math.min(Math.max(chanceDilemma, 0), 100)).toFixed();
 
 			return <div>
 				<p>Voyage has been ongoing for {formatTimeSeconds(this.state.voyage_duration)} (new dilemma in {formatTimeSeconds(this.state.seconds_between_dilemmas - this.state.seconds_since_last_dilemma)}).</p>
