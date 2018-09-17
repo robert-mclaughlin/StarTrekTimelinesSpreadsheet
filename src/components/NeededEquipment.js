@@ -24,7 +24,8 @@ export class NeededEquipment extends React.Component {
 				onlyFavorite: false,
 				onlyNeeded: false,
 				onlyFaction: false,
-				cadetable: false
+				cadetable: false,
+				userText: undefined
 			}
 		};
 
@@ -197,6 +198,49 @@ export class NeededEquipment extends React.Component {
 			arr = arr.filter((entry) => entry.isCadetable);
 		}
 
+		if (filters.userText && filters.userText.trim().length > 0) {
+			let filterString = filters.userText.toLowerCase();
+
+			arr = arr.filter(entry => {
+				// if value is (parsed into) a number, filter by entry.equipment.rarity, entry.needed, entry.have, entry.counts{}.count
+				let filterInt = parseInt(filterString);
+				if (!isNaN(filterInt)) {
+					if (entry.equipment.rarity == filterInt) {
+						return true;
+					}
+					if (entry.needed == filterInt) {
+						return true;
+					}
+					if (entry.have == filterInt) {
+						return true;
+					}
+					if (Object.values(entry.counts).some(c => c.count == filterInt)) {
+						return true;
+					}
+					return false;
+				}
+
+				// if string, filter by entry.equipment.name, entry.counts{}.crew.name, entry.equipment.item_sources[].name, cadetableItems{}.name
+				if (entry.equipment.name.toLowerCase().includes(filterString)) {
+					return true;
+				}
+				let found = false;
+				if (Object.values(entry.counts).some(c => c.crew.name.toLowerCase().includes(filterString))) {
+					return true;
+				}
+				if (entry.equipment.item_sources.some(s => s.name.toLowerCase().includes(filterString))) {
+					return true;
+				}
+				if (cadetableItems.has(entry.equipment.id)) {
+					if (cadetableItems.get(entry.equipment.id).some(c => c.name.toLowerCase().includes(filterString))) {
+						return true;
+					}
+				}
+
+				return false;
+			});
+		}
+
 		return arr;
 	}
 
@@ -217,7 +261,17 @@ export class NeededEquipment extends React.Component {
         }, () => { this._updateCommandItems(); });
 
 		return this._filterNeededEquipment(newFilters);
-    }
+   }
+
+	_filterText(filterString) {
+		const newFilters = Object.assign({}, this.state.filters);
+		newFilters.userText = filterString;
+		this.setState({
+			filters: newFilters
+		});
+
+		return this._filterNeededEquipment(newFilters);
+	}
 
 	renderSources(equipment, counts) {
 		let disputeMissions = equipment.item_sources.filter(e => e.type === 0);
@@ -378,60 +432,5 @@ export class NeededEquipment extends React.Component {
 
 		let today = new Date();
 		download('Equipment-' + (today.getUTCMonth() + 1) + '-' + (today.getUTCDate()) + '.csv', csv, 'Export needed equipment', 'Export');
-	}
-
-	_filterText(filterString) {
-		//FIXME: does not refresh when toggle filters change
-		const filteredCrew = this._getFilteredCrew(this.state.filters);
-		const neededEquipment = this._getNeededEquipment(filteredCrew, this.state.filters);
-		let filteredEquipment = neededEquipment;
-
-		if (filterString && filterString.trim().length > 0) {
-			filterString = filterString.toLowerCase();
-			const cadetableItems = this._getCadetableItems();
-
-			filteredEquipment = neededEquipment.filter(entry => {
-				// if value is (parsed into) a number, filter by entry.equipment.rarity, entry.needed, entry.have, entry.counts{}.count
-				let filterInt = parseInt(filterString);
-				if (!isNaN(filterInt)) {
-					if (entry.equipment.rarity == filterInt) {
-						return true;
-					}
-					if (entry.needed == filterInt) {
-						return true;
-					}
-					if (entry.have == filterInt) {
-						return true;
-					}
-					if (Object.values(entry.counts).some(c => c.count == filterInt)) {
-						return true;
-					}
-					return false;
-				}
-
-				// if string, filter by entry.equipment.name, entry.counts{}.crew.name, entry.equipment.item_sources[].name, cadetableItems{}.name
-				if (entry.equipment.name.toLowerCase().includes(filterString)) {
-					return true;
-				}
-				let found = false;
-				if (Object.values(entry.counts).some(c => c.crew.name.toLowerCase().includes(filterString))) {
-					return true;
-				}
-				if (entry.equipment.item_sources.some(s => s.name.toLowerCase().includes(filterString))) {
-					return true;
-				}
-				if (cadetableItems.has(entry.equipment.id)) {
-					if (cadetableItems.get(entry.equipment.id).some(c => c.name.toLowerCase().includes(filterString))) {
-						return true;
-					}
-				}
-
-				return false;
-			});
-		}
-
-		return this.setState({
-			neededEquipment: filteredEquipment
-		});
 	}
 }
