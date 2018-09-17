@@ -1,6 +1,7 @@
 import React from 'react';
 import { Image } from 'office-ui-fabric-react/lib/Image';
 import { PrimaryButton } from 'office-ui-fabric-react/lib/Button';
+import { SearchBox } from 'office-ui-fabric-react/lib/SearchBox';
 
 import { ItemDisplay } from './ItemDisplay';
 import { ReplicatorDialog } from './ReplicatorDialog';
@@ -23,7 +24,8 @@ export class NeededEquipment extends React.Component {
 				onlyFavorite: false,
 				onlyNeeded: false,
 				onlyFaction: false,
-				cadetable: false
+				cadetable: false,
+				userText: undefined
 			}
 		};
 
@@ -118,7 +120,11 @@ export class NeededEquipment extends React.Component {
 					// if total requirements exceed inventory
 					if (found.needed > 0) {
 						// how many can be filled for this equipment demand
-						let partialNeeded = Math.min(eq.need, found.needed);
+						let partialNeeded = eq.need;
+						// If this new requirement pushed past inventory amount, only need a partial amount equal to the overlap
+						if (found.needed < eq.need) {
+							partialNeeded = eq.need - found.needed;
+						}
 						equipment.recipe.demands.forEach((recipeItem) => {
 							unparsedEquipment.push({
 								archetype: recipeItem.archetype_id,
@@ -192,6 +198,49 @@ export class NeededEquipment extends React.Component {
 			arr = arr.filter((entry) => entry.isCadetable);
 		}
 
+		if (filters.userText && filters.userText.trim().length > 0) {
+			let filterString = filters.userText.toLowerCase();
+
+			arr = arr.filter(entry => {
+				// if value is (parsed into) a number, filter by entry.equipment.rarity, entry.needed, entry.have, entry.counts{}.count
+				let filterInt = parseInt(filterString);
+				if (!isNaN(filterInt)) {
+					if (entry.equipment.rarity == filterInt) {
+						return true;
+					}
+					if (entry.needed == filterInt) {
+						return true;
+					}
+					if (entry.have == filterInt) {
+						return true;
+					}
+					if (Object.values(entry.counts).some(c => c.count == filterInt)) {
+						return true;
+					}
+					return false;
+				}
+
+				// if string, filter by entry.equipment.name, entry.counts{}.crew.name, entry.equipment.item_sources[].name, cadetableItems{}.name
+				if (entry.equipment.name.toLowerCase().includes(filterString)) {
+					return true;
+				}
+				let found = false;
+				if (Object.values(entry.counts).some(c => c.crew.name.toLowerCase().includes(filterString))) {
+					return true;
+				}
+				if (entry.equipment.item_sources.some(s => s.name.toLowerCase().includes(filterString))) {
+					return true;
+				}
+				if (cadetableItems.has(entry.equipment.id)) {
+					if (cadetableItems.get(entry.equipment.id).some(c => c.name.toLowerCase().includes(filterString))) {
+						return true;
+					}
+				}
+
+				return false;
+			});
+		}
+
 		return arr;
 	}
 
@@ -212,7 +261,17 @@ export class NeededEquipment extends React.Component {
         }, () => { this._updateCommandItems(); });
 
 		return this._filterNeededEquipment(newFilters);
-    }
+   }
+
+	_filterText(filterString) {
+		const newFilters = Object.assign({}, this.state.filters);
+		newFilters.userText = filterString;
+		this.setState({
+			filters: newFilters
+		});
+
+		return this._filterNeededEquipment(newFilters);
+	}
 
 	renderSources(equipment, counts) {
 		let disputeMissions = equipment.item_sources.filter(e => e.type === 0);
@@ -326,6 +385,11 @@ export class NeededEquipment extends React.Component {
 			return (<div className='tab-panel' data-is-scrollable='true'>
 				<p>Equipment required to fill all open slots for all crew currently in your roster, for their current level band</p>
 				<small>Note that partially complete recipes result in zero counts for some crew and items</small>
+
+				<SearchBox placeholder='Filter...'
+					onChange={(newValue) => this._filterText(newValue)}
+					onSearch={(newValue) => this._filterText(newValue)}
+				/>
 
 				{this.state.neededEquipment.map((entry, idx) =>
 					<div key={idx} className="ui raised segment" style={{ display: 'grid', gridTemplateColumns: '128px auto', gridTemplateAreas: `'icon name' 'icon details'`, padding: '8px 4px', margin: '8px' }}>
