@@ -1,8 +1,11 @@
 import React from 'react';
-import { DetailsList, DetailsListLayoutMode, SelectionMode } from 'office-ui-fabric-react/lib/DetailsList';
+import ReactTable from "react-table";
+import { DefaultButton } from 'office-ui-fabric-react/lib/Button';
+import { Link } from 'office-ui-fabric-react/lib/Link';
 
 import { ItemDisplay } from './ItemDisplay';
 import { RarityStars } from './RarityStars';
+import { CONFIG } from 'sttapi';
 
 import { sortItems, columnClick } from '../utils/listUtils.js';
 
@@ -12,78 +15,93 @@ export class ItemList extends React.Component {
 
 		this.state = {
 			items: sortItems(this.props.data, 'name'),
-			sortColumn: 'name',
-			sortedDescending: false,
+			sorted: [{ id: 'name', desc: false }, { id:'rarity'}],
 			columns: [
 				{
-					key: 'icon',
-					name: '',
+					id: 'icon',
+					Header: '',
 					minWidth: 50,
 					maxWidth: 50,
-					fieldName: 'name',
-					onRender: (item) => {
+					resizable: false,
+					accessor: 'name',
+					Cell: (p) => {
+						let item = p.original;
 						return (<ItemDisplay src={item.iconUrl} size={50} maxRarity={item.rarity} rarity={item.rarity} />);
 					}
 				},
 				{
-					key: 'name',
-					name: 'Name',
+					id: 'name',
+					Header: 'Name',
 					minWidth: 130,
 					maxWidth: 180,
-					isSorted: true,
-					isSortedDescending: false,
-					isResizable: true,
-					fieldName: 'name'
+					resizable: true,
+					accessor: 'name',
+					Cell: (p) => {
+						let item = p.original;
+						return (<Link href={'https://stt.wiki/wiki/' + item.name.split(' ').join('_')} target='_blank'>{item.name}</Link>);
+					}
 				},
 				{
-					key: 'rarity',
-					name: 'Rarity',
-					minWidth: 50,
-					maxWidth: 80,
-					isResizable: true,
-					fieldName: 'rarity',
-					onRender: (item) => {
+					id: 'rarity',
+					Header: 'Rarity',
+					accessor: 'rarity',
+					minWidth: 75,
+					maxWidth: 75,
+					resizable: false,
+					Cell: (p) => {
+						let item = p.original;
 						return (
 							<RarityStars
 								min={1}
 								max={item.rarity}
-								value={item.rarity}
+								value={item.rarity ? item.rarity : null}
 							/>
 						);
-					},
-					isPadded: true
+					}
 				},
 				{
-					key: 'quantity',
-					name: 'Quantity',
+					id: 'quantity',
+					Header: 'Quantity',
 					minWidth: 50,
 					maxWidth: 80,
-					isResizable: true,
-					fieldName: 'quantity'
+					resizable: true,
+					accessor: 'quantity'
 				},
 				{
-					key: 'type',
-					name: 'Type',
+					id: 'type',
+					Header: 'Type',
 					minWidth: 70,
 					maxWidth: 120,
-					isResizable: true,
-					fieldName: 'typeName'
+					resizable: true,
+					accessor: 'typeName',
+					Cell: (p) => {
+						let item = p.original;
+
+						let typeName = CONFIG.REWARDS_ITEM_TYPE[item.type];
+						if (typeName) {
+							return typeName;
+						}
+
+						// fall-through case
+						typeName = item.icon.file.replace("/items", "").split("/")[1];
+						if (typeName) {
+							return typeName;
+						}
+
+						// show something so we know to fix these
+						if (item.item_type) {
+							return item.type + "." + item.item_type;
+						}
+						return item.type;
+					}
 				},
 				{
-					key: 'symbol',
-					name: 'Symbol',
-					minWidth: 70,
-					maxWidth: 120,
-					isResizable: true,
-					fieldName: 'symbol'
-				},
-				{
-					key: 'details',
-					name: 'Details',
-					minWidth: 90,
-					maxWidth: 130,
-					isResizable: true,
-					fieldName: 'flavor'
+					id: 'details',
+					Header: 'Details',
+					minWidth: 150,
+					maxWidth: 150,
+					resizable: true,
+					accessor: 'flavor'
 				}
 			]
 		};
@@ -92,16 +110,25 @@ export class ItemList extends React.Component {
 	}
 
 	render() {
+		let { columns, items, sorted } = this.state;
+		const defaultButton = props => <DefaultButton {...props} text={props.children} style={{ width: '100%' }} />;
 		return (
 			<div className='data-grid' data-is-scrollable='true'>
-				<DetailsList
-					items={this.state.items}
-					columns={this.state.columns}
-					setKey='set'
-					selectionMode={SelectionMode.none}
-					layoutMode={DetailsListLayoutMode.justified}
-					onColumnHeaderClick={this._onColumnClick}
+				<ReactTable
+					data={items}
+					columns={columns}
+					defaultPageSize={(items.length <= 50) ? items.length : 50}
+					pageSize={(items.length <= 50) ? items.length : 50}
+					sorted={sorted}
+					onSortedChange={sorted => this.setState({ sorted })}
+					showPagination={(items.length > 50)}
+					showPageSizeOptions={false}
+					className="-striped -highlight"
+					NextComponent={defaultButton}
+					PreviousComponent={defaultButton}
+					style={(items.length > 50) ? { height: 'calc(100vh - 88px)' } : {}}
 				/>
+
 			</div>
 		);
 	}
