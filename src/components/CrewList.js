@@ -339,9 +339,9 @@ export class CrewList extends React.Component {
 				<table><tbody>
 					<tr>
 						{
-							equipment.map(eq => {
+							equipment.map((eq, ix) => {
 								if (eq.e) {
-									return (<td key={eq.e.name}>
+									return (<td key={eq.e.name + ix}>
 										<ItemDisplay src={eq.e.iconUrl} size={100} maxRarity={eq.e.rarity} rarity={eq.e.rarity} />
 										<Label className="ms-font-xs" style={{ color: eq.have ? "" : "red" }}>{eq.e.name}</Label>
 									</td>);
@@ -429,6 +429,13 @@ export class CrewList extends React.Component {
 					NextComponent={defaultButton}
 					PreviousComponent={defaultButton}
 					style={(!this.props.embedded && (items.length > 50)) ? { height: 'calc(100vh - 88px)' } : {}}
+					getTrProps= {(s, r) => {
+						return {
+						  style: {
+							opacity: r.original.isExternal ? "0.5" : "inherit"
+						  }
+						};
+					  }}
 				/>
 				<ActiveCrewDialog ref='activeCrewDialog' />
 			</div>

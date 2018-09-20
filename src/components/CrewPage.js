@@ -14,12 +14,36 @@ import STTApi from 'sttapi';
 
 export class CrewPage extends React.Component {
 	constructor(props) {
-		super(props);
+        super(props);
+        
+        this.state = {
+            showEveryone: false,
+            crewData: this.loadCrewData(false)
+        };
     }
     
     componentDidMount() {
         this.refs.crewList.filter('');
 
+        this._updateCommandItems();
+    }
+
+    loadCrewData(showEveryone) {
+        if (!showEveryone) {
+            return STTApi.roster;
+        }
+
+        const isFFFE = (crew) => (crew.rarity === crew.max_rarity) && (crew.level === 100);
+        const notOwned = (crew) => {
+            let rc = STTApi.roster.find((rosterCrew) => rosterCrew.symbol === crew.symbol);
+            return !(rc) || !isFFFE(rc);
+        }
+
+        // Let's combine allcrew with roster such that FFFE crew shows up only once
+        return STTApi.roster.concat(STTApi.allcrew.filter(crew => notOwned(crew)));
+    }
+
+    _updateCommandItems() {
         if (this.props.onCommandItemsUpdate) {
             this.props.onCommandItemsUpdate([
                 {
@@ -45,14 +69,34 @@ export class CrewPage extends React.Component {
                                     let csv = exportCsv();
                                     download('My Crew.csv', csv, 'Export Star Trek Timelines crew roster', 'Export');
                                 }
+                            },
+                            {
+                                key: 'share',
+                                name: 'Share...',
+                                iconProps: { iconName: 'Share' },
+                                onClick: () => { this.refs.shareDialog._showDialog(STTApi.playerData.character.display_name); }
                             }]
                         }
                 },
                 {
-                    key: 'share',
-                    name: 'Share',
-                    iconProps: { iconName: 'Share' },
-                    onClick: () => { this.refs.shareDialog._showDialog(STTApi.playerData.character.display_name); }
+                    key: 'settings',
+                    text: 'Settings',
+                    iconProps: { iconName: 'Equalizer' },
+                    subMenuProps: {
+                        items: [{
+                            key: 'showEveryone',
+                            text: '(EXPERIMENTAL) Show stats for all crew',
+                            canCheck: true,
+                            isChecked: this.state.showEveryone,
+                            onClick: () => {
+                                let isChecked = !this.state.showEveryone;
+                                this.setState({
+                                    crewData: this.loadCrewData(isChecked),
+                                    showEveryone: isChecked
+                                }, () => { this._updateCommandItems(); });
+                            }
+                        }]
+                    }
                 }
             ]);
         }
@@ -64,7 +108,7 @@ export class CrewPage extends React.Component {
                 onChange={(newValue) => this.refs.crewList.filter(newValue)}
                 onSearch={(newValue) => this.refs.crewList.filter(newValue)}
             />
-            <CrewList data={STTApi.roster} ref='crewList' />
+            <CrewList data={this.state.crewData} ref='crewList' />
             <ShareDialog ref='shareDialog' onShare={shareCrew} />
         </div>;
 	}
