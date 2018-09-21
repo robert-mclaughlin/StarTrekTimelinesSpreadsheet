@@ -1,7 +1,7 @@
 import React from 'react';
 import { Image } from 'office-ui-fabric-react/lib/Image';
-import { PrimaryButton } from 'office-ui-fabric-react/lib/Button';
 import { SearchBox } from 'office-ui-fabric-react/lib/SearchBox';
+import { getTheme } from '@uifabric/styling';
 
 import { ItemDisplay } from './ItemDisplay';
 import { ReplicatorDialog } from './ReplicatorDialog';
@@ -43,8 +43,20 @@ export class NeededEquipment extends React.Component {
 		return filteredCrew;
 	}
 
-	_getCadetableItems(){
-		if(this.state.cadetableItems == undefined){
+	_getMissionCost(id, mastery_level) {
+		for (let mission of STTApi.missions) {
+			let q = mission.quests.find(q => q.id === id);
+			if (q) {
+				// .locked if not warp-able
+				return q.mastery_levels[mastery_level].energy_cost;
+			}
+		}
+
+		return undefined;
+	}
+
+	_getCadetableItems() {
+		if (this.state.cadetableItems == undefined) {
 			const cadetableItems = new Map();
 			//Advanced Cadet Challenges offer the same rewards as Standard ones, so filter them to avoid duplicates
 			let cadetMissions = STTApi.missions.filter(mission => mission.quests.filter(quest => quest.cadet).length > 0).filter(mission => mission.episode_title.indexOf("Adv") === -1);
@@ -58,10 +70,10 @@ export class NeededEquipment extends React.Component {
 									mastery: masteryLevel.id
 								};
 
-								if(cadetableItems.has(item.id)){
+								if (cadetableItems.has(item.id)) {
 									cadetableItems.get(item.id).push(info);
 								} else {
-									cadetableItems.set(item.id,[info]);
+									cadetableItems.set(item.id, [info]);
 								}
 							})
 						})
@@ -149,7 +161,7 @@ export class NeededEquipment extends React.Component {
 					if (counts) {
 						counts.count += eq.need;
 					} else {
-						found.counts[eq.crew.id] = { crew: eq.crew, count:eq.need};
+						found.counts[eq.crew.id] = { crew: eq.crew, count: eq.need };
 					}
 				} else {
 					let have = STTApi.playerData.character.items.find(item => item.archetype_id === eq.archetype);
@@ -158,7 +170,7 @@ export class NeededEquipment extends React.Component {
 					let isFactionObtainable = equipment.item_sources.filter(e => e.type === 1).length > 0;
 					let isCadetable = this._getCadetableItems().has(equipment.id);
 					let counts = {};
-					counts[eq.crew.id] = {crew: eq.crew, count: eq.need};
+					counts[eq.crew.id] = { crew: eq.crew, count: eq.need };
 
 					mapUnowned[eq.archetype] = {
 						equipment,
@@ -294,20 +306,32 @@ export class NeededEquipment extends React.Component {
 		const filteredCrew = this._getFilteredCrew(filters);
 		const neededEquipment = this._getNeededEquipment(filteredCrew, filters);
 
+		neededEquipment.sort((a, b) => {
+			if (a.energy_quotient < b.energy_quotient) {
+				return -1;
+			}
+
+			if (a.energy_quotient > b.energy_quotient) {
+				return 1;
+			}
+
+			return 0;
+		});
+
 		return this.setState({
 			neededEquipment: neededEquipment
 		});
-    }
+	}
 
-    _toggleFilter(name) {
-        const newFilters = Object.assign({}, this.state.filters);
+	_toggleFilter(name) {
+		const newFilters = Object.assign({}, this.state.filters);
 		newFilters[name] = !newFilters[name];
 		this.setState({
 			filters: newFilters
-        }, () => { this._updateCommandItems(); });
+		}, () => { this._updateCommandItems(); });
 
 		return this._filterNeededEquipment(newFilters);
-   }
+	}
 
 	_filterText(filterString) {
 		const newFilters = Object.assign({}, this.state.filters);
@@ -329,7 +353,7 @@ export class NeededEquipment extends React.Component {
 
 		res.push(<div key={'crew'}>
 			<b>Crew: </b>
-			{Object.values(counts).sort((a,b) => b.count-a.count).map((entry, idx) =>
+			{Object.values(counts).sort((a, b) => b.count - a.count).map((entry, idx) =>
 				<span key={idx}>{entry.crew.name} (x{entry.count})</span>
 			).reduce((prev, curr) => [prev, ', ', curr])}
 		</div>)
@@ -338,7 +362,9 @@ export class NeededEquipment extends React.Component {
 			res.push(<div key={'disputeMissions'}>
 				<b>Missions: </b>
 				{disputeMissions.map((entry, idx) =>
-					<span key={idx}>{entry.name} <span style={{ display: 'inline-block' }}><Image src={CONFIG.MASTERY_LEVELS[entry.mastery].url()} height={16} /></span> ({entry.chance_grade}/5, {(entry.energy_quotient * 100).toFixed(2)}%)</span>
+					<span key={idx} style={{ cursor: 'pointer' }} onClick={() => alert(`TODO - warp dialog here for ${entry.name} (mastery ${entry.mastery})`)}>
+						{entry.name} <span style={{ display: 'inline-block' }}><Image src={CONFIG.MASTERY_LEVELS[entry.mastery].url()} height={16} /></span> ({entry.chance_grade}/5, {this._getMissionCost(entry.id, entry.mastery)} <span style={{ display: 'inline-block' }}><Image src={CONFIG.SPRITES['energy_icon'].url} height={16} /></span>)
+					</span>
 				).reduce((prev, curr) => [prev, ', ', curr])}
 			</div>)
 		}
@@ -347,12 +373,14 @@ export class NeededEquipment extends React.Component {
 			res.push(<div key={'shipBattles'}>
 				<b>Ship battles: </b>
 				{shipBattles.map((entry, idx) =>
-					<span key={idx}>{entry.name} <span style={{ display: 'inline-block' }}><Image src={CONFIG.MASTERY_LEVELS[entry.mastery].url()} height={16} /></span> ({entry.chance_grade}/5, {(entry.energy_quotient * 100).toFixed(2)}%)</span>
+					<span key={idx} style={{ cursor: 'pointer' }} onClick={() => alert(`TODO - warp dialog here for ${entry.name} (mastery ${entry.mastery})`)}>
+						{entry.name} <span style={{ display: 'inline-block' }}><Image src={CONFIG.MASTERY_LEVELS[entry.mastery].url()} height={16} /></span> ({entry.chance_grade}/5, {this._getMissionCost(entry.id, entry.mastery)} <span style={{ display: 'inline-block' }}><Image src={CONFIG.SPRITES['energy_icon'].url} height={16} /></span>)
+					</span>
 				).reduce((prev, curr) => [prev, ', ', curr])}
 			</div>)
 		}
 
-		if(cadetableItems.has(equipment.id)){
+		if (cadetableItems.has(equipment.id)) {
 			res.push(<div key={'cadet'}>
 				<b>Cadet missions: </b>
 				{cadetableItems.get(equipment.id).map((entry, idx) =>
@@ -365,73 +393,73 @@ export class NeededEquipment extends React.Component {
 			res.push(<p key={'factions'}>
 				<b>Faction missions: </b>
 				{factions.map((entry, idx) =>
-					`${entry.name} (${entry.chance_grade}/5, ${(entry.energy_quotient * 100).toFixed(2)}%)`
+					`${entry.name} (${entry.chance_grade}/5)`
 				).join(', ')}
 			</p>)
 		}
 
 		return <div>{res}</div>;
-    }
+	}
 
-    componentDidMount() {
-        this._updateCommandItems();
-        this._filterNeededEquipment(this.state.filters);
-    }
+	componentDidMount() {
+		this._updateCommandItems();
+		this._filterNeededEquipment(this.state.filters);
+	}
 
-    _updateCommandItems() {
-        if (this.props.onCommandItemsUpdate) {
-            this.props.onCommandItemsUpdate([
-                {
-                    key: 'settings',
-                    text: 'Settings',
-                    iconProps: { iconName: 'Equalizer' },
-                    subMenuProps: {
-                        items: [{
-                            key: 'onlyFavorite',
-                            text: 'Show only for favorite crew',
-                            canCheck: true,
-                            isChecked: this.state.filters.onlyFavorite,
-                            onClick: () => { this._toggleFilter('onlyFavorite'); }
-                        },
-                        {
-                            key: 'onlyNeeded',
-                            text: 'Show only insufficient equipment',
-                            canCheck: true,
-                            isChecked: this.state.filters.onlyNeeded,
-                            onClick: () => { this._toggleFilter('onlyNeeded'); }
-                        },
-                        {
-                            key: 'onlyFaction',
-                            text: 'Show items obtainable through faction missions only',
-                            canCheck: true,
-                            isChecked: this.state.filters.onlyFaction,
-                            onClick: () => { this._toggleFilter('onlyFaction'); }
-                        },
-                        {
-                            key: 'cadetable',
-                            text: 'Show items obtainable through cadet missions only',
-                            canCheck: true,
-                            isChecked: this.state.filters.cadetable,
-                            onClick: () => { this._toggleFilter('cadetable'); }
+	_updateCommandItems() {
+		if (this.props.onCommandItemsUpdate) {
+			this.props.onCommandItemsUpdate([
+				{
+					key: 'settings',
+					text: 'Settings',
+					iconProps: { iconName: 'Equalizer' },
+					subMenuProps: {
+						items: [{
+							key: 'onlyFavorite',
+							text: 'Show only for favorite crew',
+							canCheck: true,
+							isChecked: this.state.filters.onlyFavorite,
+							onClick: () => { this._toggleFilter('onlyFavorite'); }
 						},
 						{
-                            key: 'allLevels',
-                            text: '(EXPERIMENTAL) show needs for all remaining level bands to FE',
-                            canCheck: true,
-                            isChecked: this.state.filters.allLevels,
-                            onClick: () => { this._toggleFilter('allLevels'); }
-                        }]
-                    }
-                },
-                {
-                    key: 'exportCsv',
-                    name: 'Export CSV...',
-                    iconProps: { iconName: 'ExcelDocument' },
-                    onClick: () => { this._exportCSV(); }
-                }
-            ]);
-        }
-    }
+							key: 'onlyNeeded',
+							text: 'Show only insufficient equipment',
+							canCheck: true,
+							isChecked: this.state.filters.onlyNeeded,
+							onClick: () => { this._toggleFilter('onlyNeeded'); }
+						},
+						{
+							key: 'onlyFaction',
+							text: 'Show items obtainable through faction missions only',
+							canCheck: true,
+							isChecked: this.state.filters.onlyFaction,
+							onClick: () => { this._toggleFilter('onlyFaction'); }
+						},
+						{
+							key: 'cadetable',
+							text: 'Show items obtainable through cadet missions only',
+							canCheck: true,
+							isChecked: this.state.filters.cadetable,
+							onClick: () => { this._toggleFilter('cadetable'); }
+						},
+						{
+							key: 'allLevels',
+							text: '(EXPERIMENTAL) show needs for all remaining level bands to FE',
+							canCheck: true,
+							isChecked: this.state.filters.allLevels,
+							onClick: () => { this._toggleFilter('allLevels'); }
+						}]
+					}
+				},
+				{
+					key: 'exportCsv',
+					name: 'Export CSV...',
+					iconProps: { iconName: 'ExcelDocument' },
+					onClick: () => { this._exportCSV(); }
+				}
+			]);
+		}
+	}
 
 	render() {
 		if (this.state.neededEquipment) {
@@ -440,9 +468,9 @@ export class NeededEquipment extends React.Component {
 				<small>Note that partially complete recipes result in zero counts for some crew and items</small>
 
 				{this.state.filters.allLevels && <div>
-					<br/>
+					<br />
 					<p><span style={{ color: 'red', fontWeight: 'bold' }}>WARNING!</span> Equipment information for all levels is crowdsourced. It is most likely incomplete and potentially incorrect (especially if DB changed the recipe tree since the data was cached). This equipment may also not display an icon and may show erroneous source information! Use this data only as rough estimates.</p>
-					<br/>
+					<br />
 				</div>}
 
 				<SearchBox placeholder='Filter...'
@@ -451,7 +479,7 @@ export class NeededEquipment extends React.Component {
 				/>
 
 				{this.state.neededEquipment.map((entry, idx) =>
-					<div key={idx} className="ui raised segment" style={{ display: 'grid', gridTemplateColumns: '128px auto', gridTemplateAreas: `'icon name' 'icon details'`, padding: '8px 4px', margin: '8px' }}>
+					<div key={idx} className="ui raised segment" style={{ display: 'grid', gridTemplateColumns: '128px auto', gridTemplateAreas: `'icon name' 'icon details'`, padding: '8px 4px', margin: '8px', backgroundColor: getTheme().palette.themeLighter }}>
 						<div style={{ gridArea: 'icon', textAlign: 'center' }}>
 							<ItemDisplay src={entry.equipment.iconUrl} size={128} maxRarity={entry.equipment.rarity} rarity={entry.equipment.rarity} />
 							<button style={{ marginBottom: '8px' }} className="ui button" onClick={() => this._replicateDialog.current.show(entry.equipment)}>Replicate...</button>
