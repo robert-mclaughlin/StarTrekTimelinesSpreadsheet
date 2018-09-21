@@ -222,7 +222,7 @@ export class NeededEquipment extends React.Component {
 						}
 					});
 
-					mapUnowned = this._mergeMapUnowned(mapUnowned, this._calculateNeeds(unparsedEquipmentFE, feCrew.archetypes));
+					mapUnowned = this._mergeMapUnowned(mapUnowned, this._calculateNeeds(unparsedEquipmentFE, STTApi.itemArchetypeCache.archetypes));
 				}
 			}
 		}
@@ -441,7 +441,7 @@ export class NeededEquipment extends React.Component {
 
 				{this.state.filters.allLevels && <div>
 					<br/>
-					<p><span style={{ color: 'red', fontWeight: 'bold' }}>WARNING!</span> Equipment information for all levels is crowdsourced. It is most likely incomplete and potentially incorrect (especially if DB changed the recipe tree since the data was collected). This equipment will also not display an icon and may show erroneous source information! Use this data as guidelines / estimates only.</p>
+					<p><span style={{ color: 'red', fontWeight: 'bold' }}>WARNING!</span> Equipment information for all levels is crowdsourced. It is most likely incomplete and potentially incorrect (especially if DB changed the recipe tree since the data was cached). This equipment may also not display an icon and may show erroneous source information! Use this data only as rough estimates.</p>
 					<br/>
 				</div>}
 
