@@ -73,39 +73,17 @@ export class NeededEquipment extends React.Component {
 		return this.state.cadetableItems;
 	}
 
-	_getNeededEquipment(filteredCrew, filters) {
-		let unparsedEquipment = [];
-		let cadetableItems = this._getCadetableItems();
-		for (let crew of filteredCrew) {
-			let lastEquipmentLevel = 1;
-			crew.equipment_slots.forEach((equipment) => {
-				if (!equipment.have) {
-					unparsedEquipment.push({ archetype: equipment.archetype, need: 1, crew: crew });
-				}
-
-				lastEquipmentLevel = equipment.level;
-			});
-
-			if (filters.allLevels) {
-				let feCrew = STTApi.allcrew.find(c => c.symol === crew.symol);
-				console.log(feCrew);
-				if (feCrew) {
-					feCrew.equipment_slots.forEach((equipment) => {
-						if (equipment.level > lastEquipmentLevel) {
-							unparsedEquipment.push({ archetype: equipment.archetype, need: 1, crew: crew });
-						}
-					})
-				}
-			}
-		}
-
+	_calculateNeeds(unparsedEquipment, archetypes) {
 		let mapUnowned = {};
 		let mapIncompleteUsed = {};
 		while (unparsedEquipment.length > 0) {
 			let eq = unparsedEquipment.pop();
-			let equipment = STTApi.itemArchetypeCache.archetypes.find(e => e.id === eq.archetype);
+			let equipment = archetypes.find(e => e.id === eq.archetype);
 
-			if (equipment.recipe && equipment.recipe.demands && (equipment.recipe.demands.length > 0)) {
+			if (!equipment) {
+				console.warn(`This equipment has no recipe and no sources: '${eq.archetype}'`);
+			}
+			else if (equipment.recipe && equipment.recipe.demands && (equipment.recipe.demands.length > 0)) {
 				let have = STTApi.playerData.character.items.find(item => item.archetype_id === eq.archetype);
 				// don't have any partially built, queue up to break into pieces
 				if (!have || have.quantity <= 0) {
@@ -178,7 +156,7 @@ export class NeededEquipment extends React.Component {
 					let isDisputeMissionObtainable = equipment.item_sources.filter(e => e.type === 0).length > 0;
 					let isShipBattleObtainable = equipment.item_sources.filter(e => e.type === 2).length > 0;
 					let isFactionObtainable = equipment.item_sources.filter(e => e.type === 1).length > 0;
-					let isCadetable = cadetableItems.has(equipment.id);
+					let isCadetable = this._getCadetableItems().has(equipment.id);
 					let counts = {};
 					counts[eq.crew.id] = {crew: eq.crew, count: eq.need};
 
@@ -193,10 +171,63 @@ export class NeededEquipment extends React.Component {
 						isCadetable: isCadetable
 					};
 				}
-			} else {
-				console.error(`This equipment has no recipe and no sources: '${equipment.name}'`);
 			}
 		}
+
+		return mapUnowned;
+	}
+
+	_mergeMapUnowned(target, source) {
+		for (let archetype in source) {
+			if (target[archetype]) {
+				target[archetype].needed += source[archetype].needed;
+
+				for (let count in source[archetype].counts) {
+					if (target[archetype].counts[count]) {
+						target[archetype].counts[count].count += source[archetype].counts[count].count;
+					} else {
+						target[archetype].counts[count] = source[archetype].counts[count];
+					}
+				}
+
+			} else {
+				target[archetype] = source[archetype];
+			}
+		}
+
+		return target;
+	}
+
+	_getNeededEquipment(filteredCrew, filters) {
+		let unparsedEquipment = [];
+		let cadetableItems = this._getCadetableItems();
+		let mapUnowned = {};
+		for (let crew of filteredCrew) {
+			let lastEquipmentLevel = 1;
+			crew.equipment_slots.forEach((equipment) => {
+				if (!equipment.have) {
+					unparsedEquipment.push({ archetype: equipment.archetype, need: 1, crew: crew });
+				}
+
+				lastEquipmentLevel = equipment.level;
+			});
+
+			if (filters.allLevels) {
+				let feCrew = STTApi.allcrew.find(c => c.symbol === crew.symbol);
+				if (feCrew) {
+					let unparsedEquipmentFE = [];
+					feCrew.equipment_slots.forEach((equipment) => {
+						if (equipment.level > lastEquipmentLevel) {
+							unparsedEquipmentFE.push({ archetype: equipment.archetype, need: 1, crew: crew });
+						}
+					});
+
+					mapUnowned = this._mergeMapUnowned(mapUnowned, this._calculateNeeds(unparsedEquipmentFE, feCrew.archetypes));
+				}
+			}
+		}
+
+		mapUnowned = this._mergeMapUnowned(mapUnowned, this._calculateNeeds(unparsedEquipment, STTApi.itemArchetypeCache.archetypes));
 
 		// Sort the map by "needed" descending
 		let arr = Object.values(mapUnowned);
@@ -240,7 +271,6 @@ export class NeededEquipment extends React.Component {
 				if (entry.equipment.name.toLowerCase().includes(filterString)) {
 					return true;
 				}
-				let found = false;
 				if (Object.values(entry.counts).some(c => c.crew.name.toLowerCase().includes(filterString))) {
 					return true;
 				}
@@ -383,15 +413,14 @@ export class NeededEquipment extends React.Component {
                             canCheck: true,
                             isChecked: this.state.filters.cadetable,
                             onClick: () => { this._toggleFilter('cadetable'); }
-						}
-						// TODO: This doesn't work ... we can't query item recipes unless the crew is at the right levels already
-						/*{
+						},
+						{
                             key: 'allLevels',
                             text: '(EXPERIMENTAL) show needs for all remaining level bands to FE',
                             canCheck: true,
                             isChecked: this.state.filters.allLevels,
                             onClick: () => { this._toggleFilter('allLevels'); }
-                        }*/]
+                        }]
                     }
                 },
                 {
@@ -409,6 +438,12 @@ export class NeededEquipment extends React.Component {
 			return (<div className='tab-panel' data-is-scrollable='true'>
 				<p>Equipment required to fill all open slots for all crew currently in your roster, for their current level band</p>
 				<small>Note that partially complete recipes result in zero counts for some crew and items</small>
+
+				{this.state.filters.allLevels && <div>
+					<br/>
+					<p><span style={{ color: 'red', fontWeight: 'bold' }}>WARNING!</span> Equipment information for all levels is crowdsourced. It is most likely incomplete and potentially incorrect (especially if DB changed the recipe tree since the data was collected). This equipment will also not display an icon and may show erroneous source information! Use this data as guidelines / estimates only.</p>
+					<br/>
+				</div>}
 
 				<SearchBox placeholder='Filter...'
 					onChange={(newValue) => this._filterText(newValue)}
