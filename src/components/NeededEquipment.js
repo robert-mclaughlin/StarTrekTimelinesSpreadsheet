@@ -25,6 +25,7 @@ export class NeededEquipment extends React.Component {
 				onlyNeeded: false,
 				onlyFaction: false,
 				cadetable: false,
+				allLevels: false,
 				userText: undefined
 			}
 		};
@@ -76,11 +77,26 @@ export class NeededEquipment extends React.Component {
 		let unparsedEquipment = [];
 		let cadetableItems = this._getCadetableItems();
 		for (let crew of filteredCrew) {
+			let lastEquipmentLevel = 1;
 			crew.equipment_slots.forEach((equipment) => {
 				if (!equipment.have) {
 					unparsedEquipment.push({ archetype: equipment.archetype, need: 1, crew: crew });
 				}
+
+				lastEquipmentLevel = equipment.level;
 			});
+
+			if (filters.allLevels) {
+				let feCrew = STTApi.allcrew.find(c => c.symol === crew.symol);
+				console.log(feCrew);
+				if (feCrew) {
+					feCrew.equipment_slots.forEach((equipment) => {
+						if (equipment.level > lastEquipmentLevel) {
+							unparsedEquipment.push({ archetype: equipment.archetype, need: 1, crew: crew });
+						}
+					})
+				}
+			}
 		}
 
 		let mapUnowned = {};
@@ -367,7 +383,15 @@ export class NeededEquipment extends React.Component {
                             canCheck: true,
                             isChecked: this.state.filters.cadetable,
                             onClick: () => { this._toggleFilter('cadetable'); }
-                        }]
+						}
+						// TODO: This doesn't work ... we can't query item recipes unless the crew is at the right levels already
+						/*{
+                            key: 'allLevels',
+                            text: '(EXPERIMENTAL) show needs for all remaining level bands to FE',
+                            canCheck: true,
+                            isChecked: this.state.filters.allLevels,
+                            onClick: () => { this._toggleFilter('allLevels'); }
+                        }*/]
                     }
                 },
                 {
