@@ -52,10 +52,10 @@ export class ReplicatorDialog extends React.Component {
             onDismiss={this._closeDialog}
             dialogContentProps={{
                 type: DialogType.normal,
-                containerClassName: 'replicatordialogMainOverride',
                 title: `Replicate one ${CONFIG.RARITIES[this.state.targetArchetype.rarity].name} ${this.state.targetArchetype.name}`
             }}
             modalProps={{
+                containerClassName: 'replicatordialogMainOverride',
                 isBlocking: true
             }}
         >

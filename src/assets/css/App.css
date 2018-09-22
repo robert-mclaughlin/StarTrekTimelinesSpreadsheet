@@ -37,6 +37,10 @@
     max-width: 600px !important;
 }
 
+.warpdialogMainOverride {
+    max-width: 600px !important;
+}
+
 .equipment-slot {
     border: 0px;
     margin: 2px;

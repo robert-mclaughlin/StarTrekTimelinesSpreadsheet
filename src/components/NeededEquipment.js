@@ -5,6 +5,7 @@ import { getTheme } from '@uifabric/styling';
 
 import { ItemDisplay } from './ItemDisplay';
 import { ReplicatorDialog } from './ReplicatorDialog';
+import { WarpDialog } from './WarpDialog';
 
 import STTApi from 'sttapi';
 import { CONFIG } from 'sttapi';
@@ -22,7 +23,7 @@ export class NeededEquipment extends React.Component {
 			cadetableItems: undefined,
 			filters: {
 				onlyFavorite: false,
-				onlyNeeded: false,
+				onlyNeeded: true,
 				onlyFaction: false,
 				cadetable: false,
 				allLevels: false,
@@ -31,6 +32,7 @@ export class NeededEquipment extends React.Component {
 		};
 
 		this._replicateDialog = React.createRef();
+		this._warpDialog = React.createRef();
 	}
 
 	_getFilteredCrew(filters) {
@@ -359,24 +361,34 @@ export class NeededEquipment extends React.Component {
 		</div>)
 
 		if (disputeMissions.length > 0) {
-			res.push(<div key={'disputeMissions'}>
+			res.push(<div key={'disputeMissions'} style={{ lineHeight: '2.5' }}>
 				<b>Missions: </b>
 				{disputeMissions.map((entry, idx) =>
-					<span key={idx} style={{ cursor: 'pointer' }} onClick={() => alert(`TODO - warp dialog here for ${entry.name} (mastery ${entry.mastery})`)}>
-						{entry.name} <span style={{ display: 'inline-block' }}><Image src={CONFIG.MASTERY_LEVELS[entry.mastery].url()} height={16} /></span> ({entry.chance_grade}/5, {this._getMissionCost(entry.id, entry.mastery)} <span style={{ display: 'inline-block' }}><Image src={CONFIG.SPRITES['energy_icon'].url} height={16} /></span>)
-					</span>
-				).reduce((prev, curr) => [prev, ', ', curr])}
+					<div className="ui labeled button compact tiny" key={idx} onClick={() => this._warpDialog.current.show(entry.id, entry.mastery) }>
+						<div className="ui button compact tiny">
+							{entry.name} <span style={{ display: 'inline-block' }}><Image src={CONFIG.MASTERY_LEVELS[entry.mastery].url()} height={14} /></span> ({entry.chance_grade}/5)
+						</div>
+						<a className="ui blue label">
+							{this._getMissionCost(entry.id, entry.mastery)} <span style={{ display: 'inline-block' }}><Image src={CONFIG.SPRITES['energy_icon'].url} height={14} /></span>
+						</a>
+				  	</div>
+				).reduce((prev, curr) => [prev, ' ', curr])}
 			</div>)
 		}
 
 		if (shipBattles.length > 0) {
-			res.push(<div key={'shipBattles'}>
+			res.push(<div key={'shipBattles'} style={{ lineHeight: '2.5' }}>
 				<b>Ship battles: </b>
 				{shipBattles.map((entry, idx) =>
-					<span key={idx} style={{ cursor: 'pointer' }} onClick={() => alert(`TODO - warp dialog here for ${entry.name} (mastery ${entry.mastery})`)}>
-						{entry.name} <span style={{ display: 'inline-block' }}><Image src={CONFIG.MASTERY_LEVELS[entry.mastery].url()} height={16} /></span> ({entry.chance_grade}/5, {this._getMissionCost(entry.id, entry.mastery)} <span style={{ display: 'inline-block' }}><Image src={CONFIG.SPRITES['energy_icon'].url} height={16} /></span>)
-					</span>
-				).reduce((prev, curr) => [prev, ', ', curr])}
+					<div className="ui labeled button compact tiny" key={idx} onClick={() => this._warpDialog.current.show(entry.id, entry.mastery) }>
+						<div className="ui button compact tiny">
+							{entry.name} <span style={{ display: 'inline-block' }}><Image src={CONFIG.MASTERY_LEVELS[entry.mastery].url()} height={14} /></span> ({entry.chance_grade}/5)
+						</div>
+						<a className="ui blue label">
+							{this._getMissionCost(entry.id, entry.mastery)} <span style={{ display: 'inline-block' }}><Image src={CONFIG.SPRITES['energy_icon'].url} height={14} /></span>
+						</a>
+					</div>
+				).reduce((prev, curr) => [prev, ' ', curr])}
 			</div>)
 		}
 
@@ -493,6 +505,7 @@ export class NeededEquipment extends React.Component {
 					</div>
 				)}
 				<ReplicatorDialog ref={this._replicateDialog} />
+				<WarpDialog ref={this._warpDialog} onWarped={() => this._filterNeededEquipment(this.state.filters)} />
 			</div>);
 		}
 		else {
