@@ -35,7 +35,6 @@ import { FileImageCache } from '../utils/fileImageCache.js';
 // #!else
 import { ServerImageProvider } from '../utils/serverImageCache.js';
 // #!endif
-import { createIssue } from '../utils/githubUtils';
 
 // #!if ENV === 'electron'
 import { LoginDialog } from './LoginDialog.js';
@@ -53,7 +52,6 @@ import { AboutAndHelp } from './AboutAndHelp.js';
 import { FleetDetails } from './FleetDetails.js';
 import { EquipmentDetails } from './EquipmentDetails.js';
 import { CaptainCard } from './CaptainCard.js';
-import { FeedbackPanel } from './FeedbackPanel.js';
 import { VoyageTools } from './VoyageTools.js';
 import { NeededEquipment } from './NeededEquipment.js';
 import { CrewDuplicates } from './CrewDuplicates.js';
@@ -61,6 +59,7 @@ import { IncompleteMissions } from './IncompleteMissions.js';
 
 import STTApi from 'sttapi';
 import { loginSequence } from 'sttapi';
+import { createIssue } from '../utils/githubUtils';
 import { openShellExternal, getAppVersion } from '../utils/pal';
 
 import { loadTheme, ColorClassNames } from '@uifabric/styling';
@@ -98,7 +97,6 @@ class App extends React.Component {
 		});
 
 		this._captainButtonElement = React.createRef();
-		this._feedbackButtonElement = null;
 		this._onAccessToken = this._onAccessToken.bind(this);
 		this._onLogout = this._onLogout.bind(this);
 		this._onRefresh = this._onRefresh.bind(this);
@@ -334,8 +332,6 @@ class App extends React.Component {
 					</DialogFooter>
 				</Dialog>
 
-				<FeedbackPanel ref='feedbackPanel' targetElement={this._feedbackButtonElement} />
-
 				{/* #!if ENV === 'electron' */}
 				<LoginDialog ref='loginDialog' onAccessToken={this._onAccessToken} shownByDefault={this.state.showLoginDialog} />
 				{/* #!else */}
@@ -452,15 +448,46 @@ class App extends React.Component {
 				}
 			},
 			{
-				key: 'Feedback',
-				name: 'Send feedback',
-				iconProps: { iconName: 'Emoji2' },
+				key: 'FeedbackHelp',
+				name: 'Feedback and help',
+				iconProps: { iconName: 'Help' },
 				iconOnly: true,
-				onClick: () => {
-					this.refs.feedbackPanel.show();
-				}
-			},
-			this._tabMenuItem({ key: 'About', name: 'Help and About', itemIcon: 'Help', iconOnly: true })
+				subMenuProps: {
+					items: [this._tabMenuItem({ key: 'About', name: 'Help and About', itemIcon: 'Help', iconOnly: true }),
+					{
+						key: 'ReportBug',
+						name: 'Report bug...',
+						iconProps: { iconName: 'Bug' },
+						onClick: () => {
+							createIssue(false);
+						}
+					},
+					{
+						key: 'SendFeedback',
+						name: 'Feature request...',
+						iconProps: { iconName: 'Comment' },
+						onClick: () => {
+							createIssue(true);
+						}
+					},
+					{
+						key: 'BuyCoffee',
+						name: 'Buy me a coffee...',
+						iconProps: { iconName: 'CoffeeScript' },
+						onClick: () => {
+							openShellExternal("https://www.buymeacoffee.com/Evbkf8yRT");
+						}
+					},
+					{
+						key: 'EmailMe',
+						name: 'info@iampicard.com',
+						iconProps: { iconName: 'Mail' },
+						onClick: () => {
+							openShellExternal("mailto:info@iampicard.com");
+						}
+					}
+				]}
+			}
 		];
 
 		return extraItems ? extraItems.concat(staticItems) : staticItems;

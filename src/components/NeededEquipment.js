@@ -364,7 +364,7 @@ export class NeededEquipment extends React.Component {
 			res.push(<div key={'disputeMissions'} style={{ lineHeight: '2.5' }}>
 				<b>Missions: </b>
 				{disputeMissions.map((entry, idx) =>
-					<div className="ui labeled button compact tiny" key={idx} onClick={() => this._warpDialog.current.show(entry.id, entry.mastery) }>
+					<div className={"ui labeled button compact tiny" + ((this._getMissionCost(entry.id, entry.mastery) === undefined) ? " disabled" : "")} key={idx} onClick={() => this._warpDialog.current.show(entry.id, entry.mastery) }>
 						<div className="ui button compact tiny">
 							{entry.name} <span style={{ display: 'inline-block' }}><Image src={CONFIG.MASTERY_LEVELS[entry.mastery].url()} height={14} /></span> ({entry.chance_grade}/5)
 						</div>
@@ -380,7 +380,7 @@ export class NeededEquipment extends React.Component {
 			res.push(<div key={'shipBattles'} style={{ lineHeight: '2.5' }}>
 				<b>Ship battles: </b>
 				{shipBattles.map((entry, idx) =>
-					<div className="ui labeled button compact tiny" key={idx} onClick={() => this._warpDialog.current.show(entry.id, entry.mastery) }>
+					<div className={"ui labeled button compact tiny" + ((this._getMissionCost(entry.id, entry.mastery) === undefined) ? " disabled" : "")} key={idx} onClick={() => this._warpDialog.current.show(entry.id, entry.mastery) }>
 						<div className="ui button compact tiny">
 							{entry.name} <span style={{ display: 'inline-block' }}><Image src={CONFIG.MASTERY_LEVELS[entry.mastery].url()} height={14} /></span> ({entry.chance_grade}/5)
 						</div>
