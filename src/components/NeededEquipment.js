@@ -6,6 +6,7 @@ import { getTheme } from '@uifabric/styling';
 import { ItemDisplay } from './ItemDisplay';
 import { ReplicatorDialog } from './ReplicatorDialog';
 import { WarpDialog } from './WarpDialog';
+import { CollapsibleSection } from './CollapsibleSection.js';
 
 import STTApi from 'sttapi';
 import { CONFIG } from 'sttapi';
@@ -364,14 +365,14 @@ export class NeededEquipment extends React.Component {
 			res.push(<div key={'disputeMissions'} style={{ lineHeight: '2.5' }}>
 				<b>Missions: </b>
 				{disputeMissions.map((entry, idx) =>
-					<div className={"ui labeled button compact tiny" + ((this._getMissionCost(entry.id, entry.mastery) === undefined) ? " disabled" : "")} key={idx} onClick={() => this._warpDialog.current.show(entry.id, entry.mastery) }>
+					<div className={"ui labeled button compact tiny" + ((this._getMissionCost(entry.id, entry.mastery) === undefined) ? " disabled" : "")} key={idx} onClick={() => this._warpDialog.current.show(entry.id, entry.mastery)}>
 						<div className="ui button compact tiny">
 							{entry.name} <span style={{ display: 'inline-block' }}><Image src={CONFIG.MASTERY_LEVELS[entry.mastery].url()} height={14} /></span> ({entry.chance_grade}/5)
 						</div>
 						<a className="ui blue label">
 							{this._getMissionCost(entry.id, entry.mastery)} <span style={{ display: 'inline-block' }}><Image src={CONFIG.SPRITES['energy_icon'].url} height={14} /></span>
 						</a>
-				  	</div>
+					</div>
 				).reduce((prev, curr) => [prev, ' ', curr])}
 			</div>)
 		}
@@ -380,7 +381,7 @@ export class NeededEquipment extends React.Component {
 			res.push(<div key={'shipBattles'} style={{ lineHeight: '2.5' }}>
 				<b>Ship battles: </b>
 				{shipBattles.map((entry, idx) =>
-					<div className={"ui labeled button compact tiny" + ((this._getMissionCost(entry.id, entry.mastery) === undefined) ? " disabled" : "")} key={idx} onClick={() => this._warpDialog.current.show(entry.id, entry.mastery) }>
+					<div className={"ui labeled button compact tiny" + ((this._getMissionCost(entry.id, entry.mastery) === undefined) ? " disabled" : "")} key={idx} onClick={() => this._warpDialog.current.show(entry.id, entry.mastery)}>
 						<div className="ui button compact tiny">
 							{entry.name} <span style={{ display: 'inline-block' }}><Image src={CONFIG.MASTERY_LEVELS[entry.mastery].url()} height={14} /></span> ({entry.chance_grade}/5)
 						</div>
@@ -473,10 +474,86 @@ export class NeededEquipment extends React.Component {
 		}
 	}
 
+	renderFarmList() {
+		if (!this.state.neededEquipment) {
+			return <span />;
+		}
+
+		let missionMap = new Map();
+		this.state.neededEquipment.forEach(entry => {
+			let equipment = entry.equipment;
+			let missions = equipment.item_sources.filter(e => (e.type === 0) || (e.type === 2));
+
+			missions.forEach(mission => {
+				if (!this._getMissionCost(mission.id, mission.mastery)) {
+					// Disabled missions are filtered out
+					return;
+				}
+
+				let key = mission.id * (mission.mastery + 1);
+				if (!missionMap.has(key)) {
+					missionMap.set(key, {
+						mission: mission,
+						equipment: []
+					});
+				}
+
+				missionMap.get(key).equipment.push(equipment);
+			});
+		});
+
+		let entries = Array.from(missionMap.values());
+		entries.sort((a, b) => a.equipment.length - b.equipment.length);
+
+		// Minimize entries
+		const obtainable = (equipment, entry) => entries.some(e => (e !== entry) && e.equipment.some(eq => eq.id === equipment.id));
+
+		// TODO: there must be a better algorithm for this, maybe one that also accounts for drop chances to break ties :)
+		let reducePossible = true;
+		while (reducePossible) {
+			reducePossible = false;
+
+			for (let entry of entries) {
+				if (entry.equipment.every(eq => obtainable(eq, entry))) {
+					entries.splice(entries.indexOf(entry), 1);
+					reducePossible = true;
+				}
+			}
+		}
+
+		entries.reverse();
+
+		let res = [];
+		for (let val of entries) {
+			let key = val.mission.id * (val.mission.mastery + 1);
+			let entry = val.mission;
+
+			res.push(<div key={key} style={{ lineHeight: '2.5' }}>
+				<div className="ui labeled button compact tiny" key={key} onClick={() => this._warpDialog.current.show(entry.id, entry.mastery)}>
+					<div className="ui button compact tiny">
+						{entry.name} <span style={{ display: 'inline-block' }}><Image src={CONFIG.MASTERY_LEVELS[entry.mastery].url()} height={14} /></span> ({entry.chance_grade}/5)
+					</div>
+					<a className="ui blue label">
+						{this._getMissionCost(entry.id, entry.mastery)} <span style={{ display: 'inline-block' }}><Image src={CONFIG.SPRITES['energy_icon'].url} height={14} /></span>
+					</a>
+				</div>
+
+				<div className="ui label small">
+					{val.equipment.map((entry, idx) => <span key={idx} style={{ color: entry.rarity && CONFIG.RARITIES[entry.rarity].color }}>{(entry.rarity ? CONFIG.RARITIES[entry.rarity].name : '')} {entry.name}</span>).reduce((prev, curr) => [prev, ', ', curr])}
+				</div>
+			</div>);
+		}
+
+		return <CollapsibleSection title='Farming list (WORK IN PROGRESS, NEEDS A LOT OF IMPROVEMENT)'>
+			<p>This list minimizes the number of missions that can yield all filtered equipment as rewards (it <b>doesn't</b> factor in drop chances).</p>
+			{res}
+		</CollapsibleSection>;
+	}
+
 	render() {
 		if (this.state.neededEquipment) {
 			return (<div className='tab-panel' data-is-scrollable='true'>
-				<p>Equipment required to fill all open slots for all crew currently in your roster, for their current level band</p>
+				<p>Equipment required to fill all open slots for all crew currently in your roster{!this.state.filters.allLevels && <span>, for their current level band</span>}</p>
 				<small>Note that partially complete recipes result in zero counts for some crew and items</small>
 
 				{this.state.filters.allLevels && <div>
@@ -504,6 +581,7 @@ export class NeededEquipment extends React.Component {
 						</div>
 					</div>
 				)}
+				{this.renderFarmList()}
 				<ReplicatorDialog ref={this._replicateDialog} />
 				<WarpDialog ref={this._warpDialog} onWarped={() => this._filterNeededEquipment(this.state.filters)} />
 			</div>);
