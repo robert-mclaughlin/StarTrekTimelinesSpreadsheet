@@ -485,6 +485,17 @@ export class VoyageLog extends React.Component {
 		this.reloadVoyageState();
 	}
 
+	componentDidMount() {
+		// Every 5 minutes refresh
+		// TODO: this should be configurable
+		const refreshInterval = 5 * 60;
+		this.intervalLogRefresh = setInterval(() => this.reloadVoyageState(), refreshInterval * 1000);
+	}
+
+	componentWillUnmount() {
+		clearInterval(this.intervalLogRefresh);
+	}
+
 	async reloadVoyageState() {
 		let voyage = STTApi.playerData.character.voyage[0];
 		if (voyage && voyage.id) {
