@@ -3,7 +3,7 @@ import '../assets/css/semantic.min.css';
 import React from 'react';
 
 import STTApi from 'sttapi';
-import { CONFIG } from 'sttapi';
+import { CONFIG, getChronitonCount } from 'sttapi';
 
 import { openDevTools } from '../utils/pal';
 
@@ -30,7 +30,7 @@ export class CaptainCard extends React.Component {
 
 						<div className="ui black large image label">
 							<img src={CONFIG.SPRITES['energy_icon'].url} className="ui" />
-							{Math.min(Math.floor(STTApi.playerData.character.seconds_from_replay_energy_basis / STTApi.playerData.character.replay_energy_rate), STTApi.playerData.character.replay_energy_max) + STTApi.playerData.character.replay_energy_overflow}
+							{getChronitonCount()}
 						</div>
 
 						<div className="ui black large image label">
