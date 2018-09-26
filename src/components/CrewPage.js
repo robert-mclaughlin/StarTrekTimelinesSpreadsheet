@@ -33,9 +33,10 @@ export class CrewPage extends React.Component {
             return STTApi.roster;
         }
 
-        const isFFFE = (crew) => (crew.rarity === crew.max_rarity) && (crew.level === 100);
+        const isFFFE = (crew) => (crew.frozen > 0) || ((crew.rarity === crew.max_rarity) && (crew.level === 100));
         const notOwned = (crew) => {
-            let rc = STTApi.roster.find((rosterCrew) => rosterCrew.symbol === crew.symbol);
+            let rc = STTApi.roster.find((rosterCrew) => !rosterCrew.buyback && (rosterCrew.symbol === crew.symbol));
+
             return !(rc) || !isFFFE(rc);
         }
 
