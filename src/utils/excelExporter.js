@@ -131,16 +131,24 @@ export async function exportExcel(itemList) {
 	worksheetShips.column(8).width(10);
 	worksheetShips.column(9).width(10);
 	worksheetShips.column(10).width(10);
+	worksheetShips.column(11).width(10);
 
 	values = [];
-	values.push(['id', 'name', 'level', 'max_level', 'rarity', 'shields', 'hull', 'attack', 'accuracy', 'evasion']);
+	values.push(['id', 'name', 'level', 'max_level', 'rarity', 'shields', 'hull', 'attack', 'accuracy', 'evasion', 'schematics']);
 
 	worksheetShips.row(1).style("bold", true);
 
 	//worksheetShips.autoFilter = 'A1:J1';
 
+	const playerSchematics = STTApi.playerData.character.items.filter(item => item.type === 8);
+	const numberOfSchematics = (archetype_id) => {
+		const schematic = STTApi.shipSchematics.find(schematic => schematic.ship.archetype_id === archetype_id);
+		const playerSchematic = playerSchematics.find(playerSchematic => playerSchematic.archetype_id === schematic.id);
+		return playerSchematic ? playerSchematic.quantity : 0;
+	}
+
 	STTApi.ships.forEach((ship) => {
-		values.push([ship.archetype_id, ship.name, ship.level, ship.max_level, ship.rarity, ship.shields, ship.hull, ship.attack, ship.accuracy, ship.evasion]);
+		values.push([ship.archetype_id, ship.name, (ship.level === 0) ? 'N/A' : (ship.level + 1), ship.max_level + 1, ship.rarity, ship.shields, ship.hull, ship.attack, ship.accuracy, ship.evasion, numberOfSchematics(ship.archetype_id)]);
 	});
 
 	worksheetShips.cell("A1").value(values);

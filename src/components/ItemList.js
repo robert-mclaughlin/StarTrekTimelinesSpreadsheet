@@ -7,14 +7,12 @@ import { ItemDisplay } from './ItemDisplay';
 import { RarityStars } from './RarityStars';
 import { CONFIG } from 'sttapi';
 
-import { sortItems, columnClick } from '../utils/listUtils.js';
-
 export class ItemList extends React.Component {
 	constructor(props) {
 		super(props);
 
 		this.state = {
-			items: sortItems(this.props.data, 'name'),
+			items: this.props.data,
 			sorted: [{ id: 'name', desc: false }, { id:'rarity'}],
 			columns: [
 				{
@@ -105,32 +103,27 @@ export class ItemList extends React.Component {
 				}
 			]
 		};
-
-		this._onColumnClick = this._onColumnClick.bind(this);
 	}
 
 	render() {
 		let { columns, items, sorted } = this.state;
 		const defaultButton = props => <DefaultButton {...props} text={props.children} style={{ width: '100%' }} />;
-		return (
-			<div className='data-grid' data-is-scrollable='true'>
-				<ReactTable
-					data={items}
-					columns={columns}
-					defaultPageSize={(items.length <= 50) ? items.length : 50}
-					pageSize={(items.length <= 50) ? items.length : 50}
-					sorted={sorted}
-					onSortedChange={sorted => this.setState({ sorted })}
-					showPagination={(items.length > 50)}
-					showPageSizeOptions={false}
-					className="-striped -highlight"
-					NextComponent={defaultButton}
-					PreviousComponent={defaultButton}
-					style={(items.length > 50) ? { height: 'calc(100vh - 88px)' } : {}}
-				/>
-
-			</div>
-		);
+		return <div className='data-grid' data-is-scrollable='true'>
+			<ReactTable
+				data={items}
+				columns={columns}
+				defaultPageSize={(items.length <= 50) ? items.length : 50}
+				pageSize={(items.length <= 50) ? items.length : 50}
+				sorted={sorted}
+				onSortedChange={sorted => this.setState({ sorted })}
+				showPagination={(items.length > 50)}
+				showPageSizeOptions={false}
+				className="-striped -highlight"
+				NextComponent={defaultButton}
+				PreviousComponent={defaultButton}
+				style={(items.length > 50) ? { height: 'calc(100vh - 88px)' } : {}}
+			/>
+		</div>;
 	}
 
 	_filterItem(item, searchString) {
@@ -156,13 +149,9 @@ export class ItemList extends React.Component {
 
 	filter(newValue) {
 		this.setState({
-			items: sortItems((newValue ?
+			items: newValue ?
 				this.props.data.filter(i => this._filterItem(i, newValue.toLowerCase())) :
-				this.props.data), this.state.sortColumn, this.state.sortedDescending)
+				this.props.data
 		});
-	}
-
-	_onColumnClick(ev, column) {
-		this.setState(columnClick(this.state.items, this.state.columns, column));
 	}
 }
