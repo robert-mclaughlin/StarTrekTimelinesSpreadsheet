@@ -20,7 +20,7 @@ import { RarityStars } from './RarityStars';
 import ReactTable from "react-table";
 
 import { download } from '../utils/pal';
-import { calculateVoyage, estimateVoyageRemaining } from '../utils/voyageCalc';
+import { calculateVoyage, estimateVoyageRemaining, exportVoyageData } from '../utils/voyageCalc';
 
 export class VoyageCrew extends React.Component {
 	constructor(props) {
@@ -40,7 +40,8 @@ export class VoyageCrew extends React.Component {
 			peopleList: [],
 			currentSelectedItems: [],
 			preselectedIgnored: [],
-			error: undefined
+			error: undefined,
+			generatingVoyCrewRank: false
 		};
 
 		// See which crew is needed in the event to give the user a chance to remove them from consideration
@@ -203,6 +204,7 @@ export class VoyageCrew extends React.Component {
 
 			{/* #!if ENV === 'electron' */}
 			<DefaultButton onClick={this._generateVoyCrewRank} text='Export CSV with crew Voyage ranking...' disabled={this.state.state === 'inprogress'} />
+			{this.state.generatingVoyCrewRank && <i className="spinner loading icon"></i>}
 			{/* #!endif */}
 		</div>);
 	}
@@ -259,7 +261,7 @@ export class VoyageCrew extends React.Component {
 		});
 	}
 
-	_calcVoyageData() {
+	_packVoyageOptions() {
 		let filteredRoster = STTApi.roster.filter(crew =>{
 			// Filter out buy-back crew
 			if (crew.buyback) {
@@ -282,7 +284,7 @@ export class VoyageCrew extends React.Component {
 			return true;
 		});
 
-		let options = {
+		return {
 			searchDepth: this.state.searchDepth,
 			extendsTarget: this.state.extendsTarget,
 			shipAM: this.state.bestShips[0].score,
@@ -293,6 +295,10 @@ export class VoyageCrew extends React.Component {
 			voyage_description: STTApi.playerData.character.voyage_descriptions[0],
 			roster: filteredRoster
 		};
+	}
+
+	_calcVoyageData() {
+		let options = this._packVoyageOptions();
 
 		calculateVoyage(options, (entries, score) => {
 			this.setState({
@@ -311,11 +317,13 @@ export class VoyageCrew extends React.Component {
 	}
 
 	_generateVoyCrewRank() {
-		let dataToExport = this._exportVoyageData();
+		this.setState({ generatingVoyCrewRank: true });
+
+		let dataToExport = exportVoyageData(this._packVoyageOptions());
 
 		const NativeExtension = require('electron').remote.require('stt-native');
 		NativeExtension.calculateVoyageCrewRank(JSON.stringify(dataToExport), (rankResult, estimateResult) => {
-			this.setState({ state: 'calculating' });
+			this.setState({ generatingVoyCrewRank: false });
 
 			download('My Voyage Crew.csv', rankResult, 'Export Star Trek Timelines voyage crew ranking', 'Export');
 			download('My Voyage Estimates.csv', estimateResult, 'Export Star Trek Timelines voyage estimates', 'Export');

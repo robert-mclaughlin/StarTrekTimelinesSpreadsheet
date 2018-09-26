@@ -20,7 +20,7 @@ function parseResults(result, callback) {
     callback(entries, score);
 }
 
-function exportVoyageData(options) {
+export function exportVoyageData(options) {
     let dataToExport = {
         // These values get filled in the following code
         crew: [],
