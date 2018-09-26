@@ -5,7 +5,7 @@ import { SpinButton } from 'office-ui-fabric-react/lib/SpinButton';
 import { PrimaryButton, DefaultButton } from 'office-ui-fabric-react/lib/Button';
 
 import STTApi from 'sttapi';
-import { CONFIG } from 'sttapi';
+import { CONFIG, getChronitonCount } from 'sttapi';
 
 export class WarpDialog extends React.Component {
     constructor(props) {
@@ -71,7 +71,7 @@ export class WarpDialog extends React.Component {
             return <span />;
         }
 
-        let chronAvailable = Math.min(Math.floor(STTApi.playerData.character.seconds_from_replay_energy_basis / STTApi.playerData.character.replay_energy_rate), STTApi.playerData.character.replay_energy_max) + STTApi.playerData.character.replay_energy_overflow;
+        let chronAvailable = getChronitonCount();
         let chronNeeded = this.state.mastery.energy_cost * this.state.warpCount;
 
         return <Dialog
