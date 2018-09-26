@@ -627,10 +627,14 @@ class App extends React.Component {
 	}
 
 	_onLogout() {
-		this.setState({ isCaptainCalloutVisible: false, darkTheme: true }, () => { this._onSwitchTheme(true); });
+		let darkTheme = true;
+		// #!if ENV === 'electron'
+		darkTheme = false;
+		// #!endif
+		this.setState({ isCaptainCalloutVisible: false, darkTheme: darkTheme }, () => { this._onSwitchTheme(true); });
 
 		STTApi.refreshEverything(true);
-		this.setState({ showLoginDialog: true, dataLoaded: false, captainName: 'Welcome!', spinnerLabel: 'Loading...' });
+		this.setState({ showLoginDialog: true, dataLoaded: false, captainName: '', spinnerLabel: 'Loading...' });
 	}
 
 	_onRefresh() {
