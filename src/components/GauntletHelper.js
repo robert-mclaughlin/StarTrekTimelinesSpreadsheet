@@ -1,5 +1,6 @@
 import React from 'react';
 import { Label } from 'office-ui-fabric-react/lib/Label';
+import { Spinner, SpinnerSize } from 'office-ui-fabric-react/lib/Spinner';
 import { Image } from 'office-ui-fabric-react/lib/Image';
 import { MessageBar, MessageBarType } from 'office-ui-fabric-react/lib/MessageBar';
 import { SpinButton } from 'office-ui-fabric-react/lib/SpinButton';
@@ -160,7 +161,8 @@ export class GauntletHelper extends React.Component {
 			critBonusDivider: 3,
 			includeFrozen: false,
 			calculating: false,
-			logPath: undefined
+			logPath: undefined,
+			showSpinner: true
 		};
 
 		this._reloadGauntletData = this._reloadGauntletData.bind(this);
@@ -296,7 +298,7 @@ export class GauntletHelper extends React.Component {
 		}
 		// #!endif
 
-		this.setState({ logPath: logPath });
+		this.setState({ logPath: logPath, showSpinner: false });
 	}
 
 	_calculateSelection() {
@@ -356,6 +358,9 @@ export class GauntletHelper extends React.Component {
 	}
 
 	render() {
+		if (this.state.showSpinner)
+			return <Spinner size={SpinnerSize.large} label='Loading gauntlet details...' />;
+
 		if (this.state.gauntlet && (this.state.gauntlet.state == 'NONE')) {
 			return (
 				<div>

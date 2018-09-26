@@ -276,7 +276,7 @@ class App extends React.Component {
 
 	render() {
 		if (this.state.showSpinner) {
-			return <Spinner size={SpinnerSize.large} label={this.state.spinnerLabel} />;
+			return <div className="centered"><Spinner size={SpinnerSize.large} label={this.state.spinnerLabel} /></div>;
 		}
 
 		return (
