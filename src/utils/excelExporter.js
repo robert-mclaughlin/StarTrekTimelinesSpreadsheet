@@ -132,9 +132,10 @@ export async function exportExcel(itemList) {
 	worksheetShips.column(9).width(10);
 	worksheetShips.column(10).width(10);
 	worksheetShips.column(11).width(10);
+	worksheetShips.column(12).width(30);
 
 	values = [];
-	values.push(['id', 'name', 'level', 'max_level', 'rarity', 'shields', 'hull', 'attack', 'accuracy', 'evasion', 'schematics']);
+	values.push(['id', 'name', 'level', 'max_level', 'rarity', 'shields', 'hull', 'attack', 'accuracy', 'evasion', 'schematics', 'traits']);
 
 	worksheetShips.row(1).style("bold", true);
 
@@ -148,7 +149,7 @@ export async function exportExcel(itemList) {
 	}
 
 	STTApi.ships.forEach((ship) => {
-		values.push([ship.archetype_id, ship.name, (ship.level === 0) ? 'N/A' : (ship.level + 1), ship.max_level + 1, ship.rarity, ship.shields, ship.hull, ship.attack, ship.accuracy, ship.evasion, numberOfSchematics(ship.archetype_id)]);
+		values.push([ship.archetype_id, ship.name, (ship.level === 0) ? 'N/A' : (ship.level + 1), ship.max_level + 1, ship.rarity, ship.shields, ship.hull, ship.attack, ship.accuracy, ship.evasion, numberOfSchematics(ship.archetype_id), ship.traitNames]);
 	});
 
 	worksheetShips.cell("A1").value(values);
