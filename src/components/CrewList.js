@@ -251,9 +251,10 @@ export class CrewList extends React.Component {
 			{
 				key: 'traits',
 				Header: 'Traits',
-				minWidth: 120,
+				minWidth: 140,
 				isResizable: true,
-				accessor: 'traits'
+				accessor: 'traits',
+				Cell: (cell) => <div style={{ whiteSpace: 'normal', height: '50px' }}>{cell.original.traits.replace(/,/g, ', ')}</div>
 			});
 
 		let sortColumn = props.sortColumn ? props.sortColumn : 'max_rarity';

@@ -547,7 +547,7 @@ export class VoyageLog extends React.Component {
 			return <p>Voyage has run out of antimatter after {formatTimeSeconds(this.state.voyage_duration)} and it's waiting to be abandoned or replenished.</p>;
 		} else {
 			let minEstimate = (this.state.estimatedMinutesLeft * 0.75 - 1) * 60;
-			let maxEstimate = (this.state.estimatedMinutesLeft * 1.25 + 1) * 60;
+			let maxEstimate = this.state.estimatedMinutesLeft * 60;
 
 			let chanceDilemma = 100 * ((this.state.seconds_between_dilemmas - this.state.seconds_since_last_dilemma) - minEstimate) / (maxEstimate - minEstimate);
 			chanceDilemma = (100 - Math.min(Math.max(chanceDilemma, 0), 100)).toFixed();
@@ -606,7 +606,7 @@ export class VoyageLog extends React.Component {
 				promises.push(resolveDilemma(voyageId, dilemmaId, i % (-1 * index)));
 			}
 
-			await Promise.all(promises);
+			await Promise.all(promises).catch((error) => { /*console.warn(error);*/ });
 		} else
 		// #!endif
 		{

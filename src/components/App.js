@@ -1,6 +1,6 @@
 ﻿/*
     StarTrekTimelinesSpreadsheet - A tool to help with crew management in Star Trek Timelines
-    Copyright (C) 2017 IAmPicard
+    Copyright (C) 2017-2018 IAmPicard
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -410,16 +410,6 @@ class App extends React.Component {
 		}
 	}
 
-	_getNavOverflowItems() {
-		let tabs = [
-			{ key: 'Items', itemIcon: 'Boards' },
-			{ key: 'Equipment', itemIcon: 'CheckList' },
-			{ key: 'Ships', itemIcon: 'Airplane' },
-			{ key: 'Fleet', itemIcon: 'WindDirection' }];
-
-		return tabs.map(tab => this._tabMenuItem(tab));
-	}
-
 	_switchTab(newTab) {
 		if (this.state.currentTab === newTab) {
 			// From the history listener, nothing to do here
@@ -529,6 +519,10 @@ class App extends React.Component {
 		}
 	}
 
+	_getNavOverflowItems() {
+		return [this._tabMenuItem({ key: 'Fleet', itemIcon: 'WindDirection' })];
+	}
+
 	_getNavItems() {
 		let navItems = [
 			{
@@ -610,7 +604,10 @@ class App extends React.Component {
 				}
 			},
 			this._tabMenuItem({ key: 'Voyage', itemIcon: 'Rocket' }),
-			this._tabMenuItem({ key: 'Gauntlet', itemIcon: 'ConnectContacts' })
+			this._tabMenuItem({ key: 'Gauntlet', itemIcon: 'ConnectContacts' }),
+			this._tabMenuItem({ key: 'Items', itemIcon: 'Boards' }),
+			this._tabMenuItem({ key: 'Equipment', itemIcon: 'CheckList' }),
+			this._tabMenuItem({ key: 'Ships', itemIcon: 'Airplane' })
 		]);
 
 		return navItems;
