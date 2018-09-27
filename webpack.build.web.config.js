@@ -51,7 +51,10 @@ module.exports = merge(baseConfig, {
 	},
 	target: 'web',
 	plugins: [
-		new HtmlWebpackPlugin({ title: `Star Trek Timelines Crew Management v${PACKAGE.version}-web BETA build ${new Date().toISOString()}` }),
+		new HtmlWebpackPlugin({
+			title: `Star Trek Timelines Crew Management v${PACKAGE.version}-web BETA build ${new Date().toISOString()}`,
+			favicon: 'src/assets/icons/ATFleet.ico'
+		}),
 		new MiniCssExtractPlugin({
 			// Options similar to the same options in webpackOptions.output
 			// both options are optional
