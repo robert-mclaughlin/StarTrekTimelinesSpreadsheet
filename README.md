@@ -1,9 +1,11 @@
 # Star Trek Timelines Spreadsheet Tool
 A tool to help with crew management in Star Trek Timelines
 
-[![Build Status](https://travis-ci.org/IAmPicard/StarTrekTimelinesSpreadsheet.svg?branch=master)](https://travis-ci.org/IAmPicard/StarTrekTimelinesSpreadsheet)
+[![Build Status](https://travis-ci.org/IAmPicard/StarTrekTimelinesSpreadsheet.svg?branch=master)](https://travis-ci.org/IAmPicard/StarTrekTimelinesSpreadsheet) [![Patreon](https://img.shields.io/badge/patreon-support_me-brightgreen.svg)](https://www.patreon.com/iampicard)
 
-> :exclamation: **HELP WANTED** :exclamation: Are you a developer? Do you love Star Trek Timelines and wish this tool could be improved? I need your help, I can't keep up with maintaining and adding new features to the tool by myself! Please get in touch with me, or fork the repo and start playing with the code. Look in the issue list or in the TODO list below for inspiration on a needed fix / feature. :thumbsup:
+:new: Online version of the tool now available for testing. Check it out at [iampicard.com](https://iampicard.com).
+
+> :exclamation: **HELP WANTED** :exclamation: Are you a developer? Do you love Star Trek Timelines and wish this tool could be improved? I need your help, I can't keep up with maintaining and adding new features to the tool by myself! Please get in touch with me, or fork the repo and start playing with the code. Look in the issue list for inspiration on a needed fix / feature. :thumbsup:
 
 **NOTE** This tool does not (and will never) automate any part of the game play; its sole purpose is to help players organize their crew using the functionality built within or with a spreadsheet application of their choice.
 
@@ -17,23 +19,6 @@ It should be understood that *Star Trek Timelines* content and materials are tra
 I recommend you install the development environment and play with the source code yourself; make improvements and submit PRs to help your fellow players. See [contribution guidelines](/docs/CONTRIBUTING.md).
 
 However, if you're only interested in installing and running the tool, head on to the [releases](https://github.com/IAmPicard/StarTrekTimelinesSpreadsheet/releases) page and pick a recent release to install.
-
-## TODO - based on user feedback
-
-- [ ] List all crew (even unowned one)
-- [ ] Gauntlet improvements (I know I left that half-done, sorry)
-- [ ] Export voyage log
-- [ ] Recommendations tab redesign (too messy, not user friendly)
-- [ ] Arena recommendations (? not sure what that means, maybe best crew for manning a ship)
-- [ ] Helper tools for items (what's most needed, where to find them, notification when replicator uses are about to go unused)
-- [ ] XP in the crew list (to know who can still earn XP)
-- [ ] Option to hide frozen crew and buy-back crew everywhere
-- [ ] Crew traits not readable on smaller screen resolutions
-
-#### Other popular feedback
-**Reload / refresh (or variants)**. I get asked for this a lot; unfortunately, DB didn't really design the game for that. You can see the same issue if you play on the phone and Facebook / Steam at the same time; things quickly go out-of-sync. However, I did add a "Refresh" button in the popout that shows up when you click on your captain name (upper-left). This will refresh everything (not just one tab), but it will be slightly faster than closing and reopening the app
-
-**Display 100 FF/FE stats for all crew**. For this to work, I'd need to depend on a different data source besides the game server itself (most popular recommendation is the stt.wiki). While I appreciate the stt.wiki and the work put into it, I don't believe that data is reliable (nor is it readily parsable / consistently formatted). In a very early version of my tool I depended on the stt.wiki for the crew portrait images (and my app became unusable when the wiki was down for a few days). I'll only trust the official game server for data (as that's the only reliable source).
 
 ## Features
 
