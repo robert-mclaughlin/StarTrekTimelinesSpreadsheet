@@ -56,13 +56,14 @@ import { VoyageTools } from './VoyageTools.js';
 import { NeededEquipment } from './NeededEquipment.js';
 import { CrewDuplicates } from './CrewDuplicates.js';
 import { IncompleteMissions } from './IncompleteMissions.js';
+import { loadUITheme } from './Styles';
 
 import STTApi from 'sttapi';
 import { loginSequence } from 'sttapi';
 import { createIssue } from '../utils/githubUtils';
 import { openShellExternal, getAppVersion } from '../utils/pal';
 
-import { loadTheme, ColorClassNames } from '@uifabric/styling';
+import { ColorClassNames } from '@uifabric/styling';
 
 // #!if ENV === 'electron'
 import { rcompare } from 'semver';
@@ -117,14 +118,11 @@ class App extends React.Component {
 		initializeIcons(/* optional base url */);
 
 		// #!if ENV === 'electron'
-		STTApi.inWebMode = false;
+		STTApi.setWebMode(false);
 		STTApi.setImageProvider(true, new FileImageCache());
 		// #!else
-		STTApi.inWebMode = true;
-
-		const serverAddress = 'https://iampicard.com/';
+		STTApi.setWebMode(true);
 		STTApi.setImageProviderOverride(new ServerImageProvider(serverAddress));
-		STTApi.networkHelper.setProxy(serverAddress + 'proxy');
 		// #!endif
 
 		STTApi.config.where('key').equals('ui.darkTheme').first().then((entry) => {
@@ -147,76 +145,7 @@ class App extends React.Component {
 	}
 
 	_onSwitchTheme(shouldForceUpdate) {
-		const darkThemePalette = {
-			"themePrimary": "#0078d7",
-			"themeLighterAlt": "#00080f",
-			"themeLighter": "#001527",
-			"themeLight": "#00335d",
-			"themeTertiary": "#0058a1",
-			"themeSecondary": "#0071cd",
-			"themeDarkAlt": "#0086f4",
-			"themeDark": "#42aaff",
-			"themeDarker": "#5cb6ff",
-			"neutralLighterAlt": "#001222",
-			"neutralLighter": "#001d36",
-			"neutralLight": "#002d55",
-			"neutralQuaternaryAlt": "#003868",
-			"neutralQuaternary": "#004078",
-			"neutralTertiaryAlt": "#0063ba",
-			"neutralTertiary": "#dee1e4",
-			"neutralSecondary": "#e3e6e8",
-			"neutralPrimaryAlt": "#e9ebed",
-			"neutralPrimary": "#ced3d7",
-			"neutralDark": "#f4f5f6",
-			"black": "#f9fafa",
-			"white": "#00070d",
-			"primaryBackground": "#00070d",
-			"primaryText": "#ced3d7",
-			"bodyBackground": "#00070d",
-			"bodyText": "#ced3d7",
-			"disabledBackground": "#001d36",
-			"disabledText": "#0063ba"
-		};
-
-		const lightThemePalette = {
-			"themePrimary": "#0078d7",
-			"themeLighterAlt": "#eff6fc",
-			"themeLighter": "#deecf9",
-			"themeLight": "#c7e0f4",
-			"themeTertiary": "#71afe5",
-			"themeSecondary": "#2b88d8",
-			"themeDarkAlt": "#106ebe",
-			"themeDark": "#005a9e",
-			"themeDarker": "#004578",
-			"neutralLighterAlt": "#f8f8f8",
-			"neutralLighter": "#f4f4f4",
-			"neutralLight": "#eaeaea",
-			"neutralQuaternaryAlt": "#dadada",
-			"neutralQuaternary": "#d0d0d0",
-			"neutralTertiaryAlt": "#c8c8c8",
-			"neutralTertiary": "#a6a6a6",
-			"neutralSecondary": "#666666",
-			"neutralPrimaryAlt": "#3c3c3c",
-			"neutralPrimary": "#333",
-			"neutralDark": "#212121",
-			"black": "#1c1c1c",
-			"white": "#fff",
-			"primaryBackground": "#fff",
-			"primaryText": "#333",
-			"bodyBackground": "#fff",
-			"bodyText": "#333",
-			"disabledBackground": "#f4f4f4",
-			"disabledText": "#c8c8c8"
-		};
-
-		let finalTheme;
-
-		// Current theme
-		if (this.state.darkTheme) {
-			finalTheme = loadTheme({ palette: darkThemePalette });
-		} else {
-			finalTheme = loadTheme({ palette: lightThemePalette });
-		}
+		let finalTheme = loadUITheme(this.state.darkTheme);
 
 		const root = document.querySelector('.App-content');
 		if (root) {
@@ -675,7 +604,7 @@ class App extends React.Component {
 		}
 		// #!endif
 
-		STTApi.networkHelper.get('https://iampicard.com/motd/get', { webApp: STTApi.inWebMode, dbid: STTApi.playerData.dbid, id: STTApi.playerData.character.id, version: getAppVersion() }).then((data) => {
+		STTApi.networkHelper.get(STTApi.serverAddress + 'motd/get', { webApp: STTApi.inWebMode, dbid: STTApi.playerData.dbid, id: STTApi.playerData.character.id, captainName: STTApi.playerData.character.display_name, version: getAppVersion() }).then((data) => {
 			this.setState({ motd: data });
 		});
 

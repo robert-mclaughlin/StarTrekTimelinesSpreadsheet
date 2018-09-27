@@ -6,6 +6,7 @@ import { Icon } from 'office-ui-fabric-react/lib/Icon';
 import { Spinner, SpinnerSize } from 'office-ui-fabric-react/lib/Spinner';
 
 import { CollapsibleSection } from './CollapsibleSection.js';
+import UserStore from './Styles';
 
 import STTApi from 'sttapi';
 import { CONFIG, loadVoyage, formatTimeSeconds } from 'sttapi';
@@ -204,9 +205,9 @@ export class ActiveCrewDialog extends React.Component {
     }
 
     render() {
-        return (
-            <div>
-                <Dialog
+        let currentTheme = UserStore.get('theme');
+
+        return <Dialog
                     hidden={this.state.hideDialog}
                     title={this.state.title}
                     onDismiss={this._cancelDialog}
@@ -216,7 +217,7 @@ export class ActiveCrewDialog extends React.Component {
                         containerClassName: 'activedialogMainOverride'
                     }}
                 >
-
+                <div style={{ color: currentTheme.semanticColors.bodyText, backgroundColor: currentTheme.semanticColors.bodyBackground }}>
                     {this.state.shuttle && (
                         <ShuttleAdventure activeId={this.state.activeId} />
                     )}
@@ -224,9 +225,8 @@ export class ActiveCrewDialog extends React.Component {
                     {!this.state.shuttle && (
                         <Voyage activeId={this.state.activeId} />
                     )}
-                </Dialog>
-            </div>
-        );
+                </div>
+            </Dialog>;
     }
 
     show(active_id, name) {

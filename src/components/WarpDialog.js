@@ -3,6 +3,7 @@ import { Dialog, DialogType, DialogFooter } from 'office-ui-fabric-react/lib/Dia
 import { Image, ImageFit } from 'office-ui-fabric-react/lib/Image';
 import { SpinButton } from 'office-ui-fabric-react/lib/SpinButton';
 import { PrimaryButton, DefaultButton } from 'office-ui-fabric-react/lib/Button';
+import UserStore from './Styles';
 
 import STTApi from 'sttapi';
 import { CONFIG, getChronitonCount } from 'sttapi';
@@ -74,6 +75,8 @@ export class WarpDialog extends React.Component {
         let chronAvailable = getChronitonCount();
         let chronNeeded = this.state.mastery.energy_cost * this.state.warpCount;
 
+        let currentTheme = UserStore.get('theme');
+
         return <Dialog
             hidden={!this.state.showDialog}
             onDismiss={this._closeDialog}
@@ -86,7 +89,7 @@ export class WarpDialog extends React.Component {
                 isBlocking: true
             }}
         >
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 3fr', gridTemplateAreas: `'image description' 'image chronitons' 'image warpcount'` }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 3fr', gridTemplateAreas: `'image description' 'image chronitons' 'image warpcount'`, color: currentTheme.semanticColors.bodyText, backgroundColor: currentTheme.semanticColors.bodyBackground }}>
                 <div style={{ gridArea: 'image' }}><Image src={this.state.iconUrl} width={200} height={200} imageFit={ImageFit.contain} /></div>
                 <div style={{ gridArea: 'description' }}>
                     <p>{this.state.quest.description}</p>
