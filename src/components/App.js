@@ -122,7 +122,7 @@ class App extends React.Component {
 		STTApi.setImageProvider(true, new FileImageCache());
 		// #!else
 		STTApi.setWebMode(true);
-		STTApi.setImageProviderOverride(new ServerImageProvider(serverAddress));
+		STTApi.setImageProviderOverride(new ServerImageProvider(STTApi.serverAddress));
 		// #!endif
 
 		STTApi.config.where('key').equals('ui.darkTheme').first().then((entry) => {

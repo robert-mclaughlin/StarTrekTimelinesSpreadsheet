@@ -86,7 +86,7 @@ export class ServerImageProvider {
             "asset_bundle_version": STTApi.serverConfig.config.asset_bundle_version,
             "asset_file": assetName,
             "sprite_name": spriteName
-        });
+        }, false);
 
         this._cachedAssets.add(assetUrl);
         return { id, url: this._baseURLAsset + assetUrl };
@@ -104,7 +104,7 @@ export class ServerImageProvider {
             "asset_server": STTApi.serverConfig.config.asset_server,
             "asset_bundle_version": STTApi.serverConfig.config.asset_bundle_version,
             "asset_file": iconFile
-        });
+        }, false);
 
         this._cachedAssets.add(assetUrl);
         return { id, url: this._baseURLAsset + assetUrl };
