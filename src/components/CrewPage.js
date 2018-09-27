@@ -18,7 +18,10 @@ export class CrewPage extends React.Component {
         
         this.state = {
             showEveryone: false,
-            crewData: this.loadCrewData(false)
+            showBuyback: true,
+            groupRarity: false,
+            compactMode: false,
+            crewData: this.loadCrewData(false, true)
         };
     }
     
@@ -28,20 +31,25 @@ export class CrewPage extends React.Component {
         this._updateCommandItems();
     }
 
-    loadCrewData(showEveryone) {
-        if (!showEveryone) {
-            return STTApi.roster;
+    loadCrewData(showEveryone, showBuyback) {
+        let crewData= STTApi.roster;
+        if (showEveryone) {
+            const isFFFE = (crew) => (crew.frozen > 0) || ((crew.rarity === crew.max_rarity) && (crew.level === 100));
+            const notOwned = (crew) => {
+                let rc = STTApi.roster.find((rosterCrew) => !rosterCrew.buyback && (rosterCrew.symbol === crew.symbol));
+
+                return !(rc) || !isFFFE(rc);
+            }
+
+            // Let's combine allcrew with roster such that FFFE crew shows up only once
+            crewData = crewData.concat(STTApi.allcrew.filter(crew => notOwned(crew)));
         }
 
-        const isFFFE = (crew) => (crew.frozen > 0) || ((crew.rarity === crew.max_rarity) && (crew.level === 100));
-        const notOwned = (crew) => {
-            let rc = STTApi.roster.find((rosterCrew) => !rosterCrew.buyback && (rosterCrew.symbol === crew.symbol));
-
-            return !(rc) || !isFFFE(rc);
+        if (!showBuyback) {
+            crewData = crewData.filter(crew => !crew.buyback);
         }
 
-        // Let's combine allcrew with roster such that FFFE crew shows up only once
-        return STTApi.roster.concat(STTApi.allcrew.filter(crew => notOwned(crew)));
+        return crewData;
     }
 
     _updateCommandItems() {
@@ -85,6 +93,43 @@ export class CrewPage extends React.Component {
                     iconProps: { iconName: 'Equalizer' },
                     subMenuProps: {
                         items: [{
+                            key: 'groupRarity',
+                            text: 'Group by rarity',
+                            canCheck: true,
+                            isChecked: this.state.groupRarity,
+                            onClick: () => {
+                                let isChecked = !this.state.groupRarity;
+                                this.setState({
+                                    groupRarity: isChecked
+                                }, () => { this._updateCommandItems(); });
+                            }
+                        },
+                        {
+                            key: 'showBuyback',
+                            text: 'Show buyback (dismissed) crew',
+                            canCheck: true,
+                            isChecked: this.state.showBuyback,
+                            onClick: () => {
+                                let isChecked = !this.state.showBuyback;
+                                this.setState({
+                                    crewData: this.loadCrewData(this.state.showEveryone, isChecked),
+                                    showBuyback: isChecked
+                                }, () => { this._updateCommandItems(); });
+                            }
+                        },
+                        {
+                            key: 'compactMode',
+                            text: 'Compact mode',
+                            canCheck: true,
+                            isChecked: this.state.compactMode,
+                            onClick: () => {
+                                let isChecked = !this.state.compactMode;
+                                this.setState({
+                                    compactMode: isChecked
+                                }, () => { this._updateCommandItems(); });
+                            }
+                        },
+                        {
                             key: 'showEveryone',
                             text: '(EXPERIMENTAL) Show stats for all crew',
                             canCheck: true,
@@ -92,7 +137,7 @@ export class CrewPage extends React.Component {
                             onClick: () => {
                                 let isChecked = !this.state.showEveryone;
                                 this.setState({
-                                    crewData: this.loadCrewData(isChecked),
+                                    crewData: this.loadCrewData(isChecked, this.state.showBuyback),
                                     showEveryone: isChecked
                                 }, () => { this._updateCommandItems(); });
                             }
@@ -109,7 +154,7 @@ export class CrewPage extends React.Component {
                 onChange={(newValue) => this.refs.crewList.filter(newValue)}
                 onSearch={(newValue) => this.refs.crewList.filter(newValue)}
             />
-            <CrewList data={this.state.crewData} ref='crewList' />
+            <CrewList data={this.state.crewData} ref='crewList' groupRarity={this.state.groupRarity} showBuyback={this.state.showBuyback} compactMode={this.state.compactMode} />
             <ShareDialog ref='shareDialog' onShare={shareCrew} />
         </div>;
 	}
