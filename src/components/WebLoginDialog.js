@@ -3,6 +3,7 @@ import '../assets/css/semantic.min.css';
 import React from 'react';
 import { PrimaryButton } from 'office-ui-fabric-react/lib/Button';
 import { TextField } from 'office-ui-fabric-react/lib/TextField';
+import { Checkbox } from 'office-ui-fabric-react/lib/Checkbox';
 import { Spinner, SpinnerSize } from 'office-ui-fabric-react/lib/Spinner';
 import { MessageBar, MessageBarType } from 'office-ui-fabric-react/lib/MessageBar';
 
@@ -16,6 +17,7 @@ export class WebLoginDialog extends React.Component {
 			errorMessage: null,
 			autoLogin: true,
 			showSpinner: false,
+			agreePolicy: false,
 			username: '',
 			password: ''
 		};
@@ -35,17 +37,16 @@ export class WebLoginDialog extends React.Component {
 		}
 
 		return (
-			<div style={{ color: 'white'}}>
+			<div style={{ background: 'mintcream' }}>
 				<div className="ui vertical stripe segment">
 					<div className="ui text container">
-						<h1 className="ui dividing header inverted">IAmPicard's Star Trek Timelines tools</h1>
+						<h1 className="ui dividing header">IAmPicard's Star Trek Timelines tools</h1>
 						<p>Companion tools for the <a href="https://www.disruptorbeam.com/games/star-trek-timelines/" target='_blank'>Star Trek Timelines</a> game</p>
 
-						<h3 className="ui header inverted"><span className='blinking_thing'>NEW!</span> Online version of the tool <span style={{color:'red'}}>- BETA</span></h3>
+						<h3 className="ui header"><span className='blinking_thing'>NEW!</span> Online version of the tool <span style={{color:'red'}}>- BETA</span></h3>
 						<div className="ui grid">
 							<div className="sixteen wide column">
 								<p>Login below using your Start Trek Timelines username and password. If you're using Facebook / Steam or a mobile platform and have yet to set up your account, please see instructions <a href='https://startrektimelines.zendesk.com/hc/en-us/articles/215687778-How-do-I-register-my-Star-Trek-Timelines-account-' target='_blank'>here</a>.</p>
-								<small>Please read the <a href='https://github.com/IAmPicard/StarTrekTimelinesSpreadsheet#privacy-and-security' target='_blank'>privacy policy</a> before continuing.</small>
 								{this.state.errorMessage && (
 									<MessageBar messageBarType={MessageBarType.error} isMultiline={false}>
 										<span>{this.state.errorMessage}</span>
@@ -54,21 +55,26 @@ export class WebLoginDialog extends React.Component {
 							</div>
 							<div className="eight wide column">
 								<TextField
-									label='Username (e-mail)'
+									placeholder='Username (e-mail)'
 									value={this.state.username}
-									onChanged={(value) => { this.setState({ username: value }) }}
+									onChange={(e, value) => { this.setState({ username: value }) }}
 								/>
 							</div>
 							<div className="eight wide column">
 								<TextField
-									label='Password'
+									placeholder='Password'
 									value={this.state.password}
 									type='password'
-									onChanged={(value) => { this.setState({ password: value }) }}
+									onChange={(e, value) => { this.setState({ password: value }) }}
 								/>
 							</div>
+							<div className="sixteen wide column" style={{display:'flex', paddingTop: '0', paddingBottom: '0'}}>
+								<Checkbox styles={{ root: { display: 'inline-block' } }} checked={this.state.agreePolicy} onRenderLabel={(props) => <span>I have read and agree to the</span>}
+									onChange={(e, isChecked) => { this.setState({ agreePolicy: isChecked }); }}
+								/><a href='https://github.com/IAmPicard/StarTrekTimelinesSpreadsheet#privacy-and-security' target='_blank' style={{ fontSize: '14px', marginLeft: '7px' }}>Privacy Policy</a>
+							</div>
 							<div className="sixteen wide column">
-								<PrimaryButton onClick={this._closeDialog} text='Login' disabled={this.state.showSpinner} />
+								<PrimaryButton onClick={this._closeDialog} text='Login' disabled={this.state.showSpinner || !this.state.agreePolicy} />
 								{this.state.showSpinner && (
 									<Spinner size={SpinnerSize.small} label='Logging in...' />
 								)}
@@ -77,7 +83,7 @@ export class WebLoginDialog extends React.Component {
 
 						<div className="ui divider"></div>
 
-						<h3 className="ui header inverted">Crew management desktop application</h3>
+						<h3 className="ui header">Crew management desktop application</h3>
 						<div className="ui grid">
 							<div className="eight wide column">
 								<a href='https://github.com/IAmPicard/StarTrekTimelinesSpreadsheet' target='_blank'>
@@ -96,7 +102,7 @@ export class WebLoginDialog extends React.Component {
 
 						<div className="ui divider"></div>
 
-						<h3 className="ui header inverted">Google Sheets add-on for the crew spreadsheet</h3>
+						<h3 className="ui header">Google Sheets add-on for the crew spreadsheet</h3>
 						<div className="ui grid">
 							<div className="eight wide column">
 								<a href='https://github.com/IAmPicard/STTGoogleSheetsAddon' target='_blank'>
@@ -118,9 +124,9 @@ export class WebLoginDialog extends React.Component {
 
 						<div className="ui divider"></div>
 
-						<a className="bmc-button" target="_blank" href="https://www.buymeacoffee.com/Evbkf8yRT"><img src="https://www.buymeacoffee.com/assets/img/BMC-btn-logo.svg" alt="Buy me a coffee" /><span style={{marginLeft:'5px'}}>Buy me a coffee</span></a>
+						<a href="https://www.patreon.com/bePatron?u=10555637" target='_blank' data-patreon-widget-type="become-patron-button"><img src='https://c5.patreon.com/external/logo/become_a_patron_button.png'/></a>
 
-						<h3 className="ui header inverted">Miscellaneous links</h3>
+						<h3 className="ui header">Miscellaneous links</h3>
 						<div className="ui list">
 							<div className="item">
 								<i className="linkify icon"></i>

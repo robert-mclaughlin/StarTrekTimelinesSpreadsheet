@@ -126,9 +126,9 @@ class App extends React.Component {
 		// #!endif
 
 		STTApi.config.where('key').equals('ui.darkTheme').first().then((entry) => {
-			this.setState({ darkTheme: !entry || entry.value || (entry.value === undefined) });
-
-			this._onSwitchTheme(true);
+			this.setState({ darkTheme: entry && entry.value }, () => {
+				this._onSwitchTheme(true);
+			});
 		});
 
 		STTApi.loginWithCachedAccessToken().then((success) => {
@@ -390,11 +390,11 @@ class App extends React.Component {
 						}
 					},
 					{
-						key: 'BuyCoffee',
-						name: 'Buy me a coffee...',
+						key: 'PatreonLink',
+						name: 'Support me on Patreon...',
 						iconProps: { iconName: 'CoffeeScript' },
 						onClick: () => {
-							openShellExternal("https://www.buymeacoffee.com/Evbkf8yRT");
+							openShellExternal("https://www.patreon.com/bePatron?u=10555637");
 						}
 					},
 					{
@@ -553,11 +553,7 @@ class App extends React.Component {
 	}
 
 	_onLogout() {
-		let darkTheme = true;
-		// #!if ENV === 'electron'
-		darkTheme = false;
-		// #!endif
-		this.setState({ isCaptainCalloutVisible: false, darkTheme: darkTheme }, () => { this._onSwitchTheme(true); });
+		this.setState({ isCaptainCalloutVisible: false, darkTheme: false }, () => { this._onSwitchTheme(true); });
 
 		STTApi.refreshEverything(true);
 		this.setState({ showLoginDialog: true, dataLoaded: false, captainName: '', spinnerLabel: 'Loading...' });
