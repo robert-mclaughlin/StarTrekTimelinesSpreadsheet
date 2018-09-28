@@ -63,7 +63,6 @@ export class VoyageCrew extends React.Component {
 		this.state.currentSelectedItems = this.state.peopleList.filter(p => this.state.preselectedIgnored.indexOf(p.key) != -1);
 
 		this._calcVoyageData = this._calcVoyageData.bind(this);
-		this._generateVoyCrewRank = this._generateVoyCrewRank.bind(this);
 		this._startVoyage = this._startVoyage.bind(this);
 		this._onFilterChanged = this._onFilterChanged.bind(this);
 		this._filterPersonasByText = this._filterPersonasByText.bind(this);
@@ -203,7 +202,7 @@ export class VoyageCrew extends React.Component {
 			<br />
 
 			{/* #!if ENV === 'electron' */}
-			<DefaultButton onClick={this._generateVoyCrewRank} text='Export CSV with crew Voyage ranking...' disabled={this.state.state === 'inprogress'} />
+			<DefaultButton onClick={() => this._generateVoyCrewRank()} text='Export CSV with crew Voyage ranking...' disabled={this.state.state === 'inprogress'} />
 			{this.state.generatingVoyCrewRank && <i className="spinner loading icon"></i>}
 			{/* #!endif */}
 		</div>);
@@ -316,6 +315,7 @@ export class VoyageCrew extends React.Component {
 			});
 	}
 
+// #!if ENV === 'electron'
 	_generateVoyCrewRank() {
 		this.setState({ generatingVoyCrewRank: true });
 
@@ -331,6 +331,7 @@ export class VoyageCrew extends React.Component {
 			console.log("unexpected progress result!"); // not implemented yet..
 		});
 	}
+// #!endif
 }
 
 export class VoyageLogEntry extends React.Component {

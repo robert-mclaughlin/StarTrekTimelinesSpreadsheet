@@ -1,5 +1,5 @@
 import React from 'react';
-import { DetailsList, DetailsListLayoutMode, SelectionMode } from 'office-ui-fabric-react/lib/DetailsList';
+import ReactTable from "react-table";
 import { Image, ImageFit } from 'office-ui-fabric-react/lib/Image';
 import { PrimaryButton } from 'office-ui-fabric-react/lib/Button';
 import { Spinner, SpinnerSize } from 'office-ui-fabric-react/lib/Spinner';
@@ -7,132 +7,156 @@ import { Spinner, SpinnerSize } from 'office-ui-fabric-react/lib/Spinner';
 import { CollapsibleSection } from './CollapsibleSection';
 import { RarityStars } from './RarityStars';
 
+// #!if ENV === 'electron'
 import { loginPubNub } from '../utils/chat';
-import { sortItems, columnClick } from '../utils/listUtils';
+// #!endif
 import { download } from '../utils/pal';
 
 import STTApi from 'sttapi';
 import { formatTimeSeconds } from 'sttapi';
 
-import { parse as json2csv } from 'json2csv';
+import { simplejson2csv } from '../utils/simplejson2csv';
 
 export class MemberList extends React.Component {
 	constructor(props) {
 		super(props);
 
 		this.state = {
-			members: sortItems(this.props.members, 'display_name'),
+			members: this.props.members,
+			sorted: [{ id: 'display_name', desc: false }],
 			columns: [
 				{
-					key: 'icon',
-					name: '',
-					minWidth: 32,
-					maxWidth: 32,
-					fieldName: 'display_name',
-					onRender: (item) => {
-						if (item.iconUrl)
-							return (<Image src={item.iconUrl} width={32} height={32} imageFit={ImageFit.contain} />);
-						else
-							return <span />
-					}
+					id: 'icon',
+					Header: '',
+					minWidth: 44,
+					maxWidth: 44,
+					resizable: false,
+					accessor: 'display_name',
+					Cell: (cell) => cell.original.iconUrl ? <Image src={cell.original.iconUrl} width={32} height={32} imageFit={ImageFit.contain} /> : <span />
 				},
 				{
-					key: 'display_name',
-					name: 'Name',
-					minWidth: 100,
-					maxWidth: 180,
-					isSorted: true,
-					isSortedDescending: false,
-					isResizable: true,
-					fieldName: 'display_name'
+					id: 'display_name',
+					Header: 'Name',
+					minWidth: 120,
+					maxWidth: 220,
+					resizable: true,
+					accessor: 'display_name'
 				},
 				{
-					key: 'rank',
-					name: 'Rank',
+					id: 'rank',
+					Header: 'Rank',
 					minWidth: 50,
 					maxWidth: 80,
-					isResizable: true,
-					fieldName: 'rank',
-					isPadded: true
+					resizable: true,
+					accessor: 'rank'
 				},
 				{
-					key: 'squad_name',
-					name: 'Squad',
-					minWidth: 90,
-					maxWidth: 150,
-					isResizable: true,
-					fieldName: 'squad_name',
-					isPadded: true,
-					onRender: (item) => {
-						if (item.squad_name)
-							return (<span>{item.squad_name} ({item.squad_rank})</span>);
-						else
-							return (<span style={{ color: 'red' }}>Not in a squad</span>);
-					}
+					id: 'squad_name',
+					Header: 'Squad',
+					minWidth: 120,
+					maxWidth: 200,
+					resizable: true,
+					accessor: 'squad_name',
+					Cell: (cell) => cell.original.squad_name ? <span>{cell.original.squad_name} ({cell.original.squad_rank})</span> : <span style={{ color: 'red' }}>Not in a squad</span>
 				},
 				{
-					key: 'last_active',
-					name: 'Last active',
+					id: 'last_active',
+					Header: 'Last active',
 					minWidth: 70,
 					maxWidth: 100,
-					isResizable: true,
-					fieldName: 'last_active',
-					onRender: (item) => <span>{formatTimeSeconds(item.last_active)}</span>
+					resizable: true,
+					accessor: 'last_active',
+					Cell: (cell) => <span>{formatTimeSeconds(cell.original.last_active)}</span>
 				},
 				{
-					key: 'daily_activity',
-					name: 'Daily activity',
+					id: 'daily_activity',
+					Header: 'Daily activity',
 					minWidth: 50,
 					maxWidth: 80,
-					isResizable: true,
-					fieldName: 'daily_activity'
+					resizable: true,
+					accessor: 'daily_activity'
 				},
 				{
-					key: 'event_rank',
-					name: 'Event rank',
+					id: 'event_rank',
+					Header: 'Event rank',
 					minWidth: 50,
 					maxWidth: 80,
-					isResizable: true,
-					fieldName: 'event_rank'
+					resizable: true,
+					accessor: 'event_rank'
 				},
 				{
-					key: 'level',
-					name: 'Level',
+					id: 'level',
+					Header: 'Level',
 					minWidth: 50,
 					maxWidth: 80,
-					isResizable: true,
-					fieldName: 'level'
+					resizable: true,
+					accessor: 'level'
 				},
 				{
-					key: 'location',
-					name: 'Location',
+					id: 'location',
+					Header: 'Location',
 					minWidth: 60,
 					maxWidth: 110,
-					isResizable: true,
-					fieldName: 'location'
+					resizable: true,
+					accessor: 'location'
 				},
 				{
-					key: 'currentShip',
-					name: 'Current Ship',
+					id: 'currentShip',
+					Header: 'Current Ship',
 					minWidth: 70,
 					maxWidth: 110,
-					isResizable: true,
-					fieldName: 'currentShip'
+					resizable: true,
+					accessor: 'currentShip'
 				}
 			]
 		};
 
-		this._onColumnClick = this._onColumnClick.bind(this);
 		this._exportCSV = this._exportCSV.bind(this);
 	}
 
-	_onColumnClick(ev, column) {
-		this.setState(columnClick(this.state.members, this.state.columns, column));
-	}
-
 	_exportCSV() {
-		let fields = ['display_name', 'rank', 'squad_name', 'squad_rank', 'last_active', 'event_rank', 'level', 'daily_activity', 'location', 'currentShip'];
-		let csv = json2csv(this.state.members, { fields: fields });
+		let fields = [
+			{
+                label: 'Name',
+                value: (row) => row.display_name
+			},
+			{
+                label: 'Rank',
+                value: (row) => row.rank
+			},
+			{
+                label: 'Squad name',
+                value: (row) => row.squad_name
+			},
+			{
+                label: 'Squad rank',
+                value: (row) => row.squad_rank
+			},
+			{
+                label: 'Last active',
+                value: (row) => row.last_active
+			},
+			{
+                label: 'Event rank',
+                value: (row) => row.event_rank
+			},
+			{
+                label: 'Level',
+                value: (row) => row.level
+			},
+			{
+                label: 'Daily activity',
+                value: (row) => row.daily_activity
+			},
+			{
+                label: 'Location',
+                value: (row) => row.location
+			},
+			{
+                label: 'Current ship',
+                value: (row) => row.currentShip
+            }];
+		let csv = simplejson2csv(this.state.members, fields);
 
 		let today = new Date();
 		download(STTApi.fleetData.name + '-' + (today.getUTCMonth() + 1) + '-' + (today.getUTCDate())+ '.csv', csv, 'Export fleet member list', 'Export');
@@ -140,13 +164,16 @@ export class MemberList extends React.Component {
 
 	render() {
 		return (<CollapsibleSection title={this.props.title}>
-			<DetailsList
-				items={this.state.members}
+			<ReactTable
+				data={this.state.members}
 				columns={this.state.columns}
-				setKey='set'
-				selectionMode={SelectionMode.none}
-				layoutMode={DetailsListLayoutMode.justified}
-				onColumnHeaderClick={this._onColumnClick}
+				defaultPageSize={50}
+				pageSize={50}
+				sorted={this.state.sorted}
+				onSortedChange={sorted => this.setState({ sorted })}
+				showPagination={false}
+				showPageSizeOptions={false}
+				className="-striped -highlight"
 			/>
 			<PrimaryButton onClick={this._exportCSV} text='Export member list as CSV...' />
 		</CollapsibleSection>);
@@ -293,6 +320,7 @@ export class FleetDetails extends React.Component {
 			});
 			Promise.all(iconPromises).then(() => this.forceUpdate());
 
+// #!if ENV === 'electron'
 			loginPubNub().then(data => {
 				// retrieve recent history of messages
 				data.pubnub.history(
@@ -321,6 +349,7 @@ export class FleetDetails extends React.Component {
 			}).catch(err => {
 				console.error(err);
 			});
+// #!endif
 		}
 		else
 		{

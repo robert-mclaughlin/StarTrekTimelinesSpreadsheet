@@ -5,7 +5,7 @@ import { CONFIG } from 'sttapi';
 
 import { getAppPath } from './pal';
 
-import { parse as json2csv } from 'json2csv';
+import { simplejson2csv } from './simplejson2csv';
 
 export class LoggerClass {
     basePath;
@@ -236,20 +236,6 @@ export class LoggerClass {
                 }
             });
 
-            // Upload the result to a Google Sheet
-
-            // This could be used to upload anonymized gountlet round results to a google spreadsheet
-            // However, I did not anticipate the sheer amount of users the app has, in less than 1 day of release 0.7.5, this accumulated 4000 results, leading Flow to disable my free account and getting close to the limit of the Spreadsheet itself :)
-            /*
-            const flowURL = 'https://prod-55.westus.logic.azure.com:443/workflows/dda0b81f61964c08ac5baf2dcd6ba1c8/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=04L6hPWcEIpAVI1oI8rSct0_XR4wDW4NMWjpDvW85V0';
-
-            let sheetRow = {};
-            this.exportFields.forEach(entry => {
-                sheetRow[entry.label] = entry.value(results);
-            });
-
-            STTApi.networkHelper.postjson(flowURL, [sheetRow]);*/
-
             return fileName;
         }
 
@@ -273,7 +259,7 @@ export class LoggerClass {
             fs.readFile(logPath, (err, inFile) => {
                 if (!err) {
                     // Format as CSV
-                    let csv = json2csv(JSON.parse(inFile), { fields: this.exportFields });
+                    let csv = simplejson2csv(JSON.parse(inFile), this.exportFields);
                     resolve(csv);
                 } else { reject(err); }
             });

@@ -13,7 +13,7 @@ import { CONFIG } from 'sttapi';
 
 import { download } from '../utils/pal';
 
-import { parse as json2csv } from 'json2csv';
+import { simplejson2csv } from '../utils/simplejson2csv';
 
 export class NeededEquipment extends React.Component {
 	constructor(props) {
@@ -592,7 +592,22 @@ export class NeededEquipment extends React.Component {
 	}
 
 	_exportCSV() {
-		let fields = ['equipment.name', 'equipment.rarity', 'needed', 'have',
+		let fields = [{
+				label: 'Equipment name',
+				value: (row) => row.equipment.name
+			},
+			{
+				label: 'Equipment rarity',
+				value: (row) => row.equipment.rarity
+			},
+			{
+				label: 'Needed',
+				value: (row) => row.needed
+			},
+			{
+				label: 'Have',
+				value: (row) => row.have
+			},
 			{
 				label: 'Missions',
 				value: (row) => row.equipment.item_sources.filter(e => e.type === 0).map((mission) => `${mission.name} (${CONFIG.MASTERY_LEVELS[mission.mastery].name} ${mission.chance_grade}/5, ${(mission.energy_quotient * 100).toFixed(2)}%)`).join(', ')
@@ -606,7 +621,7 @@ export class NeededEquipment extends React.Component {
 				value: (row) => row.equipment.item_sources.filter(e => e.type === 1).map((mission) => `${mission.name} (${mission.chance_grade}/5, ${(mission.energy_quotient * 100).toFixed(2)}%)`).join(', ')
 			}];
 
-		let csv = json2csv(this.state.neededEquipment, { fields });
+		let csv = simplejson2csv(this.state.neededEquipment, fields);
 
 		let today = new Date();
 		download('Equipment-' + (today.getUTCMonth() + 1) + '-' + (today.getUTCDate()) + '.csv', csv, 'Export needed equipment', 'Export');
