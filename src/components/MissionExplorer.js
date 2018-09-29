@@ -3,10 +3,10 @@ import { Image } from 'office-ui-fabric-react/lib/Image';
 import { Spinner, SpinnerSize } from 'office-ui-fabric-react/lib/Spinner';
 import { Dropdown, DropdownMenuItemType } from 'office-ui-fabric-react/lib/Dropdown';
 import { Persona, PersonaSize, PersonaPresence } from 'office-ui-fabric-react/lib/Persona';
-import vis from 'vis';
-import '!css-loader?url=false!vis/dist/vis.css';
 
 import { getTheme } from '@uifabric/styling';
+
+import { MissionDisplay } from '../utils/canvasutils';
 
 import STTApi from 'sttapi';
 import { CONFIG, calculateQuestRecommendations } from 'sttapi';
@@ -18,7 +18,7 @@ export class MissionDetails extends React.Component {
         this.loadMissionDetails = this.loadMissionDetails.bind(this);
         this.loadMissionDetailsInternal = this.loadMissionDetailsInternal.bind(this);
         this.updateGraph = this.updateGraph.bind(this);
-        this.visContent = null;
+        this.missionDisplay = undefined;
 
         if (!this.props.questId) {
             this.state = {
@@ -33,12 +33,10 @@ export class MissionDetails extends React.Component {
         }
     }
 
-    componentDidMount() {
-        this.updateGraph();
-    }
-
-    componentDidUpdate() {
-        this.updateGraph();
+    componentDidUpdate(prevProps, prevState) {
+        if (this.state.mission !== prevState.mission) {
+            this.updateGraph();
+        }
     }
 
     loadMissionDetails(questId) {
@@ -50,14 +48,26 @@ export class MissionDetails extends React.Component {
     }
 
     updateGraph() {
-        if (!this.refs.visGraph)
+        if (!this.refs.canvasMission)
             return;
-
-        if (this.visContent)
-            this.visContent.destroy();
 
         let mission = this.state.mission;
         if (mission) {
+            let maxX = 1;
+            let maxY = 1;
+            mission.challenges.forEach(challenge => {
+                maxX = Math.max(challenge.grid_x, maxX);
+                maxY = Math.max(challenge.grid_y, maxY);
+            });
+
+            maxX++; maxY++;
+
+            if (this.missionDisplay) {
+                this.missionDisplay.reset(maxX, maxY);
+            } else {
+                this.missionDisplay = new MissionDisplay(this.refs.canvasMission, maxX, maxY, (id) => this.setState({ selectedChallenge: id }) );
+            }
+
             let nodes = [];
             let edges = [];
             mission.challenges.forEach(challenge => {
@@ -74,17 +84,9 @@ export class MissionDetails extends React.Component {
                         edges.push({ from: challenge.id, to: child });
                     });
                 }
-            });
 
-            this.visContent = new vis.Network(this.refs.visGraph, { nodes: nodes, edges: edges },
-                {
-                    edges: { smooth: false, arrows: { to: { enabled: true } } },
-                    layout: { hierarchical: { direction: 'LR' } }
-                });
-
-            this.visContent.on("click", (params) => {
-                if (params.nodes && params.nodes.length > 0) {
-                    this.setState({ selectedChallenge: params.nodes[0] });
+                if (this.missionDisplay) {
+                    this.missionDisplay.addNode(challenge.grid_x, challenge.grid_y, challenge.skill, challenge.critical && !challenge.critical.claimed, challenge.children, challenge.id, challenge.name);
                 }
             });
         }
@@ -236,7 +238,7 @@ export class MissionDetails extends React.Component {
                             </div>
                         )}
                     </td><td style={{ width: '50%', minHeight: '280px' }}>
-                            <div ref='visGraph' style={{ border: '1px solid lightgray' }} />
+                            <canvas ref='canvasMission' width={1000} height={450} style={{ width: '100%', height: 'auto' }} />
                         </td></tr>
                     <tr><td colSpan={2}>
                         {crewSelectionLog}
@@ -339,7 +341,7 @@ export class MissionExplorer extends React.Component {
                     <p><b>Note: </b>These calculations only search crew necessary for completing the missions with the epic mastery.</p>
                     <Dropdown
                         selectedKey={this.state.selectedItem && this.state.selectedItem.key}
-                        onChanged={item => { this.setState({ selectedItem: item }); this.refs.missionDetails.loadMissionDetails(item.data.questId); }}
+                        onChange={(evt, item) => { this.setState({ selectedItem: item }); this.refs.missionDetails.loadMissionDetails(item.data.questId); }}
                         onRenderTitle={this._onRenderTitle}
                         placeHolder='Select a mission'
                         options={this.state.options}

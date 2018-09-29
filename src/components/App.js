@@ -50,7 +50,6 @@ import { MissionExplorer } from './MissionExplorer.js';
 import { CrewRecommendations } from './CrewRecommendations.js';
 import { AboutAndHelp } from './AboutAndHelp.js';
 import { FleetDetails } from './FleetDetails.js';
-import { EquipmentDetails } from './EquipmentDetails.js';
 import { CaptainCard } from './CaptainCard.js';
 import { VoyageTools } from './VoyageTools.js';
 import { NeededEquipment } from './NeededEquipment.js';
@@ -125,7 +124,7 @@ class App extends React.Component {
 		STTApi.setImageProviderOverride(new ServerImageProvider(STTApi.serverAddress));
 		// #!endif
 
-		STTApi.config.where('key').equals('ui.darkTheme').first().then((entry) => {
+		STTApi.config.where('key').equals('ui.darkThemeMode').first().then((entry) => {
 			this.setState({ darkTheme: entry && entry.value }, () => {
 				this._onSwitchTheme(true);
 			});
@@ -158,7 +157,7 @@ class App extends React.Component {
 
 		if (shouldForceUpdate) {
 			this.setState({ theme: finalTheme });
-			STTApi.config.put({ key: 'ui.darkTheme', value: this.state.darkTheme });
+			STTApi.config.put({ key: 'ui.darkThemeMode', value: this.state.darkTheme });
 			this.forceUpdate();
 		} else {
 			this.state.theme = finalTheme;
@@ -288,9 +287,6 @@ class App extends React.Component {
 			case 'Items':
 				return <ItemPage onCommandItemsUpdate={commandItemsUpdater} />;
 
-			case 'Equipment':
-				return <EquipmentDetails />;
-
 			case 'Ships':
 				return <ShipList />;
 
@@ -320,7 +316,6 @@ class App extends React.Component {
 
 			case 'IncompleteMissions':
 				return <IncompleteMissions onCommandItemsUpdate={commandItemsUpdater} />;
-
 
 			default:
 				return <span>Error! Unknown tab selected.</span>;
@@ -535,7 +530,6 @@ class App extends React.Component {
 			this._tabMenuItem({ key: 'Voyage', itemIcon: 'Rocket' }),
 			this._tabMenuItem({ key: 'Gauntlet', itemIcon: 'ConnectContacts' }),
 			this._tabMenuItem({ key: 'Items', itemIcon: 'Boards' }),
-			this._tabMenuItem({ key: 'Equipment', itemIcon: 'CheckList' }),
 			this._tabMenuItem({ key: 'Ships', itemIcon: 'Airplane' })
 		]);
 

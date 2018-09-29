@@ -65,10 +65,6 @@ module.exports = merge(baseConfig, {
 		new WebpackCdnPlugin({
 			modules: [
 				{
-					name: 'vis',
-					var: 'vis'
-				},
-				{
 					name: 'xlsx-populate',
 					var: 'XlsxPopulate',
 					path: 'browser/xlsx-populate.js'
