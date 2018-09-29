@@ -88,7 +88,6 @@
   },
   "dependencies": {
     "bindings": "latest",
-    "buffer": "latest",
     "dexie": "latest",
     "fb": "latest",
     "history": "latest",
