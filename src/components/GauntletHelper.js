@@ -281,7 +281,7 @@ export class GauntletHelper extends React.Component {
 
 		if (data.lastResult) {
 			this.setState({
-				lastResult: Object.assign(data.lastResult, {match: match}),
+				lastResult: Object.assign(data.lastResult, { match: match }),
 				rewards: data.rewards
 			});
 		}
@@ -355,6 +355,13 @@ export class GauntletHelper extends React.Component {
 				{crewSpans}
 			</div>
 		</div>);
+	}
+
+	renderStatistic(value, label, classAdd) {
+		return <div className={`${classAdd} ui statistic`}>
+			<div className="value" style={{ color: classAdd || 'unset' }}>{value}</div>
+			<div className="label" style={{ color: 'unset' }}>{label}</div>
+		</div>;
 	}
 
 	render() {
@@ -461,42 +468,22 @@ export class GauntletHelper extends React.Component {
 					{this.state.lastErrorMessage && <p>Error: '{this.state.lastErrorMessage}'</p>}
 
 					<div className="ui compact segments" style={{ margin: '6px' }}>
-						<div className="ui inverted segment">
-							<div className="ui inverted statistic">
-								<div className="value">
-									{this.state.roundOdds.rank}
-								</div>
-								<div className="label">Your rank</div>
-							</div>
-							<div className="ui inverted statistic">
-								<div className="value">
-									{this.state.roundOdds.consecutive_wins}
-								</div>
-								<div className="label">Consecutive wins</div>
-							</div>
-							<div className="ui inverted statistic">
-								<div className="value">
-									{this.state.merits}
-								</div>
-								<div className="label">Merits</div>
-							</div>
-							{this.state.lastResult && <div className={((this.state.lastResult.win == true) ? 'green' : 'red') + ' ui inverted statistic'}>
-								<div className="value">
-									{(this.state.lastResult.win == true) ? 'WON' : 'LOST'}
-								</div>
-								<div className="label">Last round</div>
-							</div>}
+						<div className="ui segment" style={{ backgroundColor: getTheme().palette.themeLighter }}>
+							{this.renderStatistic(this.state.roundOdds.rank, 'Your rank')}
+							{this.renderStatistic(this.state.roundOdds.consecutive_wins, 'Consecutive wins')}
+							{this.renderStatistic(this.state.merits, 'Merits')}
+							{this.state.lastResult && this.renderStatistic(((this.state.lastResult.win === true) ? 'WON' : 'LOST'), 'Last round', ((this.state.lastResult.win === true) ? 'green' : 'red'))}
 						</div>
-						{this.state.lastResult && this.state.lastResult.match && <div className="ui segment">
+						{this.state.lastResult && this.state.lastResult.match && <div className="ui segment" style={{ backgroundColor: getTheme().palette.themeLighterAlt }}>
 							<p>Your <b>{playerCrew}</b> rolled <b>{playerRoll}</b> ({playerRollMsg.join(', ')})</p>
 							<p><i>{this.state.lastResult.match.opponent.name}</i>'s <b>{opponentCrew}</b> rolled <b>{opponentRoll}</b> ({opponentRollMsg.join(', ')})</p>
 							{this.state.rewards &&
-							<p>
-								<span>Rewards: </span>
-								{this.state.rewards.loot.map((loot, index) =>
-									<span key={index} style={{ color: loot.rarity && CONFIG.RARITIES[loot.rarity].color }}>{loot.quantity} {(loot.rarity == null) ? '' : CONFIG.RARITIES[loot.rarity].name} {loot.full_name}</span>
-								).reduce((prev, curr) => [prev, ', ', curr])}
-							</p>
+								<p>
+									<span>Rewards: </span>
+									{this.state.rewards.loot.map((loot, index) =>
+										<span key={index} style={{ color: loot.rarity && CONFIG.RARITIES[loot.rarity].color }}>{loot.quantity} {(loot.rarity == null) ? '' : CONFIG.RARITIES[loot.rarity].name} {loot.full_name}</span>
+									).reduce((prev, curr) => [prev, ', ', curr])}
+								</p>
 							}
 						</div>}
 					</div>
