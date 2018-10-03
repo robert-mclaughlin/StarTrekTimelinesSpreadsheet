@@ -7,8 +7,6 @@ import { SpinButton } from 'office-ui-fabric-react/lib/SpinButton';
 import { Checkbox } from 'office-ui-fabric-react/lib/Checkbox';
 import { PrimaryButton } from 'office-ui-fabric-react/lib/Button';
 import { Persona, PersonaSize, PersonaPresence } from 'office-ui-fabric-react/lib/Persona';
-import { DefaultButton } from 'office-ui-fabric-react/lib/Button';
-import { Icon } from 'office-ui-fabric-react/lib/Icon';
 import { getTheme } from '@uifabric/styling';
 
 // #!if ENV === 'electron'
@@ -25,6 +23,7 @@ import {
 
 class GauntletCrew extends React.Component {
 	render() {
+		// TODO: replace these with semantic-ui segments, and a grid layout
 		return (<table className='table-GauntletCrew'>
 			<tbody>
 				<tr>
@@ -40,8 +39,8 @@ class GauntletCrew extends React.Component {
 				<tr>
 					<td>
 						{this.props.crew.disabled ?
-							(<span>Disabled <Icon iconName='Dislike' /> ({this.props.crew.debuff / 4} battles)</span>) :
-							(<span>Active <Icon iconName='Like' /> ({this.props.crew.debuff / 4} battles)</span>)
+							(<span>Disabled <i className="thumbs down outline icon"></i> ({this.props.crew.debuff / 4} battles)</span>) :
+							(<span>Active <i className="thumbs up outline icon"></i> ({this.props.crew.debuff / 4} battles)</span>)
 						}
 					</td>
 				</tr>
@@ -460,7 +459,7 @@ export class GauntletHelper extends React.Component {
 			return (
 				<div className='tab-panel' data-is-scrollable='true'>
 					<span className='quest-mastery'>Featured skill is <Image src={CONFIG.SPRITES['icon_' + this.state.gauntlet.contest_data.featured_skill].url} height={18} /> {CONFIG.SKILLS[this.state.gauntlet.contest_data.featured_skill]}; Featured traits are {this.state.gauntlet.contest_data.traits.map(trait => STTApi.getTraitName(trait)).join(", ")}</span>
-					<Label>Crew refreshes in {formatTimeSeconds(this.state.gauntlet.seconds_to_next_crew_refresh)} and the gauntlet ends in {formatTimeSeconds(this.state.gauntlet.seconds_to_end)}</Label>
+					<p>The gauntlet ends in {formatTimeSeconds(this.state.gauntlet.seconds_to_end)}</p>
 					<div style={{ display: 'flex', width: '95%' }} >
 						{this.state.gauntlet.contest_data.selected_crew.map((crew) => <GauntletCrew key={crew.crew_id} crew={crew} revive={(save) => this._payToReviveCrew(crew.crew_id, save)} />)}
 					</div>
@@ -468,13 +467,14 @@ export class GauntletHelper extends React.Component {
 					{this.state.lastErrorMessage && <p>Error: '{this.state.lastErrorMessage}'</p>}
 
 					<div className="ui compact segments" style={{ margin: '6px' }}>
-						<div className="ui segment" style={{ backgroundColor: getTheme().palette.themeLighter }}>
+						<div className="ui attached segment" style={{ backgroundColor: getTheme().palette.themeLighter }}>
+							{this.renderStatistic(formatTimeSeconds(this.state.gauntlet.seconds_to_next_crew_refresh), 'Crew refresh')}
 							{this.renderStatistic(this.state.roundOdds.rank, 'Your rank')}
 							{this.renderStatistic(this.state.roundOdds.consecutive_wins, 'Consecutive wins')}
 							{this.renderStatistic(this.state.merits, 'Merits')}
 							{this.state.lastResult && this.renderStatistic(((this.state.lastResult.win === true) ? 'WON' : 'LOST'), 'Last round', ((this.state.lastResult.win === true) ? 'green' : 'red'))}
 						</div>
-						{this.state.lastResult && this.state.lastResult.match && <div className="ui segment" style={{ backgroundColor: getTheme().palette.themeLighterAlt }}>
+						{this.state.lastResult && this.state.lastResult.match && <div className="ui attached segment" style={{ backgroundColor: getTheme().palette.themeLighterAlt }}>
 							<p>Your <b>{playerCrew}</b> rolled <b>{playerRoll}</b> ({playerRollMsg.join(', ')})</p>
 							<p><i>{this.state.lastResult.match.opponent.name}</i>'s <b>{opponentCrew}</b> rolled <b>{opponentRoll}</b> ({opponentRollMsg.join(', ')})</p>
 							{this.state.rewards &&
@@ -486,15 +486,18 @@ export class GauntletHelper extends React.Component {
 								</p>
 							}
 						</div>}
+						<div className="ui two bottom attached buttons">
+							<div className={'ui primary button' + ((this.state.roundOdds.matches.length > 0) ? '' : ' disabled')} onClick={this._payForNewOpponents}>
+								<i className="money bill alternate outline icon"></i>
+								New opponents (50 merit)
+							</div>
+							<div className="ui button" onClick={this._reloadGauntletData}>
+								<i className="retweet icon"></i>
+								Reload data
+							</div>
+						</div>
 					</div>
 
-					<br />
-					<div style={{ display: 'grid', gridGap: '10px', maxWidth: '550px', gridTemplateColumns: '1fr 1fr' }}>
-						{(this.state.roundOdds.matches.length > 0) &&
-							<PrimaryButton onClick={this._payForNewOpponents} text='Pay merits for new opponents' iconProps={{ iconName: 'Money' }} />
-						}
-						<DefaultButton onClick={this._reloadGauntletData} text='Reload data' iconProps={{ iconName: 'Refresh' }} />
-					</div>
 					<br />
 
 					<div style={{ display: 'grid', gridGap: '10px', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))' }}>
