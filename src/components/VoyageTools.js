@@ -131,7 +131,7 @@ export class VoyageCrew extends React.Component {
 			maxWidth: '900px',
 			gridGap: '10px',
 			gridTemplateColumns: '1fr 1fr 1fr',
-			gridTemplateRows: '1fr 1fr 2fr',
+			gridTemplateRows: 'auto auto 2fr',
 			gridTemplateAreas: `
 			"searchDepth extends calcbutton"
 			"checkActive checkFrozen calcbutton"
