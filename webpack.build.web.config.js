@@ -5,6 +5,7 @@ const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const WebpackCdnPlugin = require('webpack-cdn-plugin');
 const baseConfig = require('./webpack.base.config.js');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const FaviconsWebpackPlugin = require('favicons-webpack-plugin')
 const PACKAGE = require('./package.json');
 
 // Config directories
@@ -51,9 +52,29 @@ module.exports = merge(baseConfig, {
 	},
 	target: 'web',
 	plugins: [
+		new FaviconsWebpackPlugin({
+			logo: SRC_DIR + '/assets/logo.png',
+			prefix: 'img/',
+			emitStats: false,
+			persistentCache: true,
+			inject: true,
+			background: '#393737',
+			title: 'Star Trek Timelines Crew Management',
+			icons: {
+				android: true,
+				appleIcon: true,
+				appleStartup: true,
+				coast: false,
+				favicons: true,
+				firefox: true,
+				opengraph: false,
+				twitter: false,
+				yandex: false,
+				windows: true
+			}
+		}),
 		new HtmlWebpackPlugin({
-			title: `Star Trek Timelines Crew Management v${PACKAGE.version}-web BETA build ${new Date().toISOString()}`,
-			favicon: 'src/assets/icons/ATFleet.ico'
+			title: `Star Trek Timelines Crew Management v${PACKAGE.version}-web BETA build ${new Date().toISOString()}`
 		}),
 		new MiniCssExtractPlugin({
 			// Options similar to the same options in webpackOptions.output
@@ -64,11 +85,11 @@ module.exports = merge(baseConfig, {
 		new webpack.DefinePlugin({ 'process.env.NODE_ENV': JSON.stringify('production') }),
 		new WebpackCdnPlugin({
 			modules: [
-				{
-					name: 'xlsx-populate',
-					var: 'XlsxPopulate',
-					path: 'browser/xlsx-populate.js'
-				}
+				{ name: 'xlsx-populate', var: 'XlsxPopulate', path: 'browser/xlsx-populate.js' },
+				{ name: 'dexie', var: 'Dexie', path: 'dist/dexie.es.js' },
+				{ name: 'react-table' },
+				{ name: 'react', var: 'React', path: `umd/react.${process.env.NODE_ENV}.min.js` },
+				{ name: 'react-dom', var: 'ReactDOM', path: `umd/react-dom.${process.env.NODE_ENV}.min.js` }
 			],
 			publicPath: '/node_modules'
 		})

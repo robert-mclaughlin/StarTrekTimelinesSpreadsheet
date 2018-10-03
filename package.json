@@ -59,6 +59,7 @@
     "electron-builder": "latest",
     "electron-packager": "latest",
     "electron-rebuild": "latest",
+    "favicons-webpack-plugin": "0.0.9",
     "file-loader": "latest",
     "html-webpack-plugin": "latest",
     "ifdef-loader": "latest",
