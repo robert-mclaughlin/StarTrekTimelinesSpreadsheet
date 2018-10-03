@@ -25,8 +25,9 @@ export class AboutAndHelp extends React.Component {
 			<h1>Star Trek Timelines Spreadsheet Tool v{getAppVersion()}</h1>
 			{/* #!if ENV === 'electron' */}
 			<p>A tool to help with crew management in Star Trek Timelines</p>
-			{/* #!else */}
+			{/* #!elseif ENV === 'web' */}
 			<p style={{backgroundColor:'Tomato'}}><b>NOTE:</b> This web version is a very early prerelease for testing purposes only! I'm looking at overall feasibility as well as costs.</p>
+			{/* #!else */}
 			{/* #!endif */}
 			{this.state.version &&
 				<div>

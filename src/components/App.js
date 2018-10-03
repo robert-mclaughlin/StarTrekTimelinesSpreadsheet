@@ -36,7 +36,7 @@ import { FileImageCache } from '../utils/fileImageCache.js';
 import { ServerImageProvider } from '../utils/serverImageCache.js';
 // #!endif
 
-// #!if ENV === 'electron'
+// #!if (ENV === 'electron') || (ENV === 'exp')
 import { LoginDialog } from './LoginDialog.js';
 // #!else
 import { WebLoginDialog } from './WebLoginDialog.js';
@@ -119,8 +119,11 @@ class App extends React.Component {
 		// #!if ENV === 'electron'
 		STTApi.setWebMode(false);
 		STTApi.setImageProvider(true, new FileImageCache());
-		// #!else
+		// #!elseif ENV === 'web'
 		STTApi.setWebMode(true);
+		STTApi.setImageProviderOverride(new ServerImageProvider(STTApi.serverAddress));
+		// #!elseif ENV === 'exp'
+		STTApi.setWebMode(false);
 		STTApi.setImageProviderOverride(new ServerImageProvider(STTApi.serverAddress));
 		// #!endif
 
@@ -260,7 +263,7 @@ class App extends React.Component {
 					</DialogFooter>
 				</Dialog>
 
-				{/* #!if ENV === 'electron' */}
+				{/* #!if (ENV === 'electron') || (ENV === 'exp') */}
 				<LoginDialog ref='loginDialog' onAccessToken={this._onAccessToken} shownByDefault={this.state.showLoginDialog} />
 				{/* #!else */}
 				<WebLoginDialog ref='loginDialog' onAccessToken={this._onAccessToken} shownByDefault={this.state.showLoginDialog} />
