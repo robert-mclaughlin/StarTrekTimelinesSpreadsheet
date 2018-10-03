@@ -1,7 +1,6 @@
 import React from 'react';
 import { Label } from 'office-ui-fabric-react/lib/Label';
 import { Spinner, SpinnerSize } from 'office-ui-fabric-react/lib/Spinner';
-import { Image } from 'office-ui-fabric-react/lib/Image';
 import { MessageBar, MessageBarType } from 'office-ui-fabric-react/lib/MessageBar';
 import { SpinButton } from 'office-ui-fabric-react/lib/SpinButton';
 import { Checkbox } from 'office-ui-fabric-react/lib/Checkbox';
@@ -23,46 +22,22 @@ import {
 
 class GauntletCrew extends React.Component {
 	render() {
-		// TODO: replace these with semantic-ui segments, and a grid layout
-		return (<table className='table-GauntletCrew'>
-			<tbody>
-				<tr>
-					<td>
-						<b>{STTApi.getCrewAvatarBySymbol(this.props.crew.archetype_symbol).name}</b>
-					</td>
-				</tr>
-				<tr>
-					<td className={this.props.crew.disabled ? 'image-disabled' : ''}>
-						<Image src={this.props.crew.iconUrl} height={200} style={{ display: 'inline-block' }} />
-					</td>
-				</tr>
-				<tr>
-					<td>
-						{this.props.crew.disabled ?
-							(<span>Disabled <i className="thumbs down outline icon"></i> ({this.props.crew.debuff / 4} battles)</span>) :
-							(<span>Active <i className="thumbs up outline icon"></i> ({this.props.crew.debuff / 4} battles)</span>)
-						}
-					</td>
-				</tr>
-				<tr>
-					<td>
-						{this.props.crew.skills.map((skill) =>
-							<span className='gauntletCrew-statline' key={skill.skill}>
-								<Image src={CONFIG.SPRITES['icon_' + skill.skill].url} height={18} /> {CONFIG.SKILLS[skill.skill]} ({skill.min} - {skill.max})
-							</span>
-						)}
-						<span className='gauntletCrew-statline'>Crit chance {this.props.crew.crit_chance}%</span>
-					</td>
-				</tr>
-				<tr>
-					<td>
-						{this.props.crew.disabled ?
-							<PrimaryButton onClick={() => this.props.revive(true)} text='Revive (30 dil)' iconProps={{ iconName: 'Money' }} /> :
-							<PrimaryButton onClick={() => this.props.revive(false)} text='Restore (30 dil)' iconProps={{ iconName: 'Money' }} />}
-					</td>
-				</tr>
-			</tbody>
-		</table>);
+		return <div className="ui compact segments" style={{textAlign: 'center', margin: '8px' }}>
+			<h5 className="ui top attached header" style={{ backgroundColor: getTheme().palette.themeLighter, padding: '2px' }}>{STTApi.getCrewAvatarBySymbol(this.props.crew.archetype_symbol).name}</h5>
+			<div className="ui attached segment" style={{ backgroundColor: getTheme().palette.themeLighter, padding: '0' }}>
+				<div style={{ position: 'relative', display:'inline-block' }}>
+					<img src={STTApi.getCrewAvatarBySymbol(this.props.crew.archetype_symbol).iconUrl} className={this.props.crew.disabled ? 'image-disabled' : ''} height={200} />
+					<div className={"ui circular label " + (this.props.crew.disabled ? "red" : "olive")} style={{ position: 'absolute', right: '0', top: '0' }}>{this.props.crew.crit_chance}%</div>
+				</div>
+			</div>
+			<div className="ui attached segment" style={{ backgroundColor: getTheme().palette.themeLighter, padding: '2px' }}>
+				{this.props.crew.debuff / 4} battles
+			</div>
+			<div className="ui bottom attached primary button" onClick={() => this.props.revive(this.props.crew.disabled)}>
+				<i className="money bill alternate outline icon"></i>
+				{this.props.crew.disabled ? 'Revive (30 dil)' : 'Restore (30 dil)'}
+			</div>
+		</div>;
 	}
 }
 
@@ -104,7 +79,7 @@ class GauntletMatch extends React.Component {
 			<div style={containerStyle} className="ui attached segment">
 				<span style={{ gridArea: 'pcrewname', justifySelf: 'center' }}>{STTApi.getCrewAvatarBySymbol(this.props.match.crewOdd.archetype_symbol).name}</span>
 				<div style={{ gridArea: 'pcrewimage', position: 'relative' }}>
-					<Image src={this.props.match.crewOdd.iconUrl} height={128} />
+					<img src={this.props.match.crewOdd.iconUrl} height={128} />
 					<div className="ui olive circular label" style={{ position: 'absolute', left: '0', bottom: '0' }}>{this.props.match.crewOdd.crit_chance}%</div>
 				</div>
 
@@ -113,12 +88,12 @@ class GauntletMatch extends React.Component {
 						<tbody>
 							<tr>
 								<td style={{ textAlign: 'center', verticalAlign: 'middle' }}>{this.props.match.crewOdd.min[0]}-{this.props.match.crewOdd.max[0]}</td>
-								<td style={{ textAlign: 'center' }}><Image src={CONFIG.SPRITES['icon_' + this.props.gauntlet.contest_data.primary_skill].url} height={18} /></td>
+								<td style={{ textAlign: 'center' }}><img src={CONFIG.SPRITES['icon_' + this.props.gauntlet.contest_data.primary_skill].url} height={18} /></td>
 								<td style={{ textAlign: 'center', verticalAlign: 'middle' }}>{this.props.match.opponent.min[0]}-{this.props.match.opponent.max[0]}</td>
 							</tr>
 							<tr>
 								<td style={{ textAlign: 'center', verticalAlign: 'middle' }}>{this.props.match.crewOdd.min[1]}-{this.props.match.crewOdd.max[1]}</td>
-								<td style={{ textAlign: 'center' }}><Image src={CONFIG.SPRITES['icon_' + this.props.gauntlet.contest_data.secondary_skill].url} height={18} /></td>
+								<td style={{ textAlign: 'center' }}><img src={CONFIG.SPRITES['icon_' + this.props.gauntlet.contest_data.secondary_skill].url} height={18} /></td>
 								<td style={{ textAlign: 'center', verticalAlign: 'middle' }}>{this.props.match.opponent.min[1]}-{this.props.match.opponent.max[1]}</td>
 							</tr>
 						</tbody>
@@ -134,7 +109,7 @@ class GauntletMatch extends React.Component {
 				</div>
 
 				<div style={{ gridArea: 'ocrewimage', position: 'relative' }}>
-					<Image src={this.props.match.opponent.iconUrl} height={128} />
+					<img src={this.props.match.opponent.iconUrl} height={128} />
 					<div className="ui olive circular label" style={{ position: 'absolute', left: '0', bottom: '0' }}>{this.props.match.opponent.crit_chance}%</div>
 				</div>
 
@@ -371,7 +346,7 @@ export class GauntletHelper extends React.Component {
 			return (
 				<div>
 					<Label>Next gauntlet starts in {this.state.startsIn}.</Label>
-					<span className='quest-mastery'>Featured skill: <Image src={CONFIG.SPRITES['icon_' + this.state.featuredSkill].url} height={18} /> {CONFIG.SKILLS[this.state.featuredSkill]}</span>
+					<span className='quest-mastery'>Featured skill: <img src={CONFIG.SPRITES['icon_' + this.state.featuredSkill].url} height={18} /> {CONFIG.SKILLS[this.state.featuredSkill]}</span>
 					<Label>Featured traits: {this.state.traits.join(', ')}</Label>
 
 					{this.renderBestCrew()}
@@ -458,9 +433,9 @@ export class GauntletHelper extends React.Component {
 
 			return (
 				<div className='tab-panel' data-is-scrollable='true'>
-					<span className='quest-mastery'>Featured skill is <Image src={CONFIG.SPRITES['icon_' + this.state.gauntlet.contest_data.featured_skill].url} height={18} /> {CONFIG.SKILLS[this.state.gauntlet.contest_data.featured_skill]}; Featured traits are {this.state.gauntlet.contest_data.traits.map(trait => STTApi.getTraitName(trait)).join(", ")}</span>
+					<span className='quest-mastery'>Featured skill is <img src={CONFIG.SPRITES['icon_' + this.state.gauntlet.contest_data.featured_skill].url} height={18} /> {CONFIG.SKILLS[this.state.gauntlet.contest_data.featured_skill]}; Featured traits are {this.state.gauntlet.contest_data.traits.map(trait => STTApi.getTraitName(trait)).join(", ")}</span>
 					<p>The gauntlet ends in {formatTimeSeconds(this.state.gauntlet.seconds_to_end)}</p>
-					<div style={{ display: 'flex', width: '95%' }} >
+					<div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)' }} >
 						{this.state.gauntlet.contest_data.selected_crew.map((crew) => <GauntletCrew key={crew.crew_id} crew={crew} revive={(save) => this._payToReviveCrew(crew.crew_id, save)} />)}
 					</div>
 
