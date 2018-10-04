@@ -4,7 +4,6 @@ import { Spinner, SpinnerSize } from 'office-ui-fabric-react/lib/Spinner';
 import { MessageBar, MessageBarType } from 'office-ui-fabric-react/lib/MessageBar';
 import { SpinButton } from 'office-ui-fabric-react/lib/SpinButton';
 import { Checkbox } from 'office-ui-fabric-react/lib/Checkbox';
-import { PrimaryButton } from 'office-ui-fabric-react/lib/Button';
 import { Persona, PersonaSize, PersonaPresence } from 'office-ui-fabric-react/lib/Persona';
 import { getTheme } from '@uifabric/styling';
 
@@ -22,12 +21,12 @@ import {
 
 class GauntletCrew extends React.Component {
 	render() {
-		return <div className="ui compact segments" style={{textAlign: 'center', margin: '8px' }}>
+		return <div className="ui compact segments" style={{ textAlign: 'center', margin: '8px' }}>
 			<h5 className="ui top attached header" style={{ color: getTheme().palette.neutralDark, backgroundColor: getTheme().palette.themeLighter, padding: '2px' }}>{STTApi.getCrewAvatarBySymbol(this.props.crew.archetype_symbol).name}</h5>
 			<div className="ui attached segment" style={{ backgroundColor: getTheme().palette.themeLighter, padding: '0' }}>
-				<div style={{ position: 'relative', display:'inline-block' }}>
+				<div style={{ position: 'relative', display: 'inline-block' }}>
 					<img src={STTApi.getCrewAvatarBySymbol(this.props.crew.archetype_symbol).iconUrl} className={this.props.crew.disabled ? 'image-disabled' : ''} height={200} />
-					<div className={"ui circular label " + (this.props.crew.disabled ? "red" : "olive")} style={{ position: 'absolute', right: '0', top: '0' }}>{this.props.crew.crit_chance}%</div>
+					<div className={"ui circular label " + (this.props.crew.disabled ? "red" : "green")} style={{ position: 'absolute', right: '0', top: '0' }}>{this.props.crew.crit_chance}%</div>
 				</div>
 			</div>
 			<div className="ui attached segment" style={{ backgroundColor: getTheme().palette.themeLighter, padding: '2px' }}>
@@ -38,6 +37,53 @@ class GauntletCrew extends React.Component {
 				{this.props.crew.disabled ? 'Revive (30 dil)' : 'Restore (30 dil)'}
 			</div>
 		</div>;
+	}
+}
+
+class CircularLabel extends React.Component {
+	constructor(props) {
+		super(props);
+	}
+
+	// http://stackoverflow.com/a/3943023/112731
+	getLuminance(c) {
+		let i, x;
+		const a = [];
+		for (i = 0; i < c.length; i++) {
+			x = c[i] / 255;
+			a[i] = x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4);
+		}
+		return 0.2126 * a[0] + 0.7152 * a[1] + 0.0722 * a[2];
+	}
+
+	render() {
+		let backColor;
+		if (this.props.percent < 6) {
+			backColor = [parseInt('0xa7'), parseInt('0xbd'), parseInt('0x0d')];
+		} else if (this.props.percent < 26) {
+			backColor = [parseInt('0xfb'), parseInt('0xbd'), parseInt('0x08')];
+		} else if (this.props.percent < 46) {
+			backColor = [parseInt('0xf2'), parseInt('0x71'), parseInt('0x1c')];
+		} else {
+			backColor = [parseInt('0xdb'), parseInt('0x28'), parseInt('0x28')];
+		}
+
+		let color;
+		if (this.getLuminance(backColor) > Math.sqrt(1.05 * 0.05) - 0.05) {
+			color = 'black';
+		} else {
+			color = 'white';
+		}
+
+		const padz = (str) => ('00' + str).slice(-2);
+
+		return <div className="ui circular label" style={{
+			position: 'absolute', left: '0', bottom: '0',
+			backgroundColor: `#${backColor.map(c => padz(c.toString(16))).join('')}`,
+			color: color
+			}}>
+			{this.props.percent}%
+		</div >;
 	}
 }
 
@@ -83,7 +129,7 @@ class GauntletMatch extends React.Component {
 				<span style={{ gridArea: 'pcrewname', justifySelf: 'center' }}>{STTApi.getCrewAvatarBySymbol(this.props.match.crewOdd.archetype_symbol).short_name}</span>
 				<div style={{ gridArea: 'pcrewimage', position: 'relative' }}>
 					<img src={this.props.match.crewOdd.iconUrl} height={128} />
-					<div className="ui olive circular label" style={{ position: 'absolute', left: '0', bottom: '0' }}>{this.props.match.crewOdd.crit_chance}%</div>
+					<CircularLabel percent={this.props.match.crewOdd.crit_chance} />
 				</div>
 
 				<div style={{ gridArea: 'stats' }}>
@@ -113,7 +159,7 @@ class GauntletMatch extends React.Component {
 
 				<div style={{ gridArea: 'ocrewimage', position: 'relative' }}>
 					<img src={this.props.match.opponent.iconUrl} height={128} />
-					<div className="ui olive circular label" style={{ position: 'absolute', left: '0', bottom: '0' }}>{this.props.match.opponent.crit_chance}%</div>
+					<CircularLabel percent={this.props.match.opponent.crit_chance} />
 				</div>
 
 				<span style={{ gridArea: 'ocrewname', justifySelf: 'center' }}>{STTApi.getCrewAvatarBySymbol(this.props.match.opponent.archetype_symbol).short_name}</span>
@@ -480,9 +526,7 @@ export class GauntletHelper extends React.Component {
 						)}
 					</div>
 
-					<br />
-
-					{this.state.logPath && <PrimaryButton onClick={this._exportLog} text='Export log...' iconProps={{ iconName: 'DownloadDocument' }} />}
+					{this.state.logPath && <div className="ui primary button" style={{ margin: '8px' }} onClick={this._exportLog}>Export log...</div>}
 				</div>
 			);
 		} else if (this.state.gauntlet && (this.state.gauntlet.state == 'ENDED_WITH_REWARDS')) {
