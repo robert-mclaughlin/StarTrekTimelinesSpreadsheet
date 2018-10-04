@@ -354,7 +354,7 @@ export class GauntletHelper extends React.Component {
 		}
 		// #!endif
 
-		this.setState({ logPath: logPath, showSpinner: false });
+		this.setState({ logPath: logPath, showSpinner: false }, () => { this._updateCommandItems(); });
 	}
 
 	_calculateSelection() {
