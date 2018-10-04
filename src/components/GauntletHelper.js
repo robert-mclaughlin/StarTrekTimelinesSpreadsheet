@@ -23,7 +23,7 @@ import {
 class GauntletCrew extends React.Component {
 	render() {
 		return <div className="ui compact segments" style={{textAlign: 'center', margin: '8px' }}>
-			<h5 className="ui top attached header" style={{ backgroundColor: getTheme().palette.themeLighter, padding: '2px' }}>{STTApi.getCrewAvatarBySymbol(this.props.crew.archetype_symbol).name}</h5>
+			<h5 className="ui top attached header" style={{ color: getTheme().palette.neutralDark, backgroundColor: getTheme().palette.themeLighter, padding: '2px' }}>{STTApi.getCrewAvatarBySymbol(this.props.crew.archetype_symbol).name}</h5>
 			<div className="ui attached segment" style={{ backgroundColor: getTheme().palette.themeLighter, padding: '0' }}>
 				<div style={{ position: 'relative', display:'inline-block' }}>
 					<img src={STTApi.getCrewAvatarBySymbol(this.props.crew.archetype_symbol).iconUrl} className={this.props.crew.disabled ? 'image-disabled' : ''} height={200} />
@@ -64,7 +64,7 @@ class GauntletMatch extends React.Component {
 	render() {
 		//TODO: 320px hardcoded below!
 		let containerStyle = {
-			padding: '2px',
+			padding: '3px',
 			backgroundColor: getTheme().palette.themeLighter,
 			display: 'grid',
 			gridTemplateColumns: '100px auto 12px auto 100px',
@@ -75,9 +75,12 @@ class GauntletMatch extends React.Component {
 			"pcrewimage chance chance chance ocrewimage"
 			"pcrewimage button button button ocrewimage"`};
 
-		return <div>
+		return <div className="ui compact segments" style={{ margin: 'unset' }}>
+			<h5 className="ui top attached header" style={{ color: getTheme().palette.neutralDark, backgroundColor: getTheme().palette.themeLighter, textAlign: 'center', padding: '2px' }}>
+				vs {this.props.match.opponent.name} (rank {this.props.match.opponent.rank})
+			</h5>
 			<div style={containerStyle} className="ui attached segment">
-				<span style={{ gridArea: 'pcrewname', justifySelf: 'center' }}>{STTApi.getCrewAvatarBySymbol(this.props.match.crewOdd.archetype_symbol).name}</span>
+				<span style={{ gridArea: 'pcrewname', justifySelf: 'center' }}>{STTApi.getCrewAvatarBySymbol(this.props.match.crewOdd.archetype_symbol).short_name}</span>
 				<div style={{ gridArea: 'pcrewimage', position: 'relative' }}>
 					<img src={this.props.match.crewOdd.iconUrl} height={128} />
 					<div className="ui olive circular label" style={{ position: 'absolute', left: '0', bottom: '0' }}>{this.props.match.crewOdd.crit_chance}%</div>
@@ -113,9 +116,9 @@ class GauntletMatch extends React.Component {
 					<div className="ui olive circular label" style={{ position: 'absolute', left: '0', bottom: '0' }}>{this.props.match.opponent.crit_chance}%</div>
 				</div>
 
-				<span style={{ gridArea: 'ocrewname', justifySelf: 'center' }}>{STTApi.getCrewAvatarBySymbol(this.props.match.opponent.archetype_symbol).name}</span>
+				<span style={{ gridArea: 'ocrewname', justifySelf: 'center' }}>{STTApi.getCrewAvatarBySymbol(this.props.match.opponent.archetype_symbol).short_name}</span>
 			</div>
-			<div className="ui bottom attached blue button" onClick={this._playMatch}>Engage {this.props.match.opponent.name}</div>
+			<div className="ui bottom attached primary button" onClick={this._playMatch}>Engage!</div>
 		</div>;
 	}
 }
@@ -129,7 +132,6 @@ export class GauntletHelper extends React.Component {
 			lastResult: null,
 			lastErrorMessage: null,
 			rewards: null,
-			merits: STTApi.playerData.premium_earnable,
 			// Recommendation calculation settings
 			featuredSkillBonus: 10,
 			critBonusDivider: 3,
@@ -257,12 +259,6 @@ export class GauntletHelper extends React.Component {
 			this.setState({
 				lastResult: Object.assign(data.lastResult, { match: match }),
 				rewards: data.rewards
-			});
-		}
-
-		if (data.merits) {
-			this.setState({
-				merits: data.merits
 			});
 		}
 
@@ -407,9 +403,10 @@ export class GauntletHelper extends React.Component {
 
 					<br />
 
-					<PrimaryButton onClick={this._calculateSelection} text='Calculate best crew selection' disabled={this.state.calculating} />
-					<span> </span>
-					<PrimaryButton onClick={this._startGauntlet} text='Start gauntlet with recommendations' disabled={!this.state.crewSelection} />
+					<div style={{ display: 'grid', gridGap: '5px', width: 'fit-content', gridTemplateColumns: 'max-content max-content' }}>
+						<div className={"ui primary button" + (this.state.calculating ? ' disabled' : '')} onClick={this._calculateSelection}>Calculate best crew selection</div>
+						<div className={"ui primary button" + (!this.state.crewSelection ? ' disabled' : '')} onClick={this._startGauntlet}>Start gauntlet with recommendations</div>
+					</div>
 				</div>
 			);
 		}
@@ -434,19 +431,21 @@ export class GauntletHelper extends React.Component {
 			return (
 				<div className='tab-panel' data-is-scrollable='true'>
 					<span className='quest-mastery'>Featured skill is <img src={CONFIG.SPRITES['icon_' + this.state.gauntlet.contest_data.featured_skill].url} height={18} /> {CONFIG.SKILLS[this.state.gauntlet.contest_data.featured_skill]}; Featured traits are {this.state.gauntlet.contest_data.traits.map(trait => STTApi.getTraitName(trait)).join(", ")}</span>
-					<p>The gauntlet ends in {formatTimeSeconds(this.state.gauntlet.seconds_to_end)}</p>
 					<div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)' }} >
 						{this.state.gauntlet.contest_data.selected_crew.map((crew) => <GauntletCrew key={crew.crew_id} crew={crew} revive={(save) => this._payToReviveCrew(crew.crew_id, save)} />)}
 					</div>
 
 					{this.state.lastErrorMessage && <p>Error: '{this.state.lastErrorMessage}'</p>}
 
-					<div className="ui compact segments" style={{ margin: '6px' }}>
+					<div className="ui compact segments" style={{ margin: '8px' }}>
+						<h5 className="ui top attached header" style={{ color: getTheme().palette.neutralDark, backgroundColor: getTheme().palette.themeLighter, textAlign: 'center', padding: '2px' }}>
+							The gauntlet ends in {formatTimeSeconds(this.state.gauntlet.seconds_to_end)}
+						</h5>
 						<div className="ui attached segment" style={{ backgroundColor: getTheme().palette.themeLighter }}>
 							{this.renderStatistic(formatTimeSeconds(this.state.gauntlet.seconds_to_next_crew_refresh), 'Crew refresh')}
 							{this.renderStatistic(this.state.roundOdds.rank, 'Your rank')}
 							{this.renderStatistic(this.state.roundOdds.consecutive_wins, 'Consecutive wins')}
-							{this.renderStatistic(this.state.merits, 'Merits')}
+							{this.renderStatistic(STTApi.playerData.premium_earnable, 'Merits')}
 							{this.state.lastResult && this.renderStatistic(((this.state.lastResult.win === true) ? 'WON' : 'LOST'), 'Last round', ((this.state.lastResult.win === true) ? 'green' : 'red'))}
 						</div>
 						{this.state.lastResult && this.state.lastResult.match && <div className="ui attached segment" style={{ backgroundColor: getTheme().palette.themeLighterAlt }}>
@@ -475,7 +474,7 @@ export class GauntletHelper extends React.Component {
 
 					<br />
 
-					<div style={{ display: 'grid', gridGap: '10px', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))' }}>
+					<div style={{ display: 'grid', gridGap: '10px', margin: '8px', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))' }}>
 						{this.state.roundOdds.matches.map((match) =>
 							<GauntletMatch key={match.crewOdd.archetype_symbol + match.opponent.player_id} match={match} gauntlet={this.state.gauntlet} consecutive_wins={this.state.roundOdds.consecutive_wins} onNewData={this._gauntletDataRecieved} />
 						)}
@@ -488,9 +487,9 @@ export class GauntletHelper extends React.Component {
 			);
 		} else if (this.state.gauntlet && (this.state.gauntlet.state == 'ENDED_WITH_REWARDS')) {
 			return <div>
-				<h3>Gauntlet ended.</h3>
-				<PrimaryButton onClick={this._clainRankedRewards} text='Claim rewards and select new crew' />
-				<p>Note: you won't see the rewards here, you'll go straight to crew selection. Claim rewards in the game client to see them. !THIS FEATURE IS UNTESTED!</p>
+				<h3>Gauntlet ended, your final rank was <b>{this.state.gauntlet.rank}</b>.</h3>
+				<div className="ui primary button" onClick={this._clainRankedRewards}>Claim rewards and select new crew</div>
+				<p>Note: you won't see the rewards here, you'll go straight to crew selection. Claim rewards in the game client to see them!</p>
 			</div>;
 		}
 		else {
