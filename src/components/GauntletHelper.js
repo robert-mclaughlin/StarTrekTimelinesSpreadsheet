@@ -515,15 +515,11 @@ export class GauntletHelper extends React.Component {
 			}
 
 			let matches = this.state.roundOdds.matches;
+			let sortCrit = (match) => match.chance;
 			if (this.state.bestFirst) {
-				matches.sort((a, b) => {
-					return (b.chance + b.opponent.value / 4 - a.chance - a.opponent.value / 4);
-				});
-			} else {
-				matches.sort((a, b) => {
-					return (b.chance - a.chance);
-				});
+				sortCrit = (match) => (match.chance > 0) ? (match.chance + match.opponent.value / 6) : 0;
 			}
+			matches.sort((a, b) => sortCrit(b) - sortCrit(a));
 
 			return (
 				<div className='tab-panel' data-is-scrollable='true'>
