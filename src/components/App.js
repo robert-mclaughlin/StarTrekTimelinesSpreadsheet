@@ -304,7 +304,7 @@ class App extends React.Component {
 				return <VoyageTools />;
 
 			case 'Gauntlet':
-				return <GauntletHelper />;
+				return <GauntletHelper onCommandItemsUpdate={commandItemsUpdater} />;
 
 			case 'Fleet':
 				return <FleetDetails />;

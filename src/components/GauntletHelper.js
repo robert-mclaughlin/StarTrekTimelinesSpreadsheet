@@ -81,7 +81,7 @@ class CircularLabel extends React.Component {
 			position: 'absolute', left: '0', bottom: '0',
 			backgroundColor: `#${backColor.map(c => padz(c.toString(16))).join('')}`,
 			color: color
-			}}>
+		}}>
 			{this.props.percent}%
 		</div >;
 	}
@@ -196,6 +196,46 @@ export class GauntletHelper extends React.Component {
 		this._startGauntlet = this._startGauntlet.bind(this);
 		this._exportLog = this._exportLog.bind(this);
 		this._reloadGauntletData();
+	}
+
+	componentDidMount() {
+		this._updateCommandItems();
+	}
+
+	_updateCommandItems() {
+		if (this.props.onCommandItemsUpdate) {
+			let commandItems = [];
+			if (this.state.logPath) {
+				commandItems.push({
+					key: 'exportCsv',
+					name: 'Export log...',
+					iconProps: { iconName: 'ExcelDocument' },
+					onClick: () => this._exportLog()
+				});
+			}
+
+			commandItems.push({
+				key: 'settings',
+				text: 'Settings',
+				iconProps: { iconName: 'Equalizer' },
+				subMenuProps: {
+					items: [{
+						key: 'bestFirst',
+						text: 'Best match first',
+						canCheck: true,
+						isChecked: this.state.bestFirst,
+						onClick: () => {
+							let isChecked = !this.state.bestFirst;
+							this.setState({
+								bestFirst: isChecked
+							}, () => { this._updateCommandItems(); });
+						}
+					}]
+				}
+			});
+
+			this.props.onCommandItemsUpdate(commandItems);
+		}
 	}
 
 	_reloadGauntletData() {
@@ -474,6 +514,17 @@ export class GauntletHelper extends React.Component {
 				}
 			}
 
+			let matches = this.state.roundOdds.matches;
+			if (this.state.bestFirst) {
+				matches.sort((a, b) => {
+					return (b.chance + b.opponent.value / 4 - a.chance - a.opponent.value / 4);
+				});
+			} else {
+				matches.sort((a, b) => {
+					return (b.chance - a.chance);
+				});
+			}
+
 			return (
 				<div className='tab-panel' data-is-scrollable='true'>
 					<span className='quest-mastery'>Featured skill is <img src={CONFIG.SPRITES['icon_' + this.state.gauntlet.contest_data.featured_skill].url} height={18} /> {CONFIG.SKILLS[this.state.gauntlet.contest_data.featured_skill]}; Featured traits are {this.state.gauntlet.contest_data.traits.map(trait => STTApi.getTraitName(trait)).join(", ")}</span>
@@ -521,12 +572,10 @@ export class GauntletHelper extends React.Component {
 					<br />
 
 					<div style={{ display: 'grid', gridGap: '10px', margin: '8px', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))' }}>
-						{this.state.roundOdds.matches.map((match) =>
+						{matches.map((match) =>
 							<GauntletMatch key={match.crewOdd.archetype_symbol + match.opponent.player_id} match={match} gauntlet={this.state.gauntlet} consecutive_wins={this.state.roundOdds.consecutive_wins} onNewData={this._gauntletDataRecieved} />
 						)}
 					</div>
-
-					{this.state.logPath && <div className="ui primary button" style={{ margin: '8px' }} onClick={this._exportLog}>Export log...</div>}
 				</div>
 			);
 		} else if (this.state.gauntlet && (this.state.gauntlet.state == 'ENDED_WITH_REWARDS')) {
