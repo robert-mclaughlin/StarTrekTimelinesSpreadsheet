@@ -19,7 +19,6 @@ import '../assets/css/App.css';
 import React from 'react';
 import { Fabric } from 'office-ui-fabric-react/lib/Fabric';
 import { CommandBar } from 'office-ui-fabric-react/lib/CommandBar';
-import { Spinner, SpinnerSize } from 'office-ui-fabric-react/lib/Spinner';
 import { Dialog, DialogType, DialogFooter } from 'office-ui-fabric-react/lib/Dialog';
 import { ContextualMenuItemType } from 'office-ui-fabric-react/lib/ContextualMenu';
 import { Image } from 'office-ui-fabric-react/lib/Image';
@@ -208,7 +207,9 @@ class App extends React.Component {
 
 	render() {
 		if (this.state.showSpinner) {
-			return <div className="centered"><Spinner size={SpinnerSize.large} label={this.state.spinnerLabel} /></div>;
+			return <div className="centeredVerticalAndHorizontal">
+				<div className="ui massive text active centered inline loader">{this.state.spinnerLabel}</div>
+			</div>;
 		}
 
 		return (
@@ -301,7 +302,7 @@ class App extends React.Component {
 				return <CrewRecommendations />;
 
 			case 'Voyage':
-				return <VoyageTools />;
+				return <VoyageTools onCommandItemsUpdate={commandItemsUpdater} />;
 
 			case 'Gauntlet':
 				return <GauntletHelper onCommandItemsUpdate={commandItemsUpdater} />;

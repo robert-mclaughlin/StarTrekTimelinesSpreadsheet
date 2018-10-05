@@ -1,6 +1,5 @@
 import React from 'react';
 import { Image } from 'office-ui-fabric-react/lib/Image';
-import { Spinner, SpinnerSize } from 'office-ui-fabric-react/lib/Spinner';
 import { Dropdown, DropdownMenuItemType } from 'office-ui-fabric-react/lib/Dropdown';
 import { Persona, PersonaSize, PersonaPresence } from 'office-ui-fabric-react/lib/Persona';
 
@@ -349,7 +348,10 @@ export class MissionExplorer extends React.Component {
                     <MissionDetails questId={this.state.selectedItem} ref='missionDetails' />
                 </div>
             );
-        else
-            return (<Spinner size={SpinnerSize.large} label='Loading mission and quest data...' />);
+        else {
+            return <div className="centeredVerticalAndHorizontal">
+				<div className="ui huge centered text active inline loader">Loading mission and quest data...</div>
+			</div>;
+        }
     }
 }

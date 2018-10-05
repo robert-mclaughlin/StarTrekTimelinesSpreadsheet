@@ -2,7 +2,7 @@
     font-family: "Helvetica Neue", Roboto, "Segoe UI", -apple-system, sans-serif !important;
 }
 
-.centered {
+.centeredVerticalAndHorizontal {
     display: flex;
     width: 100vw;
     height: 100vh;

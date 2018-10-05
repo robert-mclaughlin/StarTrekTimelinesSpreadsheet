@@ -2,7 +2,6 @@ import React from 'react';
 import ReactTable from "react-table";
 import { Image, ImageFit } from 'office-ui-fabric-react/lib/Image';
 import { PrimaryButton } from 'office-ui-fabric-react/lib/Button';
-import { Spinner, SpinnerSize } from 'office-ui-fabric-react/lib/Spinner';
 
 import { CollapsibleSection } from './CollapsibleSection';
 import { RarityStars } from './RarityStars';
@@ -205,8 +204,11 @@ export class Starbase extends React.Component {
 	}
 
 	render() {
-		if (this.state.showSpinner)
-			return <Spinner size={SpinnerSize.large} label='Loading starbase details...' />;
+		if (this.state.showSpinner) {
+			return <div className="centeredVerticalAndHorizontal">
+				<div className="ui huge centered text active inline loader">Loading starbase details...</div>
+			</div>;
+		}
 
 		const roomContainerStyle = {
 			display: 'grid',

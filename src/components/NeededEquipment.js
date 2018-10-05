@@ -1,5 +1,4 @@
 import React from 'react';
-import { Image } from 'office-ui-fabric-react/lib/Image';
 import { SearchBox } from 'office-ui-fabric-react/lib/SearchBox';
 import { getTheme } from '@uifabric/styling';
 
@@ -367,10 +366,10 @@ export class NeededEquipment extends React.Component {
 				{disputeMissions.map((entry, idx) =>
 					<div className={"ui labeled button compact tiny" + ((this._getMissionCost(entry.id, entry.mastery) === undefined) ? " disabled" : "")} key={idx} onClick={() => this._warpDialog.current.show(entry.id, entry.mastery)}>
 						<div className="ui button compact tiny">
-							{entry.name} <span style={{ display: 'inline-block' }}><Image src={CONFIG.MASTERY_LEVELS[entry.mastery].url()} height={14} /></span> ({entry.chance_grade}/5)
+							{entry.name} <span style={{ display: 'inline-block' }}><img src={CONFIG.MASTERY_LEVELS[entry.mastery].url()} height={14} /></span> ({entry.chance_grade}/5)
 						</div>
 						<a className="ui blue label">
-							{this._getMissionCost(entry.id, entry.mastery)} <span style={{ display: 'inline-block' }}><Image src={CONFIG.SPRITES['energy_icon'].url} height={14} /></span>
+							{this._getMissionCost(entry.id, entry.mastery)} <span style={{ display: 'inline-block' }}><img src={CONFIG.SPRITES['energy_icon'].url} height={14} /></span>
 						</a>
 					</div>
 				).reduce((prev, curr) => [prev, ' ', curr])}
@@ -383,10 +382,10 @@ export class NeededEquipment extends React.Component {
 				{shipBattles.map((entry, idx) =>
 					<div className={"ui labeled button compact tiny" + ((this._getMissionCost(entry.id, entry.mastery) === undefined) ? " disabled" : "")} key={idx} onClick={() => this._warpDialog.current.show(entry.id, entry.mastery)}>
 						<div className="ui button compact tiny">
-							{entry.name} <span style={{ display: 'inline-block' }}><Image src={CONFIG.MASTERY_LEVELS[entry.mastery].url()} height={14} /></span> ({entry.chance_grade}/5)
+							{entry.name} <span style={{ display: 'inline-block' }}><img src={CONFIG.MASTERY_LEVELS[entry.mastery].url()} height={14} /></span> ({entry.chance_grade}/5)
 						</div>
 						<a className="ui blue label">
-							{this._getMissionCost(entry.id, entry.mastery)} <span style={{ display: 'inline-block' }}><Image src={CONFIG.SPRITES['energy_icon'].url} height={14} /></span>
+							{this._getMissionCost(entry.id, entry.mastery)} <span style={{ display: 'inline-block' }}><img src={CONFIG.SPRITES['energy_icon'].url} height={14} /></span>
 						</a>
 					</div>
 				).reduce((prev, curr) => [prev, ' ', curr])}
@@ -397,7 +396,7 @@ export class NeededEquipment extends React.Component {
 			res.push(<div key={'cadet'}>
 				<b>Cadet missions: </b>
 				{cadetableItems.get(equipment.id).map((entry, idx) =>
-					<span key={idx}>{entry.name} <span style={{ display: 'inline-block' }}><Image src={CONFIG.MASTERY_LEVELS[entry.mastery].url()} height={16} /></span></span>
+					<span key={idx}>{entry.name} <span style={{ display: 'inline-block' }}><img src={CONFIG.MASTERY_LEVELS[entry.mastery].url()} height={16} /></span></span>
 				).reduce((prev, curr) => [prev, ', ', curr])}
 			</div>)
 		}
@@ -531,10 +530,10 @@ export class NeededEquipment extends React.Component {
 			res.push(<div key={key} style={{ lineHeight: '2.5' }}>
 				<div className="ui labeled button compact tiny" key={key} onClick={() => this._warpDialog.current.show(entry.id, entry.mastery)}>
 					<div className="ui button compact tiny">
-						{entry.name} <span style={{ display: 'inline-block' }}><Image src={CONFIG.MASTERY_LEVELS[entry.mastery].url()} height={14} /></span> ({entry.chance_grade}/5)
+						{entry.name} <span style={{ display: 'inline-block' }}><img src={CONFIG.MASTERY_LEVELS[entry.mastery].url()} height={14} /></span> ({entry.chance_grade}/5)
 					</div>
 					<a className="ui blue label">
-						{this._getMissionCost(entry.id, entry.mastery)} <span style={{ display: 'inline-block' }}><Image src={CONFIG.SPRITES['energy_icon'].url} height={14} /></span>
+						{this._getMissionCost(entry.id, entry.mastery)} <span style={{ display: 'inline-block' }}><img src={CONFIG.SPRITES['energy_icon'].url} height={14} /></span>
 					</a>
 				</div>
 

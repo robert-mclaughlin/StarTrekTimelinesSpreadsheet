@@ -1,9 +1,6 @@
 import React from 'react';
 
 import { Dialog, DialogType } from 'office-ui-fabric-react/lib/Dialog';
-import { Image, ImageFit } from 'office-ui-fabric-react/lib/Image';
-import { Icon } from 'office-ui-fabric-react/lib/Icon';
-import { Spinner, SpinnerSize } from 'office-ui-fabric-react/lib/Spinner';
 
 import { CollapsibleSection } from './CollapsibleSection.js';
 import UserStore from './Styles';
@@ -77,12 +74,13 @@ export class VoyageLogEntry extends React.Component {
                     <span className='quest-mastery'>
                         {entry.skill_check && (
                             <span className='quest-mastery'>
-                                <Image src={CONFIG.SPRITES['icon_' + entry.skill_check.skill].url} height={18} />
-                                {(entry.skill_check.passed == true)?<Icon iconName='Like' /> : <Icon iconName='Dislike' />} &nbsp;
+                                <img src={CONFIG.SPRITES['icon_' + entry.skill_check.skill].url} height={18} />
+                                <i className={`thumbs ${entry.skill_check.passed ? 'up' : 'down'} outline icon`}></i>
+                                &nbsp;
                             </span>
                         )}
                         {entry.crewIconUrl && (
-                            <Image src={entry.crewIconUrl} width={32} height={32} imageFit={ImageFit.contain} />
+                            <img src={entry.crewIconUrl} height={32} />
                         )}
                         <span dangerouslySetInnerHTML={{__html: entry.text}} />
                     </span>
@@ -140,8 +138,9 @@ export class Voyage extends React.Component {
     }
 
     render() {
-        if (this.state.showSpinner)
-            return <Spinner size={SpinnerSize.large} label='Loading voyage details...' />;
+        if (this.state.showSpinner) {
+			return <div className="ui big centered text active inline loader">Loading voyage details...</div>;
+		}
 
         return (<div style={{ userSelect: 'initial' }}>
             <h3>Voyage on the {STTApi.getShipTraitName(this.state.voyage.ship_trait)} ship {this.state.ship_name}</h3>
@@ -156,7 +155,7 @@ export class Voyage extends React.Component {
                                 <ul>
                                     {this.state.crew_slots.map((slot) => {
                                         return (<li key={slot.symbol}><span className='quest-mastery'>
-                                            {slot.name} &nbsp; <Image src={ STTApi.roster.find((rosterCrew) => rosterCrew.id == slot.crew.archetype_id).iconUrl} width={20} height={20} imageFit={ImageFit.contain} /> &nbsp; {slot.crew.name}
+                                            {slot.name} &nbsp; <img src={ STTApi.roster.find((rosterCrew) => rosterCrew.id == slot.crew.archetype_id).iconUrl} height={20} /> &nbsp; {slot.crew.name}
                                             </span>
                                         </li>);
                                     })}
@@ -168,7 +167,7 @@ export class Voyage extends React.Component {
                                 {Object.values(this.state.voyage.skill_aggregates).map((skill) => {
                                     return (<li key={skill.skill}>
                                         <span className='quest-mastery'>
-                                            <Image src={CONFIG.SPRITES['icon_' + skill.skill].url} height={18} /> &nbsp; {skill.core} ({skill.range_min}-{skill.range_max})
+                                            <img src={CONFIG.SPRITES['icon_' + skill.skill].url} height={18} /> &nbsp; {skill.core} ({skill.range_min}-{skill.range_max})
                                         </span>
                                     </li>);
                                 })}

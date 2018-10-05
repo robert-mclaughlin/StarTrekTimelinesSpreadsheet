@@ -4,7 +4,6 @@ import React from 'react';
 import { PrimaryButton } from 'office-ui-fabric-react/lib/Button';
 import { TextField } from 'office-ui-fabric-react/lib/TextField';
 import { Checkbox } from 'office-ui-fabric-react/lib/Checkbox';
-import { Spinner, SpinnerSize } from 'office-ui-fabric-react/lib/Spinner';
 import { MessageBar, MessageBarType } from 'office-ui-fabric-react/lib/MessageBar';
 
 import STTApi from 'sttapi';
@@ -75,9 +74,9 @@ export class WebLoginDialog extends React.Component {
 							</div>
 							<div className="sixteen wide column">
 								<PrimaryButton onClick={this._closeDialog} text='Login' disabled={this.state.showSpinner || !this.state.agreePolicy} />
-								{this.state.showSpinner && (
-									<Spinner size={SpinnerSize.small} label='Logging in...' />
-								)}
+								{this.state.showSpinner &&
+									<div className="ui medium centered text active inline loader">Logging in...</div>
+								}
 							</div>
 						</div>
 

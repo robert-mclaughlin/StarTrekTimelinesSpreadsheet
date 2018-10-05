@@ -1,7 +1,6 @@
 import '../assets/css/semantic.min.css';
 
 import React from 'react';
-import { Spinner, SpinnerSize } from 'office-ui-fabric-react/lib/Spinner';
 import { SpinButton } from 'office-ui-fabric-react/lib/SpinButton';
 import { Checkbox } from 'office-ui-fabric-react/lib/Checkbox';
 import { DefaultButton, PrimaryButton, CompoundButton } from 'office-ui-fabric-react/lib/Button';
@@ -9,7 +8,6 @@ import { Persona, PersonaSize, PersonaPresence } from 'office-ui-fabric-react/li
 import { NormalPeoplePicker } from 'office-ui-fabric-react/lib/Pickers';
 import { Image, ImageFit } from 'office-ui-fabric-react/lib/Image';
 import { Icon } from 'office-ui-fabric-react/lib/Icon';
-import { Link } from 'office-ui-fabric-react/lib/Link';
 import { TextField } from 'office-ui-fabric-react/lib/TextField';
 import { MessageBar, MessageBarType } from 'office-ui-fabric-react/lib/MessageBar';
 
@@ -100,9 +98,9 @@ export class VoyageCrew extends React.Component {
 
 			return (<div>
 				<h3>Best crew</h3>
-				{(this.state.state === "inprogress") && (
-					<Spinner size={SpinnerSize.small} label='Still calculating...' />
-				)}
+				{(this.state.state === "inprogress") &&
+					<div className="ui medium centered text active inline loader">Still calculating...</div>
+				}
 				<div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap' }}>
 					{crewSpans}
 				</div>
@@ -261,7 +259,7 @@ export class VoyageCrew extends React.Component {
 	}
 
 	_packVoyageOptions() {
-		let filteredRoster = STTApi.roster.filter(crew =>{
+		let filteredRoster = STTApi.roster.filter(crew => {
 			// Filter out buy-back crew
 			if (crew.buyback) {
 				return false;
@@ -289,7 +287,7 @@ export class VoyageCrew extends React.Component {
 			shipAM: this.state.bestShips[0].score,
 			skillPrimaryMultiplier: 3.5,
 			skillSecondaryMultiplier: 2.5,
-    		skillMatchingMultiplier: 1.1,
+			skillMatchingMultiplier: 1.1,
 			traitScoreBoost: 200,
 			voyage_description: STTApi.playerData.character.voyage_descriptions[0],
 			roster: filteredRoster
@@ -315,7 +313,7 @@ export class VoyageCrew extends React.Component {
 			});
 	}
 
-// #!if ENV === 'electron'
+	// #!if ENV === 'electron'
 	_generateVoyCrewRank() {
 		this.setState({ generatingVoyCrewRank: true });
 
@@ -331,7 +329,7 @@ export class VoyageCrew extends React.Component {
 			console.log("unexpected progress result!"); // not implemented yet..
 		});
 	}
-// #!endif
+	// #!endif
 }
 
 export class VoyageLogEntry extends React.Component {
@@ -400,7 +398,7 @@ export class VoyageLog extends React.Component {
 				accessor: (row) => row.full_name,
 				Cell: (p) => {
 					let item = p.original;
-					return (<Link href={'https://stt.wiki/wiki/' + item.full_name.split(' ').join('_')} target='_blank'>{item.full_name}</Link>);
+					return (<a href={'https://stt.wiki/wiki/' + item.full_name.split(' ').join('_')} target='_blank'>{item.full_name}</a>);
 				}
 			},
 			{
@@ -450,8 +448,8 @@ export class VoyageLog extends React.Component {
 						let have = STTApi.roster.filter(crew => crew.symbol === item.symbol);
 						if (have.length > 0) {
 							if (!have.some(c => c.max_rarity === c.rarity)) {
-                                return <span style={{ fontWeight: 'bold' }}>NEW STAR FOR CREW!</span>;
-                            } else {
+								return <span style={{ fontWeight: 'bold' }}>NEW STAR FOR CREW!</span>;
+							} else {
 								return <span>Duplicate of immortalized crew (airlock-able)</span>;
 							}
 						} else {
@@ -599,7 +597,7 @@ export class VoyageLog extends React.Component {
 			shipAM: 0,
 			skillPrimaryMultiplier: 3.5,
 			skillSecondaryMultiplier: 2.5,
-    		skillMatchingMultiplier: 1.1,
+			skillMatchingMultiplier: 1.1,
 			traitScoreBoost: 200,
 			voyage_description: STTApi.playerData.character.voyage_descriptions[0],
 			roster: assignedRoster,
@@ -678,8 +676,11 @@ export class VoyageLog extends React.Component {
 	}
 
 	render() {
-		if (this.state.showSpinner)
-			return <Spinner size={SpinnerSize.large} label='Loading voyage details...' />;
+		if (this.state.showSpinner) {
+			return <div className="centeredVerticalAndHorizontal">
+				<div className="ui massive centered text active inline loader">Loading voyage details...</div>
+			</div>;
+		}
 
 		const defaultButton = props => <DefaultButton {...props} text={props.children} style={{ width: '100%' }} />;
 
@@ -759,12 +760,34 @@ export class VoyageTools extends React.Component {
 		this.forceUpdate();
 	}
 
+	componentDidMount() {
+        this._updateCommandItems();
+    }
+
+    _updateCommandItems() {
+        if (this.props.onCommandItemsUpdate) {
+			const activeVoyage = STTApi.playerData.character.voyage.length > 0;
+
+			if (activeVoyage) {
+				this.props.onCommandItemsUpdate([{
+					key: 'exportExcel',
+					name: this.state.showCalcAnyway ? 'Switch to log' : 'Switch to recommendations',
+					iconProps: { iconName: 'Switch' },
+					onClick: () => {
+						this.setState({ showCalcAnyway: !this.state.showCalcAnyway }, () => { this._updateCommandItems(); });
+					}
+				}]);
+			} else {
+				this.props.onCommandItemsUpdate([]);
+			}
+        }
+    }
+
 	render() {
-		let activeVoyage = STTApi.playerData.character.voyage.length > 0;
+		const activeVoyage = STTApi.playerData.character.voyage.length > 0;
 
 		return (
 			<div className='tab-panel' data-is-scrollable='true'>
-				{activeVoyage && <PrimaryButton onClick={() => this.setState({ showCalcAnyway: !this.state.showCalcAnyway })} text={this.state.showCalcAnyway ? 'Switch to log' : 'Switch to recommendations'} />}
 				{(!activeVoyage || this.state.showCalcAnyway) && <VoyageCrew onRefreshNeeded={() => this._onRefreshNeeded()} />}
 				{activeVoyage && !this.state.showCalcAnyway && <VoyageLog />}
 			</div>

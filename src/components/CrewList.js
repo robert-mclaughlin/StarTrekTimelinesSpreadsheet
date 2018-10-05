@@ -1,9 +1,7 @@
-import '../assets/css/fabric.min.css';
 import 'react-table/react-table.css';
 
 import React from 'react';
 import { Image, ImageFit } from 'office-ui-fabric-react/lib/Image';
-import { Link } from 'office-ui-fabric-react/lib/Link';
 import { Label } from 'office-ui-fabric-react/lib/Label';
 import { Icon } from 'office-ui-fabric-react/lib/Icon';
 import { IconButton, DefaultButton } from 'office-ui-fabric-react/lib/Button';
@@ -73,20 +71,16 @@ export class CrewList extends React.Component {
 	}
 
 	_onRenderCompactCard(item) {
-		return (
-			<div className="ms-Grid">
-				<div className="ms-Grid-row">
-					<div className="ms-Grid-col ms-sm6 ms-md4 ms-lg4">
-						<Image src={item.iconBodyUrl} height={180} imageFit={ImageFit.contain} shouldStartVisible={true} />
-					</div>
-					<div className="ms-Grid-col ms-sm6 ms-md8 ms-lg8" style={{ padding: '10px' }}>
-						<Label className="ms-font-m-plus">{item.name}</Label>
-						<Label className="ms-font-s">Traits: {item.traits.replace(new RegExp(',', 'g'), ', ')}</Label>
-						<Label className="ms-font-xs">{item.flavor}</Label>
-					</div>
+		return <div className="ui items">
+			<div className="item">
+				<img src={item.iconBodyUrl} height={180} />
+				<div className="content" style={{ padding: '12px' }}>
+					<div className="header">{item.name}</div>
+					<div className="meta">{item.flavor}</div>
+					<div className="description">Traits: {item.traits.replace(new RegExp(',', 'g'), ', ')}</div>
 				</div>
 			</div>
-		);
+		</div>;
 	}
 
 	_onRenderExpandedCard(item) {
@@ -103,7 +97,7 @@ export class CrewList extends React.Component {
 		let eqTable;
 		if (equipment && equipment.length > 0) {
 			eqTable = (<div>
-				<Label className="ms-font-m-plus">Equipment</Label>
+				<h4 className="ui header">Equipment</h4>
 				<table><tbody>
 					<tr>
 						{
@@ -111,7 +105,7 @@ export class CrewList extends React.Component {
 								if (eq.e) {
 									return (<td key={eq.e.name + ix}>
 										<ItemDisplay src={eq.e.iconUrl} size={100} maxRarity={eq.e.rarity} rarity={eq.e.rarity} />
-										<Label className="ms-font-xs" style={{ color: eq.have ? "" : "red" }}>{eq.e.name}</Label>
+										<span style={{ fontSize: '0.8rem', color: eq.have ? "" : "red" }}>{eq.e.name}</span>
 									</td>);
 								}
 								else {
@@ -127,7 +121,7 @@ export class CrewList extends React.Component {
 		return (
 			<div style={{ padding: '10px' }}>
 				{eqTable}
-				<Label className="ms-font-m-plus">Ship abilitiy '{item.action.name}'</Label>
+				<h4 className="ui header">Ship abilitiy '{item.action.name}'</h4>
 				<Label>Accuracy +{item.ship_battle.accuracy}  Crit Bonus +{item.ship_battle.crit_bonus}  {item.ship_battle.crit_chance && <span>Crit Rating +{item.ship_battle.crit_chance}  </span>}Evasion +{item.ship_battle.evasion}</Label>
 				<Label>Increase {CONFIG.CREW_SHIP_BATTLE_BONUS_TYPE[item.action.bonus_type]} by {item.action.bonus_amount}</Label>
 				{item.action.penalty && <Label>Decrease {CONFIG.CREW_SHIP_BATTLE_BONUS_TYPE[item.action.penalty.type]} by {item.action.penalty.amount}</Label>}
@@ -169,7 +163,7 @@ export class CrewList extends React.Component {
 			});
 
 			return (<div>
-				<Label className="ms-font-m-plus">Charge phases</Label>
+				<h4 className="ui header">Charge phases</h4>
 				<div>
 					{phases}
 				</div>
@@ -213,7 +207,7 @@ export class CrewList extends React.Component {
 						};
 					}}
 					getTdProps={(s, r) => {
-						return this.props.compactMode ? {style: { padding: "2px 3px" }} : {};
+						return this.props.compactMode ? { style: { padding: "2px 3px" } } : {};
 					}}
 				/>
 				<ActiveCrewDialog ref='activeCrewDialog' />
@@ -258,21 +252,21 @@ export class CrewList extends React.Component {
 		}
 
 		_columns.push({
-				id: 'icon',
-				Header: '',
-				minWidth: compactMode ? 28 : 60,
-				maxWidth: compactMode ? 28 : 60,
-				resizable: false,
-				accessor: 'name',
-				Cell: (cell) => {
-					if (cell && cell.original) {
-						return <Image src={cell.original.iconUrl} width={compactMode ? 22 : 50} height={compactMode ? 22 : 50} imageFit={ImageFit.contain} shouldStartVisible={true} />;
-					} else {
-						return <span />;
-					}
-				},
-				Aggregated: row => <span />
+			id: 'icon',
+			Header: '',
+			minWidth: compactMode ? 28 : 60,
+			maxWidth: compactMode ? 28 : 60,
+			resizable: false,
+			accessor: 'name',
+			Cell: (cell) => {
+				if (cell && cell.original) {
+					return <Image src={cell.original.iconUrl} width={compactMode ? 22 : 50} height={compactMode ? 22 : 50} imageFit={ImageFit.contain} shouldStartVisible={true} />;
+				} else {
+					return <span />;
+				}
 			},
+			Aggregated: row => <span />
+		},
 			{
 				id: 'short_name',
 				Header: 'Name',
@@ -282,7 +276,7 @@ export class CrewList extends React.Component {
 				accessor: 'short_name',
 				Cell: (cell) => {
 					if (cell && cell.original) {
-						return <Link href={'https://stt.wiki/wiki/' + cell.original.name.split(' ').join('_')} target='_blank'>{cell.original.short_name}</Link>;
+						return <a href={'https://stt.wiki/wiki/' + cell.original.name.split(' ').join('_')} target='_blank'>{cell.original.short_name}</a>;
 					} else {
 						return <span />;
 					}
@@ -426,16 +420,16 @@ export class CrewList extends React.Component {
 		}
 
 		_columns.push({
-				id: 'command_skill',
-				Header: 'Command',
-				minWidth: 70,
-				maxWidth: 100,
-				resizable: true,
-				accessor: 'command_skill_core',
-				Cell: (cell) => cell.original ? <SkillCell skill={cell.original.command_skill} compactMode={compactMode} /> : <span />,
-				aggregate: vals => vals.reduce((a, b) => a + b, 0) / vals.length,
-				Aggregated: row => <span>{Math.floor(row.value)} (avg)</span>
-			},
+			id: 'command_skill',
+			Header: 'Command',
+			minWidth: 70,
+			maxWidth: 100,
+			resizable: true,
+			accessor: 'command_skill_core',
+			Cell: (cell) => cell.original ? <SkillCell skill={cell.original.command_skill} compactMode={compactMode} /> : <span />,
+			aggregate: vals => vals.reduce((a, b) => a + b, 0) / vals.length,
+			Aggregated: row => <span>{Math.floor(row.value)} (avg)</span>
+		},
 			{
 				id: 'diplomacy_skill',
 				Header: 'Diplomacy',
@@ -497,7 +491,7 @@ export class CrewList extends React.Component {
 				minWidth: 140,
 				isResizable: true,
 				accessor: 'traits',
-				Cell: (cell) => cell.original ? <div style={ compactMode ? { overflow: 'hidden', textOverflow: 'ellipsis', height: '22px' } : { whiteSpace: 'normal', height: '50px' }}>{cell.original.traits.replace(/,/g, ', ')}</div> : <span />,
+				Cell: (cell) => cell.original ? <div style={compactMode ? { overflow: 'hidden', textOverflow: 'ellipsis', height: '22px' } : { whiteSpace: 'normal', height: '50px' }}>{cell.original.traits.replace(/,/g, ', ')}</div> : <span />,
 				aggregate: vals => 0,
 				Aggregated: row => <span />
 			});

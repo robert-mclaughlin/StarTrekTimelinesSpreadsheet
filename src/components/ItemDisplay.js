@@ -11,17 +11,17 @@ export class ItemDisplay extends React.Component {
 
         let rarity = [];
         if (!this.props.hideRarity) {
-            for (var i = 0; i < this.props.rarity; i++) {
+            for (let i = 0; i < this.props.rarity; i++) {
                 rarity.push(<img key={i} src={CONFIG.SPRITES['star_reward'].url} style={{ width: starSize + 'px' }} />);
             }
-            for (var i = this.props.rarity; i < this.props.maxRarity; i++) {
+            for (let i = this.props.rarity; i < this.props.maxRarity; i++) {
                 rarity.push(<img key={i} src={CONFIG.SPRITES['star_reward_inactive'].url} style={{ width: starSize + 'px' }} />);
             }
         }
 
-        return (<div style={{ position: 'relative', width: this.props.size + 'px', height: this.props.size + 'px' }}>
+        return <div style={{ position: 'relative', width: this.props.size + 'px', height: this.props.size + 'px' }}>
             <img src={this.props.src} style={{ borderStyle: 'solid', borderRadius: borderRadius + 'px', borderWidth: borderWidth + 'px', borderColor: borderColor, width: (this.props.size - 2 * borderWidth) + 'px', height: (this.props.size - 2 * borderWidth) + 'px' }} />
             {!this.props.hideRarity && <div style={{ position: 'absolute', width: this.props.size + 'px', bottom: bottomStar + 'px', left: '50%', transform: 'translate(-50%, 0)', textAlign: 'center'}}>{rarity}</div>}
-        </div>);
+        </div>;
     }
 }

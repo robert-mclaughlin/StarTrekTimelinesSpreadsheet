@@ -1,6 +1,5 @@
 import React from 'react';
 import { Label } from 'office-ui-fabric-react/lib/Label';
-import { Spinner, SpinnerSize } from 'office-ui-fabric-react/lib/Spinner';
 import { MessageBar, MessageBarType } from 'office-ui-fabric-react/lib/MessageBar';
 import { SpinButton } from 'office-ui-fabric-react/lib/SpinButton';
 import { Checkbox } from 'office-ui-fabric-react/lib/Checkbox';
@@ -150,8 +149,8 @@ class GauntletMatch extends React.Component {
 				</div>
 
 				<div style={{ gridArea: 'chance', justifySelf: 'center', alignSelf: 'center' }}>
-					<Label className="ms-fontSize-l ms-fontWeight-semibold" style={{ padding: '0' }}><b>{this.props.match.chance}%</b> chance</Label>
-					<Label className="ms-fontSize-l ms-fontWeight-semibold" style={{ padding: '0' }}><b>{this.props.match.opponent.value}</b> points</Label>
+					<p style={{ fontSize: '1.5rem', fontWeight: '800', margin: '4px', paddingTop: '18px', lineHeight: '1.5em' }}><b>{this.props.match.chance}%</b> chance</p>
+					<p style={{ fontSize: '1.2rem', fontWeight: '700', margin: '4px', lineHeight: '1.2em' }}><b>{this.props.match.opponent.value}</b> points</p>
 				</div>
 
 				<div style={{ gridArea: 'button', justifySelf: 'center', alignSelf: 'center' }}>
@@ -406,7 +405,7 @@ export class GauntletHelper extends React.Component {
 
 		return (<div>
 			<h3>Best crew</h3>
-			{this.state.calculating && <Spinner size={SpinnerSize.small} label='Still calculating...' />}
+			{this.state.calculating && <div className="ui medium centered text active inline loader">Still calculating...</div>}
 			<div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap' }}>
 				{crewSpans}
 			</div>
@@ -421,8 +420,11 @@ export class GauntletHelper extends React.Component {
 	}
 
 	render() {
-		if (this.state.showSpinner)
-			return <Spinner size={SpinnerSize.large} label='Loading gauntlet details...' />;
+		if (this.state.showSpinner) {
+			return <div className="centeredVerticalAndHorizontal">
+				<div className="ui massive centered text active inline loader">Loading gauntlet details...</div>
+			</div>;
+		}
 
 		if (this.state.gauntlet && (this.state.gauntlet.state == 'NONE')) {
 			return (

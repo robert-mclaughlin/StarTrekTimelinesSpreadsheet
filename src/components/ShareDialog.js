@@ -5,7 +5,6 @@ import { PrimaryButton, DefaultButton } from 'office-ui-fabric-react/lib/Button'
 import { TextField } from 'office-ui-fabric-react/lib/TextField';
 import { Dropdown } from 'office-ui-fabric-react/lib/Dropdown';
 import { Checkbox } from 'office-ui-fabric-react/lib/Checkbox';
-import { Image, ImageFit } from 'office-ui-fabric-react/lib/Image';
 
 export class ShareDialog extends React.Component {
 	constructor(props) {
@@ -105,12 +104,7 @@ export class ShareDialog extends React.Component {
 									onChanged={(item) => {
 										this.setState({ htmlColorTheme: item.key });
 									}}
-									onRenderOption={(option) => {
-										return (<div>
-											<p>{option.text}</p>
-											<Image src={option.thumbnail} height={64} imageFit={ImageFit.contain} shouldStartVisible={true} shouldFadeIn={false} />
-											</div>);
-									}}
+									onRenderOption={(option) => <img src={option.thumbnail} height={80} />}
 								/>
 							}
 							</td>

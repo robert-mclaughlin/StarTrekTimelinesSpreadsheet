@@ -3,7 +3,6 @@ import { Dialog, DialogType, DialogFooter } from 'office-ui-fabric-react/lib/Dia
 import { PrimaryButton } from 'office-ui-fabric-react/lib/Button';
 import { TextField } from 'office-ui-fabric-react/lib/TextField';
 import { Checkbox } from 'office-ui-fabric-react/lib/Checkbox';
-import { Spinner, SpinnerSize } from 'office-ui-fabric-react/lib/Spinner';
 import { MessageBar, MessageBarType } from 'office-ui-fabric-react/lib/MessageBar';
 import { Pivot, PivotItem } from 'office-ui-fabric-react/lib/Pivot';
 import { Image } from 'office-ui-fabric-react/lib/Image';
@@ -98,9 +97,9 @@ export class LoginDialog extends React.Component {
 
 					<DialogFooter>
 						<PrimaryButton onClick={this._closeDialog} text='Login' disabled={this.state.showSpinner} />
-						{this.state.showSpinner && (
-							<Spinner size={SpinnerSize.small} label='Logging in...' />
-						)}
+						{this.state.showSpinner && 
+							<div className="ui medium centered text active inline loader">Logging in...</div>
+						}
 					</DialogFooter>
 				</Dialog>
 			</div>

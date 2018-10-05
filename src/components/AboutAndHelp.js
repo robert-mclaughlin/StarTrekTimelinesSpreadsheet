@@ -1,9 +1,8 @@
 import React from 'react';
-import { Label } from 'office-ui-fabric-react/lib/Label';
-import { Link } from 'office-ui-fabric-react/lib/Link';
-import { PrimaryButton } from 'office-ui-fabric-react/lib/Button';
 
 import { getAppVersion, openShellExternal } from '../utils/pal';
+
+import snarkdown from 'snarkdown';
 
 import STTApi from 'sttapi';
 
@@ -16,7 +15,7 @@ export class AboutAndHelp extends React.Component {
 		});
 
 		this.state = {
-			version: null
+			version: undefined
 		};
 	}
 
@@ -25,22 +24,22 @@ export class AboutAndHelp extends React.Component {
 			<h1>Star Trek Timelines Spreadsheet Tool v{getAppVersion()}</h1>
 			{/* #!if ENV === 'electron' */}
 			<p>A tool to help with crew management in Star Trek Timelines</p>
-			{/* #!elseif ENV === 'web' */}
-			<p style={{backgroundColor:'Tomato'}}><b>NOTE:</b> This web version is a very early prerelease for testing purposes only! I'm looking at overall feasibility as well as costs.</p>
-			{/* #!else */}
-			{/* #!endif */}
 			{this.state.version &&
 				<div>
-				<h3>Latest version: {this.state.version.tag_name} {this.state.version.name}</h3>
-				<p>{this.state.version.body}</p>
-				<PrimaryButton onClick={() => openShellExternal(this.state.version.html_url)} text='Download now' />
+					<h3>Latest version: {this.state.version.tag_name} {this.state.version.name}</h3>
+					<p dangerouslySetInnerHTML={{__html: snarkdown(this.state.version.body)}} />
+					<div className="ui primary button" onClick={() => openShellExternal(this.state.version.html_url)}>Download now</div>
 				</div>}
+			{/* #!elseif ENV === 'web' */}
+			<p style={{ backgroundColor: 'Tomato' }}><b>NOTE:</b> This web version is a very early prerelease for testing purposes only! I'm looking at overall feasibility as well as costs.</p>
+			{/* #!else */}
+			{/* #!endif */}
 
 			<p><b>NOTE</b> This tool does not (and will never) automate any part of the game play; its sole purpose is to help players organize their crew using the functionality built within or with a spreadsheet application of their choice.</p>
 
-			<p><b>DISCLAIMER</b> This tool is provided "as is", without warranty of any kind. Use at your own risk! It should be understood that <i>Star Trek Timelines</i> content and materials are trademarks and copyrights of <Link href='https://www.disruptorbeam.com/tos/' target='_blank'>Disruptor Beam, Inc.</Link> or its licensors. All rights reserved. This tool is neither endorsed by nor affiliated with Disruptor Beam, Inc..</p>
+			<p><b>DISCLAIMER</b> This tool is provided "as is", without warranty of any kind. Use at your own risk! It should be understood that <i>Star Trek Timelines</i> content and materials are trademarks and copyrights of <a href='https://www.disruptorbeam.com/tos/' target='_blank'>Disruptor Beam, Inc.</a> or its licensors. All rights reserved. This tool is neither endorsed by nor affiliated with Disruptor Beam, Inc..</p>
 
-			<Label>For feedback, bugs and other issues please use the <Link href='https://github.com/IAmPicard/StarTrekTimelinesSpreadsheet/issues' target='_blank'>GitHub page</Link>. For information about other tools for Star Trek Timelines, see <Link href='https://iampicard.github.io/' target='_blank'>here</Link>.</Label>
+			<p>For feedback, bugs and other issues please use the <a href='https://github.com/IAmPicard/StarTrekTimelinesSpreadsheet/issues' target='_blank'>GitHub page</a>. For information about other tools for Star Trek Timelines, see <a href='https://iampicard.github.io/' target='_blank'>here</a>.</p>
 		</div>;
 	}
 }

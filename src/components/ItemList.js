@@ -1,7 +1,6 @@
 import React from 'react';
 import ReactTable from "react-table";
 import { DefaultButton } from 'office-ui-fabric-react/lib/Button';
-import { Link } from 'office-ui-fabric-react/lib/Link';
 
 import { ItemDisplay } from './ItemDisplay';
 import { RarityStars } from './RarityStars';
@@ -36,7 +35,7 @@ export class ItemList extends React.Component {
 					accessor: 'name',
 					Cell: (p) => {
 						let item = p.original;
-						return (<Link href={'https://stt.wiki/wiki/' + item.name.split(' ').join('_')} target='_blank'>{item.name}</Link>);
+						return (<a href={'https://stt.wiki/wiki/' + item.name.split(' ').join('_')} target='_blank'>{item.name}</a>);
 					}
 				},
 				{
