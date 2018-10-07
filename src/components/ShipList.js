@@ -135,6 +135,10 @@ export class ShipList extends React.Component {
 
 	numberOfSchematics(archetype_id) {
 		const schematic = STTApi.shipSchematics.find(schematic => schematic.ship.archetype_id === archetype_id);
+		if (!schematic) {
+			return 0;
+		}
+
 		const playerSchematic = this.state.playerSchematics.find(playerSchematic => playerSchematic.archetype_id === schematic.id);
 		return playerSchematic ? playerSchematic.quantity : 0;
 	}
