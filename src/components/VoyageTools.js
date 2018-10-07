@@ -537,9 +537,15 @@ export class VoyageLog extends React.Component {
 
 			await Promise.all(iconPromises);
 
+			let ship_name = voyage.ship_name;
+			if (!ship_name) {
+				let ship = STTApi.ships.find((ship) => ship.id === voyage.ship_id);
+				ship_name = ship ? ship.name : '-BUGBUG-';
+			}
+
 			this.setState({
 				showSpinner: false,
-				ship_name: voyage.ship_name ? voyage.ship_name : (STTApi.ships.find((ship) => ship.id === voyage.ship_id).name),
+				ship_name: ship_name,
 				ship_id: voyage.ship_id,
 				created_at: voyage.created_at,
 				voyage_duration: voyage.voyage_duration,

@@ -44,6 +44,8 @@
     "serveweb": "webpack-serve --config=./webpack.build.web.config.js --content=./dist",
     "package": "webpack --mode production --config webpack.build.electron.config.js",
     "postpackage": "electron-packager ./ --out=./builds --prune --icon=src/assets/icons/ATFleet.ico",
+    "packagedev": "webpack --mode development --config webpack.build.electron.config.js",
+    "postpackagedev": "electron-packager ./ --out=./builds --prune --icon=src/assets/icons/ATFleet.ico",
     "installer": "node createinstaller.js"
   },
   "devDependencies": {
