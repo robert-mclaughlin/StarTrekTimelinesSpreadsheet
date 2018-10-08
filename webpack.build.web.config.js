@@ -86,10 +86,8 @@ module.exports = merge(baseConfig, {
 		new WebpackCdnPlugin({
 			modules: [
 				{ name: 'xlsx-populate', var: 'XlsxPopulate', path: 'browser/xlsx-populate.js' },
-				{ name: 'dexie', var: 'Dexie', path: 'dist/dexie.es.js' },
-				{ name: 'react-table' },
-				{ name: 'react', var: 'React', path: `umd/react.${process.env.NODE_ENV}.min.js` },
-				{ name: 'react-dom', var: 'ReactDOM', path: `umd/react-dom.${process.env.NODE_ENV}.min.js` }
+				{ name: 'react', var: 'React', path: `umd/react.production.min.js` },
+				{ name: 'react-dom', var: 'ReactDOM', path: `umd/react-dom.production.min.js` }
 			],
 			publicPath: '/node_modules'
 		})
