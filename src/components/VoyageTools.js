@@ -447,14 +447,16 @@ export class VoyageLog extends React.Component {
 						// For crew, check if it's useful or not
 						let have = STTApi.roster.filter(crew => crew.symbol === item.symbol);
 						if (have.length > 0) {
-							if (!have.some(c => c.max_rarity === c.rarity)) {
-								return <span style={{ fontWeight: 'bold' }}>NEW STAR FOR CREW!</span>;
-							} else {
-								return <span>Duplicate of immortalized crew (airlock-able)</span>;
+							if (have.some(c => c.frozen === 1)) {
+								return <span>Duplicate of frozen crew (airlock-able)</span>;
 							}
-						} else {
-							return <span style={{ fontWeight: 'bold' }}>NEW CREW!</span>;
+							if (have.some(c => c.max_rarity === c.rarity)) {
+								return <span>Duplicate of fully-fused crew (airlock-able)</span>;
+							}
+
+							return <span style={{ fontWeight: 'bold' }}>NEW STAR FOR CREW!</span>;
 						}
+						return <span style={{ fontWeight: 'bold' }}>NEW CREW!</span>;
 					}
 
 					let typeName = CONFIG.REWARDS_ITEM_TYPE[item.item_type];
@@ -560,7 +562,10 @@ export class VoyageLog extends React.Component {
 				voyageRewards: voyageRewards
 			});
 
-			this._betterEstimate();
+			// Avoid estimating if voyage is not ongoing
+			if (voyage.state !== "recalled" && voyage.state !== "failed") {
+				this._betterEstimate();
+			}
 		}
 	}
 
