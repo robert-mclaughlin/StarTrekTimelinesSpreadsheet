@@ -562,7 +562,10 @@ export class VoyageLog extends React.Component {
 				voyageRewards: voyageRewards
 			});
 
-			this._betterEstimate();
+			// Avoid estimating if voyage is not ongoing
+			if (voyage.state !== "recalled" && voyage.state !== "failed") {
+				this._betterEstimate();
+			}
 		}
 	}
 
