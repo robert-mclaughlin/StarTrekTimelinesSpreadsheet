@@ -9,7 +9,8 @@ import { HoverCard } from 'office-ui-fabric-react/lib/HoverCard';
 import { TooltipHost } from 'office-ui-fabric-react/lib/Tooltip';
 import { Checkbox } from 'office-ui-fabric-react/lib/Checkbox';
 
-import ReactTable from "react-table";
+import ReactTable from 'react-table';
+import { isMobile } from 'react-device-detect';
 
 import { SkillCell } from './SkillCell';
 import { ActiveCrewDialog } from './ActiveCrewDialog';
@@ -266,8 +267,10 @@ export class CrewList extends React.Component {
 				}
 			},
 			Aggregated: row => <span />
-		},
-			{
+		});
+
+		if (!isMobile) {
+			_columns.push({
 				id: 'short_name',
 				Header: 'Name',
 				minWidth: 90,
@@ -282,8 +285,10 @@ export class CrewList extends React.Component {
 					}
 				},
 				Aggregated: row => <span />
-			},
-			{
+			});
+		}
+
+		_columns.push({
 				id: 'name',
 				Header: 'Full name',
 				minWidth: 110,
@@ -336,8 +341,10 @@ export class CrewList extends React.Component {
 					}
 				},
 				Aggregated: row => <span />
-			},
-			{
+			});
+
+		if (!isMobile) {
+			_columns.push({
 				id: 'favorite',
 				Header: () => <Icon iconName='FavoriteStar' />,
 				minWidth: 30,
@@ -375,6 +382,7 @@ export class CrewList extends React.Component {
 				},
 				Aggregated: row => <span />
 			});
+		}
 
 		// TODO: add global setting / toggle for turning off buy-back crew
 		if (!duplicatelist && showBuyBack) {
@@ -399,7 +407,7 @@ export class CrewList extends React.Component {
 			});
 		}
 
-		if (!compactMode) {
+		if (!compactMode && !isMobile) {
 			_columns.push({
 				id: 'active_id',
 				Header: () => <Icon iconName='Balloons' />,

@@ -24,7 +24,7 @@ class GauntletCrew extends React.Component {
 			<h5 className="ui top attached header" style={{ color: getTheme().palette.neutralDark, backgroundColor: getTheme().palette.themeLighter, padding: '2px' }}>{STTApi.getCrewAvatarBySymbol(this.props.crew.archetype_symbol).name}</h5>
 			<div className="ui attached segment" style={{ backgroundColor: getTheme().palette.themeLighter, padding: '0' }}>
 				<div style={{ position: 'relative', display: 'inline-block' }}>
-					<img src={STTApi.getCrewAvatarBySymbol(this.props.crew.archetype_symbol).iconUrl} className={this.props.crew.disabled ? 'image-disabled' : ''} height={200} />
+					<img src={STTApi.getCrewAvatarBySymbol(this.props.crew.archetype_symbol).iconUrl} className={this.props.crew.disabled ? 'image-disabled' : ''} height={Math.min(200, this.props.maxwidth)} />
 					<div className={"ui circular label " + (this.props.crew.disabled ? "red" : "green")} style={{ position: 'absolute', right: '0', top: '0' }}>{this.props.crew.crit_chance}%</div>
 				</div>
 			</div>
@@ -183,7 +183,9 @@ export class GauntletHelper extends React.Component {
 			includeFrozen: false,
 			calculating: false,
 			logPath: undefined,
-			showSpinner: true
+			showSpinner: true,
+			windowWidth: 0,
+			windowHeight: 0
 		};
 
 		this._reloadGauntletData = this._reloadGauntletData.bind(this);
@@ -195,10 +197,22 @@ export class GauntletHelper extends React.Component {
 		this._startGauntlet = this._startGauntlet.bind(this);
 		this._exportLog = this._exportLog.bind(this);
 		this._reloadGauntletData();
+		this.updateWindowDimensions = this.updateWindowDimensions.bind(this);
+	}
+
+	updateWindowDimensions() {
+		this.setState({ windowWidth: window.innerWidth, windowHeight: window.innerHeight });
 	}
 
 	componentDidMount() {
 		this._updateCommandItems();
+
+		this.updateWindowDimensions();
+		window.addEventListener('resize', this.updateWindowDimensions);
+	}
+
+	componentWillUnmount() {
+		window.removeEventListener('resize', this.updateWindowDimensions);
 	}
 
 	_updateCommandItems() {
@@ -413,7 +427,11 @@ export class GauntletHelper extends React.Component {
 	}
 
 	renderStatistic(value, label, classAdd) {
-		return <div className={`${classAdd} ui statistic`}>
+		let classSize = '';
+		if (this.state.windowWidth < 1200) { classSize = 'small'; }
+		if (this.state.windowWidth < 800) { classSize = 'tiny'; }
+		if (this.state.windowWidth < 500) { classSize = 'mini'; }
+		return <div className={`${classAdd} ui ${classSize} statistic`}>
 			<div className="value" style={{ color: classAdd || 'unset' }}>{value}</div>
 			<div className="label" style={{ color: 'unset' }}>{label}</div>
 		</div>;
@@ -527,7 +545,7 @@ export class GauntletHelper extends React.Component {
 				<div className='tab-panel' data-is-scrollable='true'>
 					<span className='quest-mastery'>Featured skill is <img src={CONFIG.SPRITES['icon_' + this.state.gauntlet.contest_data.featured_skill].url} height={18} /> {CONFIG.SKILLS[this.state.gauntlet.contest_data.featured_skill]}; Featured traits are {this.state.gauntlet.contest_data.traits.map(trait => STTApi.getTraitName(trait)).join(", ")}</span>
 					<div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)' }} >
-						{this.state.gauntlet.contest_data.selected_crew.map((crew) => <GauntletCrew key={crew.crew_id} crew={crew} revive={(save) => this._payToReviveCrew(crew.crew_id, save)} />)}
+						{this.state.gauntlet.contest_data.selected_crew.map((crew) => <GauntletCrew maxwidth={this.state.windowWidth / 6} key={crew.crew_id} crew={crew} revive={(save) => this._payToReviveCrew(crew.crew_id, save)} />)}
 					</div>
 
 					{this.state.lastErrorMessage && <p>Error: '{this.state.lastErrorMessage}'</p>}

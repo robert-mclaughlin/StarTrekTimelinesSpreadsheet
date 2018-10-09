@@ -95,6 +95,7 @@
     "dexie": "latest",
     "fb": "latest",
     "history": "latest",
+    "react-device-detect": "^1.6.1",
     "react-table": "latest",
     "semver": "latest",
     "snarkdown": "^1.2.2",
