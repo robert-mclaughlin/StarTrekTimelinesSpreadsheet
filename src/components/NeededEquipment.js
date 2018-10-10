@@ -38,7 +38,10 @@ export class NeededEquipment extends React.Component {
 		for (let mission of STTApi.missions) {
 			let q = mission.quests.find(q => q.id === id);
 			if (q) {
-				// .locked if not warp-able .progress.goal_progress != progress.goals
+				if (q.locked || (q.mastery_levels[mastery_level].progress.goal_progress !== q.mastery_levels[mastery_level].progress.goals)) {
+					return undefined;
+				}
+
 				return q.mastery_levels[mastery_level].energy_cost;
 			}
 		}
