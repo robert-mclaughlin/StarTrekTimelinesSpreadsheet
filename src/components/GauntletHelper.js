@@ -564,6 +564,7 @@ export class GauntletHelper extends React.Component {
 						{this.state.lastResult && this.state.lastResult.match && <div className="ui attached segment" style={{ backgroundColor: getTheme().palette.themeLighterAlt }}>
 							<p>Your <b>{playerCrew}</b> rolled <b>{playerRoll}</b> ({playerRollMsg.join(', ')})</p>
 							<p><i>{this.state.lastResult.match.opponent.name}</i>'s <b>{opponentCrew}</b> rolled <b>{opponentRoll}</b> ({opponentRollMsg.join(', ')})</p>
+							<p>Match had a <b>{this.state.lastResult.match.chance}%</b> chance of success; you got <b>{this.state.lastResult.value} points</b>.</p>
 							{this.state.rewards &&
 								<p>
 									<span>Rewards: </span>
