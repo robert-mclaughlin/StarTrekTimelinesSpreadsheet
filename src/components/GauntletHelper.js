@@ -537,7 +537,7 @@ export class GauntletHelper extends React.Component {
 			let matches = this.state.roundOdds.matches;
 			let sortCrit = (match) => match.chance;
 			if (this.state.bestFirst) {
-				sortCrit = (match) => (match.chance > 0) ? (match.chance + match.opponent.value / 6) : 0;
+				sortCrit = (match) => (match.chance > 0) ? (match.chance + match.opponent.value / 4.5) : 0;
 			}
 			matches.sort((a, b) => sortCrit(b) - sortCrit(a));
 
