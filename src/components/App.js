@@ -46,7 +46,6 @@ import { ItemPage } from './ItemPage.js';
 import { CrewPage } from './CrewPage.js';
 import { GauntletHelper } from './GauntletHelper.js';
 import { MissionExplorer } from './MissionExplorer.js';
-import { CrewRecommendations } from './CrewRecommendations.js';
 import { AboutAndHelp } from './AboutAndHelp.js';
 import { FleetDetails } from './FleetDetails.js';
 import { CaptainCard } from './CaptainCard.js';
@@ -298,9 +297,6 @@ class App extends React.Component {
 			case 'Missions':
 				return <MissionExplorer onCommandItemsUpdate={commandItemsUpdater} />;
 
-			case 'Recommendations':
-				return <CrewRecommendations />;
-
 			case 'Voyage':
 				return <VoyageTools onCommandItemsUpdate={commandItemsUpdater} />;
 
@@ -510,24 +506,6 @@ class App extends React.Component {
 						iconProps: { iconName: 'Backlog' },
 						onClick: () => {
 							this._switchTab('IncompleteMissions');
-						}
-					},
-					{
-						key: 'section',
-						itemType: ContextualMenuItemType.Section,
-						sectionProps: {
-							topDivider: true,
-							bottomDivider: true,
-							title: 'Other recommendations',
-							items: [
-								{
-									key: 'Recommendations',
-									name: 'Minimal crew (OLD)',
-									iconProps: { iconName: 'Lightbulb' },
-									onClick: () => {
-										this._switchTab('Recommendations');
-									}
-								}]
 						}
 					}]
 				}
