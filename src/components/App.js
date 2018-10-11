@@ -20,7 +20,6 @@ import React from 'react';
 import { Fabric } from 'office-ui-fabric-react/lib/Fabric';
 import { CommandBar } from 'office-ui-fabric-react/lib/CommandBar';
 import { Dialog, DialogType, DialogFooter } from 'office-ui-fabric-react/lib/Dialog';
-import { ContextualMenuItemType } from 'office-ui-fabric-react/lib/ContextualMenu';
 import { Image } from 'office-ui-fabric-react/lib/Image';
 import { Callout } from 'office-ui-fabric-react/lib/Callout';
 import { PrimaryButton, DefaultButton } from 'office-ui-fabric-react/lib/Button';
@@ -53,6 +52,7 @@ import { VoyageTools } from './VoyageTools.js';
 import { NeededEquipment } from './NeededEquipment.js';
 import { CrewDuplicates } from './CrewDuplicates.js';
 import { IncompleteMissions } from './IncompleteMissions.js';
+import { ModalNotification } from './ModalNotification';
 import { loadUITheme } from './Styles';
 
 import STTApi from 'sttapi';
@@ -269,6 +269,8 @@ class App extends React.Component {
 				{/* #!else */}
 				<WebLoginDialog ref='loginDialog' onAccessToken={this._onAccessToken} shownByDefault={this.state.showLoginDialog} />
 				{/* #!endif */}
+
+				<ModalNotification ref='modalNotification' />
 			</Fabric>
 		);
 	}
@@ -579,6 +581,16 @@ class App extends React.Component {
 
 		STTApi.networkHelper.get(STTApi.serverAddress + 'motd/get', { webApp: STTApi.inWebMode, dbid: STTApi.playerData.dbid, id: STTApi.playerData.character.id, captainName: STTApi.playerData.character.display_name, version: getAppVersion() }).then((data) => {
 			this.setState({ motd: data });
+		});
+
+		let notifURL = 'notifweb.json';
+		// #!if ENV === 'electron'
+		notifURL = 'notifapp.json';
+		// #!endif
+		STTApi.networkHelper.get(STTApi.serverAddress + notifURL, undefined).then((data) => {
+			if (data && data.show) {
+				this.refs.modalNotification.show(data.title, data.content);
+			}
 		});
 
 		if (STTApi.playerData.character.crew_avatar) {
