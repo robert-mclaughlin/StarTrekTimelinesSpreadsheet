@@ -583,13 +583,9 @@ class App extends React.Component {
 			this.setState({ motd: data });
 		});
 
-		let notifURL = 'notifweb.json';
-		// #!if ENV === 'electron'
-		notifURL = 'notifapp.json';
-		// #!endif
-		STTApi.networkHelper.get(STTApi.serverAddress + notifURL, undefined).then((data) => {
+		STTApi.networkHelper.get(STTApi.serverAddress + 'motd/notif', { webApp: STTApi.inWebMode }).then((data) => {
 			if (data && data.show) {
-				this.refs.modalNotification.show(data.title, data.content);
+				this.refs.modalNotification.show(data.title, data.contents);
 			}
 		});
 
