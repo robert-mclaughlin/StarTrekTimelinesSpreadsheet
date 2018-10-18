@@ -524,8 +524,10 @@ class App extends React.Component {
 	_onAccessToken() {
 		this.setState({ showSpinner: true, showLoginDialog: false });
 
-		loginSequence((progressLabel) => this.setState({ spinnerLabel: progressLabel }))
-			.then(this._onDataFinished)
+		loginSequence((progressLabel) => {
+			console.log(`Progress message: '${progressLabel}'`);
+			this.setState({ spinnerLabel: progressLabel });
+		}).then(this._onDataFinished)
 			.catch((err) => {
 				this._onDataError(err);
 			});
