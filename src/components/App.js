@@ -21,7 +21,6 @@ import { Fabric } from 'office-ui-fabric-react/lib/Fabric';
 import { CommandBar } from 'office-ui-fabric-react/lib/CommandBar';
 import { Dialog, DialogType, DialogFooter } from 'office-ui-fabric-react/lib/Dialog';
 import { Image } from 'office-ui-fabric-react/lib/Image';
-import { Callout } from 'office-ui-fabric-react/lib/Callout';
 import { PrimaryButton, DefaultButton } from 'office-ui-fabric-react/lib/Button';
 import { Checkbox } from 'office-ui-fabric-react/lib/Checkbox';
 import { TooltipHost, TooltipDelay, DirectionalHint } from 'office-ui-fabric-react/lib/Tooltip';
@@ -46,8 +45,8 @@ import { CrewPage } from './CrewPage.js';
 import { GauntletHelper } from './GauntletHelper.js';
 import { MissionExplorer } from './MissionExplorer.js';
 import { AboutAndHelp } from './AboutAndHelp.js';
+import { HomePage } from './HomePage.js';
 import { FleetDetails } from './FleetDetails.js';
-import { CaptainCard } from './CaptainCard.js';
 import { VoyageTools } from './VoyageTools.js';
 import { NeededEquipment } from './NeededEquipment.js';
 import { CrewDuplicates } from './CrewDuplicates.js';
@@ -73,7 +72,6 @@ class App extends React.Component {
 		this.state = {
 			showSpinner: false,
 			dataLoaded: false,
-			isCaptainCalloutVisible: false,
 			showLoginDialog: false,
 			captainName: 'Welcome!',
 			captainAvatarUrl: '',
@@ -94,12 +92,9 @@ class App extends React.Component {
 			this._switchTab(location.hash.substr(1));
 		});
 
-		this._captainButtonElement = React.createRef();
 		this._onAccessToken = this._onAccessToken.bind(this);
 		this._onLogout = this._onLogout.bind(this);
 		this._onRefresh = this._onRefresh.bind(this);
-		this._onCaptainClicked = this._onCaptainClicked.bind(this);
-		this._onCaptainCalloutDismiss = this._onCaptainCalloutDismiss.bind(this);
 		this._onDataFinished = this._onDataFinished.bind(this);
 		this._onDataError = this._onDataError.bind(this);
 		this._playerResync = this._playerResync.bind(this);
@@ -172,25 +167,9 @@ class App extends React.Component {
 		this.setState({ hideBootMessage: true });
 	}
 
-	_onCaptainClicked() {
-		if (!STTApi.loggedIn) {
-			this._onLogout();
-			return;
-		}
-
-		if (!this.state.showSpinner)
-			this.setState({ isCaptainCalloutVisible: !this.state.isCaptainCalloutVisible });
-	}
-
-	_onCaptainCalloutDismiss() {
-		this.setState({
-			isCaptainCalloutVisible: false
-		});
-	}
-
 	componentDidMount() {
 		this.intervalPlayerResync = setInterval(this._playerResync, 5 * 60 * 1000);
-		this._switchTab('Crew');
+		this._switchTab('HomePage');
 	}
 
 	componentWillUnmount() {
@@ -311,6 +290,9 @@ class App extends React.Component {
 			case 'About':
 				return <AboutAndHelp />;
 
+			case 'HomePage':
+				return <HomePage captainAvatarBodyUrl={this.state.captainAvatarBodyUrl} onLogout={this._onLogout} onRefresh={this._onRefresh} />;
+
 			case 'NeededEquipment':
 				return <NeededEquipment onCommandItemsUpdate={commandItemsUpdater} />;
 
@@ -412,20 +394,10 @@ class App extends React.Component {
 
 	renderCaptainName() {
 		return <div style={{ height: '100%' }}>
-			<div style={{ cursor: 'pointer', display: 'flex', height: '100%', flexWrap: 'nowrap', justifyContent: 'center', alignItems: 'center' }} onClick={this._onCaptainClicked} ref={this._captainButtonElement}>
+			<div style={{ cursor: 'pointer', display: 'flex', height: '100%', flexWrap: 'nowrap', justifyContent: 'center', alignItems: 'center' }} onClick={() => this._switchTab('HomePage')}>
 				<Image src={this.state.captainAvatarUrl} height={32} style={{ display: 'inline-block' }} />
 				<span style={{ padding: '5px' }}>{this.state.captainName}</span>
 			</div>
-			<Callout className='CaptainCard-callout'
-				role={'alertdialog'}
-				gapSpace={0}
-				target={this._captainButtonElement.value}
-				onDismiss={this._onCaptainCalloutDismiss}
-				setInitialFocus={true}
-				hidden={!this.state.isCaptainCalloutVisible}
-			>
-				<CaptainCard captainAvatarBodyUrl={this.state.captainAvatarBodyUrl} onLogout={this._onLogout} onRefresh={this._onRefresh} />
-			</Callout>
 		</div>;
 	}
 
@@ -534,14 +506,13 @@ class App extends React.Component {
 	}
 
 	_onLogout() {
-		this.setState({ isCaptainCalloutVisible: false, darkTheme: false }, () => { this._onSwitchTheme(true); });
+		this.setState({ darkTheme: false }, () => { this._onSwitchTheme(true); });
 
 		STTApi.refreshEverything(true);
 		this.setState({ showLoginDialog: true, dataLoaded: false, captainName: '', spinnerLabel: 'Loading...' });
 	}
 
 	_onRefresh() {
-		this.setState({ isCaptainCalloutVisible: false });
 		STTApi.refreshEverything(false);
 		this.setState({ dataLoaded: false, spinnerLabel: 'Refreshing...' });
 		this._onAccessToken();

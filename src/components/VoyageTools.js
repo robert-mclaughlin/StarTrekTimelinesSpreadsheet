@@ -138,9 +138,6 @@ export class VoyageCrew extends React.Component {
 		return (<div>
 			{this.state.error && <MessageBar messageBarType={MessageBarType.error}>Error: {this.state.error}</MessageBar>}
 			<br />
-			{/* #!if ENV !== 'electron' */}
-			<h2 style={{ backgroundColor: 'Tomato' }}>NOTE: If the calculation crashes your browser, try reducing the search depth! And let me know by logging a bug.</h2>
-			{/* #!endif */}
 
 			<div style={containerStyle}>
 				<div style={{ gridArea: 'searchDepth' }}>
