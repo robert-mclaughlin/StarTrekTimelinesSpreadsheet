@@ -22,6 +22,7 @@ const { app, BrowserWindow, ipcMain, session } = require('electron');
 const path = require('path')
 const url = require('url')
 const FB = require('fb');
+const appConfig = require('electron-settings');
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -36,16 +37,64 @@ if (process.defaultApp || /[\\/]electron-prebuilt[\\/]/.test(process.execPath) |
   dev = true;
 }
 
+function windowStateKeeper(windowName) {
+  let window, windowState;
+  function setBounds() {
+    // Restore from appConfig
+    if (appConfig.has(`windowState.${windowName}`)) {
+      windowState = appConfig.get(`windowState.${windowName}`);
+      return;
+    }
+    // Default
+    windowState = {
+      x: undefined,
+      y: undefined,
+      width: 1000,
+      height: 800,
+    };
+  }
+  function saveState() {
+    if (!windowState.isMaximized) {
+      windowState = window.getBounds();
+    }
+    windowState.isMaximized = window.isMaximized();
+    appConfig.set(`windowState.${windowName}`, windowState);
+  }
+  function track(win) {
+    window = win;
+    ['resize', 'move', 'close'].forEach(event => {
+      win.on(event, saveState);
+    });
+  }
+  setBounds();
+  return ({
+    x: windowState.x,
+    y: windowState.y,
+    width: windowState.width,
+    height: windowState.height,
+    isMaximized: windowState.isMaximized,
+    track,
+  });
+}
+
 function createWindow() {
+  // Get window state
+  const mainWindowStateKeeper = windowStateKeeper('main');
+
   // Create the browser window.
   mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
+    x: mainWindowStateKeeper.x,
+    y: mainWindowStateKeeper.y,
+    width: mainWindowStateKeeper.width,
+    height: mainWindowStateKeeper.height,
     show: false,
     contextIsolation: true,
     icon: path.join(__dirname, 'src/assets/icons/ATFleet.ico'),
     webPreferences: { webSecurity: false, nodeIntegration: true }
   });
+
+  // Track window state
+  mainWindowStateKeeper.track(mainWindow);
 
   mainWindow.setTitle('Star Trek Timelines Crew Management v' + app.getVersion());
   mainWindow.setMenu(null);
