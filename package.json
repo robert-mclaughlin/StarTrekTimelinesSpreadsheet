@@ -1,7 +1,7 @@
 {
   "name": "startrektimelinestool",
   "productName": "Star Trek Timelines Crew Management",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "description": "Tool for managing Star Trek Timelines crew",
   "author": "IAmPicard",
   "copyright": "Copyright © 2018 IAmPicard",
@@ -62,7 +62,6 @@
     "electron-builder": "latest",
     "electron-packager": "latest",
     "electron-rebuild": "latest",
-    "electron-settings": "^3.2.0",
     "favicons-webpack-plugin": "latest",
     "file-loader": "latest",
     "html-webpack-plugin": "latest",
@@ -94,6 +93,7 @@
   "dependencies": {
     "bindings": "latest",
     "dexie": "latest",
+    "electron-settings": "latest",
     "fb": "latest",
     "history": "latest",
     "react-device-detect": "^1.6.1",
