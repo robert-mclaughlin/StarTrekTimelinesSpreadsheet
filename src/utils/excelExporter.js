@@ -144,6 +144,9 @@ export async function exportExcel(itemList) {
 	const playerSchematics = STTApi.playerData.character.items.filter(item => item.type === 8);
 	const numberOfSchematics = (archetype_id) => {
 		const schematic = STTApi.shipSchematics.find(schematic => schematic.ship.archetype_id === archetype_id);
+		if (!schematic) {
+			return 0;
+		}
 		const playerSchematic = playerSchematics.find(playerSchematic => playerSchematic.archetype_id === schematic.id);
 		return playerSchematic ? playerSchematic.quantity : 0;
 	}
