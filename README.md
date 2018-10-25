@@ -12,7 +12,7 @@ A tool to help with crew management in Star Trek Timelines
 **DISCLAIMER** This tool is provided "as is", without warranty of any kind. Use at your own risk!
 It should be understood that *Star Trek Timelines* content and materials are trademarks and copyrights of [Disruptor Beam, Inc.](https://www.disruptorbeam.com/tos/) or its licensors. All rights reserved. This tool is neither endorsed by nor affiliated with Disruptor Beam, Inc. ( [more](/docs/DBSupport.png) )
 
-[More tools and information here](https://iampicard.github.io/)
+[More tools and information here](https://iampicard.com/)
 
 ## Install and run the tool
 
@@ -24,25 +24,25 @@ However, if you're only interested in installing and running the tool, head on t
 
 ### Crew management
 
-![Screenshot tool](/docs/Screenshot-Tool.png "Tool screenshot")
+![Screenshot tool](/docs/mac-crew.png "Tool screenshot")
 
 The first tab lets you manage your crew. You can sort by various fields, (un)group by rarity as well as export the data in Excel, CSV, JSON or HTML formats.
 
 ### Item management
 
-![Screenshot Items](/docs/Screenshot-Items.png "Items screenshot")
+![Screenshot Items](/docs/mac-items.png "Items screenshot")
 
 This tab lists out all the items you currently have, along with their quantity and type.
 
 ### Ship management
 
-![Screenshot Ships](/docs/Screenshot-Ships.png "Ships screenshot")
+![Screenshot Ships](/docs/mac-ships.png "Ships screenshot")
 
 This tab lists out all the ships you currently have, along with their stats.
 
 ### Missions
 
-![Screenshot Missions](/docs/Screenshot-Missions.png "Missions screenshot")
+![Screenshot Missions](/docs/mac-missions.png "Missions screenshot")
 
 This tab give an overview of all accepted missions and cadet challenged, along with individual requirements and player stats for each quest and challenge, as well as crew success rates for each challenge (node).
 
@@ -50,7 +50,7 @@ This tab give an overview of all accepted missions and cadet challenged, along w
 
 ![Screenshot CrewRecommendations](/docs/Screenshot-CrewRecommendations.png "CrewRecommendations screenshot")
 
-*Work in progress!*
+*DEPRECATED*
 
 This tab will make recommendations about which crew you can freeze or airlock, and which you need to keep in your active roster, primarily for cadet challenges.
 
@@ -60,7 +60,7 @@ This tab will make recommendations about which crew you can freeze or airlock, a
 
 In this tab you can get recommendations for which crew to use in your next gauntlet (if you didn't already start it), and odds for crew matches (if you already started a gauntlet). Please see source code for details, the algorithm is still "hand-wavy" at this point and could use input from someone more experienced with statistical analysis.
 
-![Screenshot Gauntlet Round](/docs/Screenshot-GauntletRound.png "Gauntlet Round screenshot")
+![Screenshot Gauntlet Round](/docs/mac-gauntlet.png "Gauntlet Round screenshot")
 
 ### Fleet
 
@@ -76,7 +76,9 @@ You can export a formatted html page with your crew stats and (optionally) your 
 
 ### Crew active state
 
-![Screenshot Voyage](/docs/Screenshot-Voyage.png "Voyage screenshot")
+![Screenshot Voyage](/docs/mac-voyage-calculation.png "Voyage screenshot")
+
+![Screenshot Voyage](/docs/mac-voyage-log.png "Voyage log screenshot")
 
 You can inspect the active state of crew by clicking on the little "baloon" icon. This can tell you whether the crew is currently on a shuttle adventure or on a voyage as well as details about remaining time, loot, etc.
 
