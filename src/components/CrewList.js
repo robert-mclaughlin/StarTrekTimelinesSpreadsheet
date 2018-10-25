@@ -319,7 +319,7 @@ export class CrewList extends React.Component {
 				id: 'level',
 				Header: 'Level',
 				minWidth: 40,
-				maxWidth: 40,
+				maxWidth: 45,
 				resizable: false,
 				accessor: 'level',
 				aggregate: vals => vals.reduce((a, b) => a + b, 0) / vals.length,
@@ -331,7 +331,7 @@ export class CrewList extends React.Component {
 				// Sort all by max fusion level, then fractional part by current fusion level
 				accessor: (c) => c.max_rarity + (c.rarity / c.max_rarity),
 				minWidth: 75,
-				maxWidth: 75,
+				maxWidth: 85,
 				resizable: false,
 				Cell: (cell) => {
 					if (cell && cell.original) {
