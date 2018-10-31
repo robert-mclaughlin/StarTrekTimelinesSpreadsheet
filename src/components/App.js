@@ -52,6 +52,7 @@ import { NeededEquipment } from './NeededEquipment.js';
 import { CrewDuplicates } from './CrewDuplicates.js';
 import { IncompleteMissions } from './IncompleteMissions.js';
 import { CryoCollections } from './CryoCollections';
+import { FactionDetails } from './FactionDetails';
 import { ModalNotification } from './ModalNotification';
 import { loadUITheme } from './Styles';
 
@@ -306,6 +307,9 @@ class App extends React.Component {
 			case 'CryoCollections':
 				return <CryoCollections />;
 
+			case 'FactionDetails':
+				return <FactionDetails />;
+
 			default:
 				return <span>Error! Unknown tab selected.</span>;
 		}
@@ -425,6 +429,7 @@ class App extends React.Component {
 	_getNavOverflowItems() {
 		return [
 			this._tabMenuItem({ key: 'Fleet', itemIcon: 'WindDirection' }),
+			this._tabMenuItem({ key: 'FactionDetails', name: 'Factions', itemIcon: 'Teamwork' }),
 			this._tabMenuItem({ key: 'CryoCollections', name: 'Cryo collections', itemIcon: 'CheckList' })];
 	}
 
