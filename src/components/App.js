@@ -51,6 +51,7 @@ import { VoyageTools } from './VoyageTools.js';
 import { NeededEquipment } from './NeededEquipment.js';
 import { CrewDuplicates } from './CrewDuplicates.js';
 import { IncompleteMissions } from './IncompleteMissions.js';
+import { CryoCollections } from './CryoCollections';
 import { ModalNotification } from './ModalNotification';
 import { loadUITheme } from './Styles';
 
@@ -302,6 +303,9 @@ class App extends React.Component {
 			case 'IncompleteMissions':
 				return <IncompleteMissions onCommandItemsUpdate={commandItemsUpdater} />;
 
+			case 'CryoCollections':
+				return <CryoCollections />;
+
 			default:
 				return <span>Error! Unknown tab selected.</span>;
 		}
@@ -419,7 +423,9 @@ class App extends React.Component {
 	}
 
 	_getNavOverflowItems() {
-		return [this._tabMenuItem({ key: 'Fleet', itemIcon: 'WindDirection' })];
+		return [
+			this._tabMenuItem({ key: 'Fleet', itemIcon: 'WindDirection' }),
+			this._tabMenuItem({ key: 'CryoCollections', name: 'Cryo collections', itemIcon: 'CheckList' })];
 	}
 
 	_getNavItems() {
