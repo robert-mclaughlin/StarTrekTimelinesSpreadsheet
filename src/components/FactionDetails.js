@@ -26,21 +26,19 @@ class StoreItem extends React.Component {
     }
 
     render() {
-        let curr = CURRENCIES[this.props.storeItem.costCurrency];
+        let curr = CURRENCIES[this.props.storeItem.offer.cost.currency];
 
-        return <div className={"ui labeled button compact tiny" + (this.props.storeItem.locked ? " disabled" : "")} onClick={() => this._buy()}>
+        let locked = this.props.storeItem.locked || (this.props.storeItem.offer.purchase_avail === 0);
+
+        return <div className={"ui labeled button compact tiny" + (locked ? " disabled" : "")} onClick={() => this.props.onBuy()}>
             <div className="ui button compact tiny">
-                {this.props.storeItem.game_item.name}
+                {this.props.storeItem.offer.game_item.name}
             </div>
             <a className="ui blue label">
                 <span style={{ display: 'inline-block' }}><img src={CONFIG.SPRITES[curr.icon].url} height={16} /></span>
-                {this.props.storeItem.costAmount} {curr.name}
+                {this.props.storeItem.offer.cost.amount} {curr.name}
             </a>
         </div>;
-    }
-
-    _buy() {
-        alert('Not implemented! Go in the game to actually buy.');
     }
 }
 
@@ -69,33 +67,85 @@ class FactionDisplay extends React.Component {
             }
         });
 
+        STTApi.imageProvider.getImageUrl(this.props.faction.reputation_item_icon.file, this.props.faction).then((found) => {
+            this.props.faction.reputationIconUrl = found.url;
+            this.setState({ reputationIconUrl: found.url });
+        }).catch((error) => { console.warn(error); });
+
         this.state = {
+            reputationIconUrl: '',
+            showSpinner: true,
             rewards: equipment
         };
+
+        this.refreshStore();
+    }
+
+    refreshStore() {
+        STTApi.executeGetRequestWithUpdates("commerce/store_layout_v2/" + this.props.faction.shop_layout).then((factionData) => {
+            let storeItems = factionData[0].grids.map(grid => grid.primary_content[0]);
+
+            this.setState({
+                showSpinner: false,
+                storeItems
+            });
+        });
+    }
+
+    _buyItem(storeItem) {
+        let id = storeItem.symbol + ':';
+        if (storeItem.offer.game_item.hash_key) {
+            id += storeItem.offer.game_item.hash_key;
+        }
+
+        this.setState({ showSpinner: true });
+
+        STTApi.executePostRequestWithUpdates('commerce/buy_direct_offer', { id, layout: this.props.faction.shop_layout, e: 0 }).then((buyData) => {
+            this.refreshStore();
+        });
+    }
+
+    renderStoreItems() {
+        if (this.state.showSpinner) {
+            return <div className="centeredVerticalAndHorizontal">
+                <div className="ui centered text active inline loader">Loading {this.props.faction.name} faction store...</div>
+            </div>;
+        }
+
+        return <div style={{ lineHeight: '2.5' }}>
+            {this.state.storeItems.map((storeItem, idx) => <StoreItem key={idx} storeItem={storeItem} onBuy={() => this._buyItem(storeItem)} />).reduce((prev, curr) => [prev, ' ', curr])}
+        </div>;
+    }
+
+    _getReputationName(reputation) {
+        for(let repBucket of STTApi.platformConfig.config.faction_config.reputation_buckets) {
+            if ((reputation < repBucket.upper_bound) || !repBucket.upper_bound) {
+                return repBucket.name;
+            }
+        }
+
+        return 'Unknown';
     }
 
     render() {
         let token = STTApi.playerData.character.items.find(item => item.archetype_id === this.props.faction.shuttle_token_id);
         let tokens = token ? token.quantity : 0;
 
-        // reputationIconUrl, iconUrl
-        return <div style={{paddingBottom: '10px'}}>
+        return <div style={{ paddingBottom: '10px' }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'min-content auto', gridTemplateAreas: `'icon description'`, gridGap: '10px' }}>
                 <div style={{ gridArea: 'icon' }}>
-                    <img src={this.props.faction.reputationIconUrl} height={90} />
+                    <img src={this.state.reputationIconUrl} height={90} />
                 </div>
                 <div style={{ gridArea: 'description' }}>
                     <h4>{this.props.faction.name}</h4>
-                    <p>Reputation: {this.props.faction.reputation} ({this.props.faction.completed_shuttle_adventures} completed shuttle adventures)</p>
+                    <p>Reputation: {this._getReputationName(this.props.faction.reputation)} ({this.props.faction.completed_shuttle_adventures} completed shuttle adventures)</p>
                     <p>Transmissions: {tokens}</p>
                 </div>
             </div>
             <h5>Potential shuttle rewards</h5>
             {this.state.rewards.map((item, idx) => <span style={{ display: 'contents' }} key={idx}><ItemDisplay style={{ display: 'inline-block' }} src={item.iconUrl} size={24} maxRarity={item.rarity} rarity={item.rarity} /> {item.name} </span>)}
             <h5>Store</h5>
-            <div style={{ lineHeight: '2.5' }}>
-                {this.props.faction.storeItems.map((storeItem, idx) => <StoreItem key={idx} storeItem={storeItem} />).reduce((prev, curr) => [prev, ' ', curr])}
-            </div>
+            {this.renderStoreItems()}
         </div>;
     }
 }
@@ -109,7 +159,7 @@ export class FactionDetails extends React.Component {
             spinnerLabel: 'factions'
         };
 
-        STTApi.executeGetRequestWithUpdates("character/refresh_all_factions").then(async (data) => {
+        STTApi.executeGetRequestWithUpdates("character/refresh_all_factions").then((data) => {
             let factions = [];
             for (let faction of STTApi.playerData.character.factions) {
                 factions.push(faction);
@@ -121,22 +171,6 @@ export class FactionDetails extends React.Component {
                 STTApi.imageProvider.getImageUrl(faction.icon.file, faction).then((found) => {
                     found.id.iconUrl = found.url;
                 }).catch((error) => { console.warn(error); });
-
-                STTApi.imageProvider.getImageUrl(faction.reputation_item_icon.file, faction).then((found) => {
-                    found.id.reputationIconUrl = found.url;
-                }).catch((error) => { console.warn(error); });
-
-                let factionData = await STTApi.executeGetRequestWithUpdates("commerce/store_layout_v2/" + faction.shop_layout);
-
-                faction.storeItems = [];
-                factionData[0].grids.forEach(grid => {
-                    faction.storeItems.push({
-                        game_item: grid.primary_content[0].offer.game_item,
-                        costAmount: grid.primary_content[0].cost.amount,
-                        costCurrency: grid.primary_content[0].cost.currency,
-                        locked: grid.primary_content[0].locked
-                    });
-                });
             }
 
             this.setState({
