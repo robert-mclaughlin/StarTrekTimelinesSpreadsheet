@@ -2,7 +2,7 @@ import React from 'react';
 
 import STTApi from 'sttapi';
 
-export class CryoCollection extends React.Component {
+class CryoCollection extends React.Component {
 	constructor(props) {
         super(props);
 
