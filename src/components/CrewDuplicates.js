@@ -10,11 +10,7 @@ export class CrewDuplicates extends React.Component {
     constructor(props) {
         super(props);
 
-        this.state = {
-            hideConfirmationDialog: true,
-            duplicates: this._loadDuplicates(),
-            selectedIds: new Set()
-        };
+        this.state = Object.assign({ hideConfirmationDialog: true }, this._loadDuplicates());
 
         this._loadDuplicates = this._loadDuplicates.bind(this);
         this._onSelectionChange = this._onSelectionChange.bind(this);
@@ -57,7 +53,16 @@ export class CrewDuplicates extends React.Component {
 
         let duplicateIds = Object.keys(uniq).filter((a) => uniq[a] > 1);
 
-        return STTApi.roster.filter((crew) => duplicateIds.includes(crew.id.toString()));
+        let duplicates = STTApi.roster.filter((crew) => duplicateIds.includes(crew.id.toString()));
+
+        let selectedIds = new Set();
+        duplicates.forEach(crew => {
+            if ((crew.level === 1) && (crew.rarity === 1)) {
+                selectedIds.add(crew.crew_id);
+            }
+        });
+
+        return {duplicates, selectedIds};
     }
 
     _onSelectionChange(selectedIds) {
