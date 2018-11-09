@@ -42,7 +42,14 @@ export class WebLoginDialog extends React.Component {
 						<h1 className="ui dividing header">IAmPicard's Star Trek Timelines tools</h1>
 						<p>Companion tools for the <a href="https://www.disruptorbeam.com/games/star-trek-timelines/" target='_blank'>Star Trek Timelines</a> game</p>
 
-						<h3 className="ui header"><span className='blinking_thing'>NEW!</span> Online version of the tool <span style={{color:'red'}}>- BETA</span></h3>
+						<h3 className="ui header"><span className='blinking_thing'>NEW!</span> Selfupdating crew stats tool <span style={{color:'red'}}>- VERY BETA (PRE-ALPHA)</span></h3>
+						<p>You don't need to log in to see crew stats; this information is self-updating and comes from DB itself, not wikis or spreadsheets. That means there is no chance of human error. All the data is guaranteed correct at all times; it is also <b>self-updating (without human intervention).</b></p>
+						<p><i>How does it work?</i> This data is using cached immortal stats from users of the online tool (see below). I'm keeping that data to speed up load times (and to reduce load on DB's servers), so I might as well put it to good use for the community. A newly added crew usually shows up in the database in a couple of hours.</p>
+						<p><a href='/crew.html'>Check it out!</a></p>
+
+						<div className="ui divider"></div>
+
+						<h3 className="ui header">Online version of the tool <span style={{color:'red'}}>- BETA</span></h3>
 						<div className="ui grid">
 							<div className="sixteen wide column">
 								<p>Login below using your Start Trek Timelines username and password. If you're using Facebook / Steam or a mobile platform and have yet to set up your account, please see instructions <a href='https://startrektimelines.zendesk.com/hc/en-us/articles/215687778-How-do-I-register-my-Star-Trek-Timelines-account-' target='_blank'>here</a>.</p>
