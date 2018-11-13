@@ -4,11 +4,11 @@ const merge = require('webpack-merge');
 const { spawn } = require('child_process');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const baseConfig = require('./webpack.base.config.js');
-const PACKAGE = require('./package.json');
+const PACKAGE = require('../package.json');
 
 // Config directories
-const SRC_DIR = path.resolve(__dirname, 'src');
-const OUTPUT_DIR = path.resolve(__dirname, 'dist');
+const SRC_DIR = path.resolve(__dirname, '../src');
+const OUTPUT_DIR = path.resolve(__dirname, '../dist');
 
 // Any directories you will be adding code/files into, need to be added to this array so webpack will pick them up
 const defaultInclude = [SRC_DIR];
@@ -19,7 +19,7 @@ module.exports = merge(baseConfig, {
 	},
 	target: 'electron-renderer',
 	plugins: [
-		new HtmlWebpackPlugin({ title: 'Star Trek Timelines Crew Management v' + PACKAGE.version }),
+		new HtmlWebpackPlugin({ template: './webpack/template.html', title: 'Star Trek Timelines Crew Management v' + PACKAGE.version }),
 		new webpack.DefinePlugin({ 'process.env.NODE_ENV': JSON.stringify('development')})
 	],
 	module: {

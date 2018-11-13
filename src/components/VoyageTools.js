@@ -1,5 +1,3 @@
-import '../assets/css/semantic.min.css';
-
 import React from 'react';
 import { SpinButton } from 'office-ui-fabric-react/lib/SpinButton';
 import { Checkbox } from 'office-ui-fabric-react/lib/Checkbox';

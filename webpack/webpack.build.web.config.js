@@ -6,11 +6,11 @@ const WebpackCdnPlugin = require('webpack-cdn-plugin');
 const baseConfig = require('./webpack.base.config.js');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const FaviconsWebpackPlugin = require('favicons-webpack-plugin')
-const PACKAGE = require('./package.json');
+const PACKAGE = require('../package.json');
 
 // Config directories
-const SRC_DIR = path.resolve(__dirname, 'src');
-const SHARED_DIR = path.resolve(__dirname, 'shared');
+const SRC_DIR = path.resolve(__dirname, '../src');
+const SHARED_DIR = path.resolve(__dirname, '../shared');
 
 // Any directories you will be adding code/files into, need to be added to this array so webpack will pick them up
 const defaultInclude = [SRC_DIR, SHARED_DIR];
@@ -74,6 +74,7 @@ module.exports = merge(baseConfig, {
 			}
 		}),
 		new HtmlWebpackPlugin({
+			template: './webpack/template.html',
 			title: `Star Trek Timelines Crew Management v${PACKAGE.version}-web BETA build ${new Date().toISOString()}`
 		}),
 		new MiniCssExtractPlugin({
@@ -87,7 +88,9 @@ module.exports = merge(baseConfig, {
 			modules: [
 				{ name: 'xlsx-populate', var: 'XlsxPopulate', path: 'browser/xlsx-populate.js' },
 				{ name: 'react', var: 'React', path: `umd/react.production.min.js` },
-				{ name: 'react-dom', var: 'ReactDOM', path: `umd/react-dom.production.min.js` }
+				{ name: 'react-dom', var: 'ReactDOM', path: `umd/react-dom.production.min.js` },
+				{ name: 'semantic-ui-react', var: 'semanticUIReact', path: `semantic-ui-react.min` },
+				{ name: 'lodash', var: '_', path: `lodash.min.js` }
 			],
 			publicPath: '/node_modules'
 		})

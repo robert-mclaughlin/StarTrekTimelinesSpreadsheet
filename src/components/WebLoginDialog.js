@@ -1,5 +1,3 @@
-import '../assets/css/semantic.min.css';
-
 import React from 'react';
 import { PrimaryButton } from 'office-ui-fabric-react/lib/Button';
 import { TextField } from 'office-ui-fabric-react/lib/TextField';

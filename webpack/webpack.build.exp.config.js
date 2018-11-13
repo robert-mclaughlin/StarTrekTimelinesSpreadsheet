@@ -5,21 +5,18 @@ const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const WebpackCdnPlugin = require('webpack-cdn-plugin');
 const baseConfig = require('./webpack.base.config.js');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const FaviconsWebpackPlugin = require('favicons-webpack-plugin')
-const PACKAGE = require('./package.json');
+const PACKAGE = require('../package.json');
 
 // Config directories
-const SRC_DIR = path.resolve(__dirname, 'src');
-const OUTPUT_DIR = path.resolve(__dirname, 'dist');
+const SRC_DIR = path.resolve(__dirname, '../src');
+const SHARED_DIR = path.resolve(__dirname, '../shared');
 
 // Any directories you will be adding code/files into, need to be added to this array so webpack will pick them up
-const defaultInclude = [SRC_DIR];
-
-// TODO: Figure out how to serve voymod.wasm
+const defaultInclude = [SRC_DIR, SHARED_DIR];
 
 module.exports = merge(baseConfig, {
 	output: {
-		publicPath: ''
+		publicPath: './'
 	},
 	module: {
 		rules: [
@@ -42,41 +39,21 @@ module.exports = merge(baseConfig, {
 			},
 			{
 				test: /\.jsx?$/,
-				use: [{ loader: 'babel-loader' }, { loader: 'webpack-preprocessor-loader', options: { params: { ENV: 'web' } } }],
+				use: [{ loader: 'babel-loader' }, { loader: 'webpack-preprocessor-loader', options: { params: { ENV: 'exp' } } }],
 				include: defaultInclude
 			},
 			{
 				test: /\.tsx?$/,
-				use: [{ loader: 'babel-loader' }, { loader: 'ts-loader' }, { loader: 'webpack-preprocessor-loader', options: { params: { ENV: 'web' } } }],
+				use: [{ loader: 'babel-loader' }, { loader: 'ts-loader' }, { loader: 'webpack-preprocessor-loader', options: { params: { ENV: 'exp' } } }],
 				include: defaultInclude
 			}
 		]
 	},
 	target: 'web',
 	plugins: [
-		new FaviconsWebpackPlugin({
-			logo: SRC_DIR + '/assets/logo.png',
-			prefix: 'img/',
-			emitStats: false,
-			persistentCache: true,
-			inject: true,
-			background: '#393737',
-			title: 'Star Trek Timelines Crew Management',
-			icons: {
-				android: true,
-				appleIcon: true,
-				appleStartup: true,
-				coast: false,
-				favicons: true,
-				firefox: true,
-				opengraph: false,
-				twitter: false,
-				yandex: false,
-				windows: true
-			}
-		}),
 		new HtmlWebpackPlugin({
-			title: `Star Trek Timelines Crew Management v${PACKAGE.version}-web BETA build ${new Date().toISOString()}`
+			template: './webpack/template.html',
+			title: `Star Trek Timelines Crew Management v${PACKAGE.version}`
 		}),
 		new MiniCssExtractPlugin({
 			// Options similar to the same options in webpackOptions.output
@@ -87,9 +64,7 @@ module.exports = merge(baseConfig, {
 		new webpack.DefinePlugin({ 'process.env.NODE_ENV': JSON.stringify('production') }),
 		new WebpackCdnPlugin({
 			modules: [
-				{ name: 'xlsx-populate', var: 'XlsxPopulate', path: 'browser/xlsx-populate.js' },
-				{ name: 'react', var: 'React', path: `umd/react.production.min.js` },
-				{ name: 'react-dom', var: 'ReactDOM', path: `umd/react-dom.production.min.js` }
+				{ name: 'xlsx-populate', var: 'XlsxPopulate', path: 'browser/xlsx-populate.js' }
 			],
 			publicPath: '/node_modules'
 		})
@@ -97,13 +72,10 @@ module.exports = merge(baseConfig, {
 	node: {
 		fs: "empty"
 	},
-	devtool: 'inline-source-map',
-	devServer: {
-		contentBase: OUTPUT_DIR,
-		stats: {
-			colors: true,
-			chunks: false,
-			children: false
-		}
+	stats: {
+		colors: true,
+		children: false,
+		chunks: false,
+		modules: false
 	}
 });
