@@ -202,6 +202,6 @@ async function shareCrewInternal(options, missionList) {
 		download('export.' + options.exportType, data, 'Export your crew list for sharing', 'Export');
 	}
 	else {
-		openShellExternal(pastebinPost(data, options.exportType));
+		openShellExternal(await pastebinPost(data, options.exportType));
 	}
 }

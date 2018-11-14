@@ -120,6 +120,7 @@ export class AppHome extends React.Component {
 		if (shouldForceUpdate) {
 			this.setState({ theme: finalTheme });
 			STTApi.config.put({ key: 'ui.darkThemeMode', value: this.state.darkTheme });
+			window.setThemeCss(this.state.darkTheme);
 			this.forceUpdate();
 		} else {
 			this.state.theme = finalTheme;

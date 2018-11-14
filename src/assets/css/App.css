@@ -10,6 +10,10 @@
     align-items: center;
 }
 
+.ship-dropdown {
+    min-width: 25em !important;
+}
+
 .recipe-item-span {
     float: left;
     margin-right: 5px;

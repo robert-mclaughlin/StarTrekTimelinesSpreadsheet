@@ -1,11 +1,6 @@
 import React from 'react';
-import { DefaultButton, PrimaryButton } from 'office-ui-fabric-react/lib/Button';
-import { Persona, PersonaSize, PersonaPresence } from 'office-ui-fabric-react/lib/Persona';
-import { Image, ImageFit } from 'office-ui-fabric-react/lib/Image';
-import { Icon } from 'office-ui-fabric-react/lib/Icon';
-import { TextField } from 'office-ui-fabric-react/lib/TextField';
 
-import { Message, Dropdown, Header, Button, Select, Checkbox, Form } from 'semantic-ui-react';
+import { Message, Dropdown, Button, Header, Select, Checkbox, Form, List, Image, Icon, Card } from 'semantic-ui-react';
 
 import STTApi from 'sttapi';
 import {
@@ -84,18 +79,22 @@ export class VoyageCrew extends React.Component {
 			let crewSpans = [];
 			this.state.crewSelection.forEach(entry => {
 				if (entry.choice) {
+					let status = (entry.choice.frozen > 0) ? 'frozen' : ((entry.choice.active_id > 0) ? 'active' : 'available');
+					let statusColor = (status === 'frozen') ? 'red' : ((status === 'active') ? 'yellow' : 'green')
 					let crew = (
-						<Persona
-							key={entry.choice.crew_id || entry.choice.id}
-							imageUrl={entry.choice.iconUrl}
-							text={entry.choice.name}
-							secondaryText={STTApi.playerData.character.voyage_descriptions[0].crew_slots[entry.slotId].name}
-							tertiaryText={formatCrewStats(entry.choice)}
-							size={PersonaSize.large}
-							presence={
-								entry.choice.frozen > 0 ? PersonaPresence.dnd : entry.choice.active_id > 0 ? PersonaPresence.away : PersonaPresence.online
-							}
-						/>
+						<Card key={entry.choice.crew_id || entry.choice.id} color={statusColor}>
+							<Card.Content>
+								<Image floated='right' size='mini' src={entry.choice.iconUrl} />
+								<Card.Header>{entry.choice.name}</Card.Header>
+								<Card.Meta>{STTApi.playerData.character.voyage_descriptions[0].crew_slots[entry.slotId].name}</Card.Meta>
+								<Card.Description>
+									{formatCrewStats(entry.choice)}
+								</Card.Description>
+							</Card.Content>
+							<Card.Content extra>
+								Status: {status}
+							</Card.Content>
+						</Card>
 					);
 
 					crewSpans[entry.slotId] = crew;
@@ -106,13 +105,9 @@ export class VoyageCrew extends React.Component {
 
 			return (
 				<div>
-					<h3>Best crew</h3>
+					<br/>
 					{this.state.state === 'inprogress' && <div className='ui medium centered text active inline loader'>Still calculating...</div>}
-					<div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap' }}>{crewSpans}</div>
-					<h3>
-						Estimated duration: <b>{formatTimeSeconds(this.state.estimatedDuration * 60 * 60)}</b>
-					</h3>
-					<br />
+					<Card.Group>{crewSpans}</Card.Group>
 				</div>
 			);
 		} else {
@@ -129,7 +124,7 @@ export class VoyageCrew extends React.Component {
 				value: entry.ship.id,
 				content: (
 					<Header
-						icon={<Image src={entry.ship.iconUrl} height={48} style={{ display: 'inline-block' }} />}
+						icon={<img src={entry.ship.iconUrl} height={48} style={{ display: 'inline-block' }} />}
 						content={entry.ship.name}
 						subheader={`${entry.score.toFixed(0)} antimatter`}
 					/>
@@ -138,13 +133,12 @@ export class VoyageCrew extends React.Component {
 		}
 
 		return (
-			<div>
-				<Message attached error hidden={!this.state.error}>
-					Error: {this.state.error}
+			<div style={{ margin: '5px' }}>
+				<Message attached>
+					Configure the settings below, then click on the "Calculate" button to see the recommendations. Current voyage is <b>{CONFIG.SKILLS[STTApi.playerData.character.voyage[0].skills.primary_skill]} primary / {CONFIG.SKILLS[STTApi.playerData.character.voyage[0].skills.secondary_skill]} secondary</b>.
 				</Message>
-
-				<Form className='attached fluid segment' onSubmit={this._calcVoyageData}>
-					<Form.Group widths='equal'>
+				<Form className='attached fluid segment' loading={this.state.generatingVoyCrewRank || (this.state.state === 'inprogress')}>
+					<Form.Group inline>
 						<Form.Field
 							control={Select}
 							label='Search depth'
@@ -154,7 +148,7 @@ export class VoyageCrew extends React.Component {
 								{ key: '6', text: '6 (normal)', value: 6 },
 								{ key: '7', text: '7 (slower)', value: 7 },
 								{ key: '8', text: '8 (slowest)', value: 8 },
-								{ key: '9', text: '9 (for supercomputer owners)', value: 9 }
+								{ key: '9', text: '9 (for supercomputers)', value: 9 }
 							]}
 							value={this.state.searchDepth}
 							onChange={(e, { value }) => this.setState({ searchDepth: value })}
@@ -174,18 +168,23 @@ export class VoyageCrew extends React.Component {
 						/>
 					</Form.Group>
 
-					<Form.Group>
-						<Form.Field
-							control={Checkbox}
-							label='Include active (on shuttles) crew'
-							checked={this.state.includeActive}
-							onChange={(e, { checked }) => this.setState({ includeActive: checked })}
-						/>
-						<Form.Field
-							control={Checkbox}
-							label='Include frozen (vaulted) crew'
-							checked={this.state.includeFrozen}
-							onChange={(e, { checked }) => this.setState({ includeFrozen: checked })}
+					<Form.Group inline>
+						<Form.Field>
+							<label>Choose a ship</label>
+							<Dropdown className='ship-dropdown'
+								selection
+								options={shipSpans}
+								placeholder='Choose a ship for your voyage'
+								value={this.state.selectedShip}
+								onChange={(ev, { value }) => this.setState({ selectedShip: value })}
+							/>
+						</Form.Field>
+
+						<Form.Input
+							label='Ship name'
+							value={this.state.shipName}
+							placeholder={this.state.bestShips.find(s => s.ship.id == this.state.selectedShip).ship.name}
+							onChange={(ev, { value }) => this.setState({ shipName: value })}
 						/>
 					</Form.Group>
 
@@ -208,45 +207,40 @@ export class VoyageCrew extends React.Component {
 						/>
 					</Form.Group>
 
-					<Button disabled={this.state.state === 'inprogress'}>Calculate best crew selection</Button>
-				</Form>
+					<Form.Group inline>
+						<Form.Field
+							control={Checkbox}
+							label='Include active (on shuttles) crew'
+							checked={this.state.includeActive}
+							onChange={(e, { checked }) => this.setState({ includeActive: checked })}
+						/>
 
-				<Dropdown
-					selection
-					options={shipSpans}
-					placeholder='Choose a ship for your voyage'
-					value={this.state.selectedShip}
-					onChange={(ev, { value }) => this.setState({ selectedShip: value })}
-				/>
+						<Form.Field
+							control={Checkbox}
+							label='Include frozen (vaulted) crew'
+							checked={this.state.includeFrozen}
+							onChange={(e, { checked }) => this.setState({ includeFrozen: checked })}
+						/>
+					</Form.Group>
+
+					{(this.state.state === 'inprogress' || this.state.state === 'done') && <h3>
+						Estimated duration: <b>{formatTimeSeconds(this.state.estimatedDuration * 60 * 60)}</b>
+					</h3>}
+
+					<Form.Group>
+						<Form.Button primary onClick={this._calcVoyageData} disabled={this.state.state === 'inprogress'}>Calculate best crew selection</Form.Button>
+						<Form.Button secondary onClick={this._startVoyage} disabled={this.state.state !== 'done'}>Start voyage with recommendations</Form.Button>
+
+						{/* #!if ENV === 'electron' */}
+						<Form.Button onClick={() => this._generateVoyCrewRank()} disabled={this.state.state === 'inprogress'}>Export CSV with crew Voyage ranking...</Form.Button>
+						{/* #!endif */}
+					</Form.Group>
+				</Form>
+				<Message attached='bottom' error hidden={!this.state.error}>
+					Error: {this.state.error}
+				</Message>
 
 				{this.renderBestCrew()}
-
-				<div
-					style={{
-						display: 'grid',
-						gridGap: '5px',
-						width: 'fit-content',
-						gridTemplateColumns: 'minmax(5em,min-content) max-content max-content'
-					}}>
-					<span style={{ justifySelf: 'center', alignSelf: 'center' }}>Ship Name</span>
-					<TextField
-						value={this.state.shipName}
-						placeholder={this.state.bestShips.find(s => s.ship.id == this.state.selectedShip).ship.name}
-						onChanged={v => this.setState({ shipName: v })}
-					/>
-					<PrimaryButton onClick={this._startVoyage} text='Start voyage with recommendations' disabled={this.state.state !== 'done'} />
-				</div>
-
-				<br />
-
-				{/* #!if ENV === 'electron' */}
-				<DefaultButton
-					onClick={() => this._generateVoyCrewRank()}
-					text='Export CSV with crew Voyage ranking...'
-					disabled={this.state.state === 'inprogress'}
-				/>
-				{this.state.generatingVoyCrewRank && <i className='spinner loading icon' />}
-				{/* #!endif */}
 			</div>
 		);
 	}
@@ -294,8 +288,11 @@ export class VoyageCrew extends React.Component {
 				return false;
 			}
 
+			// TODO: ignore crew crashes
+			// TODO: fix wasm
+
 			// Filter out crew the user has chosen not to include
-			if (this.state.currentSelectedItems.length > 0 && this.state.currentSelectedItems.some(ignored => (ignored === crew.crew_id || crew.id))) {
+			if (this.state.currentSelectedItems.length > 0 && this.state.currentSelectedItems.some(ignored => (ignored === (crew.crew_id || crew.id)))) {
 				return false;
 			}
 
@@ -374,23 +371,30 @@ export class VoyageLogEntry extends React.Component {
 	}
 
 	render() {
+		let listItems = [];
+		this.props.log.forEach((entry, index) => {
+			if (entry.crewIconUrl) {
+				listItems.push(<List.Item key={index}>
+					<Image avatar src={entry.crewIconUrl} />
+					<List.Content>
+						<List.Header><span dangerouslySetInnerHTML={{ __html: entry.text }} /></List.Header>
+						{entry.skill_check && (<List.Description>
+							<span className='quest-mastery'>
+								<img src={CONFIG.SPRITES['icon_' + entry.skill_check.skill].url} height={18} />
+								{entry.skill_check.passed == true ? <Icon name='thumbs up' /> : <Icon name='thumbs down' />}
+							</span></List.Description>
+						)}
+					</List.Content>
+				</List.Item>);
+			} else {
+				listItems.push(<List.Item key={index}><span dangerouslySetInnerHTML={{ __html: entry.text }} /></List.Item>);
+			}
+		});
+
 		return (
-			<ul>
-				{this.props.log.map((entry, index) => (
-					<li key={index}>
-						<span className='quest-mastery'>
-							{entry.skill_check && (
-								<span className='quest-mastery'>
-									<Image src={CONFIG.SPRITES['icon_' + entry.skill_check.skill].url} height={18} />
-									{entry.skill_check.passed == true ? <Icon iconName='Like' /> : <Icon iconName='Dislike' />} &nbsp;
-								</span>
-							)}
-							{entry.crewIconUrl && <Image src={entry.crewIconUrl} width={32} height={32} imageFit={ImageFit.contain} />}
-							<span dangerouslySetInnerHTML={{ __html: entry.text }} />
-						</span>
-					</li>
-				))}
-			</ul>
+			<List>
+				{listItems}
+			</List>
 		);
 	}
 }
@@ -407,7 +411,7 @@ export class VoyageLog extends React.Component {
 				maxWidth: 30,
 				resizable: false,
 				accessor: row => row.full_name,
-				Cell: p => <Image src={p.original.iconUrl} width={25} height={25} imageFit={ImageFit.contain} shouldStartVisible={true} />
+				Cell: p => <img src={p.original.iconUrl} height={25} />
 			},
 			{
 				id: 'quantity',
@@ -547,7 +551,7 @@ export class VoyageLog extends React.Component {
 			}
 
 			// Group by index
-			voyageNarrative = voyageNarrative.reduce(function(r, a) {
+			voyageNarrative = voyageNarrative.reduce(function (r, a) {
 				r[a.index] = r[a.index] || [];
 				r[a.index].push(a);
 				return r;
@@ -740,7 +744,7 @@ export class VoyageLog extends React.Component {
 											className='item'
 											key={index}
 											onClick={() => this._chooseDilemma(this.state.voyage.id, this.state.voyage.dilemma.id, index)}>
-											<Image src={CONFIG.SPRITES['icon_' + resolution.skill].url} height={18} />
+											<img src={CONFIG.SPRITES['icon_' + resolution.skill].url} height={18} />
 											<div className='content'>
 												<div className='header'>
 													<span dangerouslySetInnerHTML={{ __html: resolution.option }} />
@@ -757,7 +761,7 @@ export class VoyageLog extends React.Component {
 								onClick={() =>
 									this._chooseDilemma(this.state.voyage.id, this.state.voyage.dilemma.id, -1 * this.state.voyage.dilemma.resolutions.length)
 								}>
-								<Image src={CONFIG.SPRITES['question_icon'].url} height={18} />
+								<img src={CONFIG.SPRITES['question_icon'].url} height={18} />
 								<div className='content'>
 									<div className='header'>Random choice!</div>
 								</div>
@@ -780,7 +784,7 @@ export class VoyageLog extends React.Component {
 			);
 		}
 
-		const defaultButton = props => <DefaultButton {...props} text={props.children} style={{ width: '100%' }} />;
+		const defaultButton = props => <Button {...props} style={{ width: '100%' }}>{props.children}</Button>;
 
 		return (
 			<div style={{ userSelect: 'initial' }}>
@@ -802,11 +806,9 @@ export class VoyageLog extends React.Component {
 												<li key={slot.symbol}>
 													<span className='quest-mastery'>
 														{slot.name} &nbsp;{' '}
-														<Image
+														<img
 															src={STTApi.roster.find(rosterCrew => rosterCrew.id == slot.crew.archetype_id).iconUrl}
-															width={20}
 															height={20}
-															imageFit={ImageFit.contain}
 														/>{' '}
 														&nbsp; {slot.crew.name}
 													</span>
@@ -822,7 +824,7 @@ export class VoyageLog extends React.Component {
 										return (
 											<li key={skill.skill}>
 												<span className='quest-mastery'>
-													<Image src={CONFIG.SPRITES['icon_' + skill.skill].url} height={18} /> &nbsp; {skill.core} ({skill.range_min}-
+													<img src={CONFIG.SPRITES['icon_' + skill.skill].url} height={18} /> &nbsp; {skill.core} ({skill.range_min}-
 													{skill.range_max})
 												</span>
 											</li>

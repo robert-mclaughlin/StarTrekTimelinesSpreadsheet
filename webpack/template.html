@@ -7,20 +7,29 @@
   <link id="themeCSS" rel="stylesheet" href="" />
 
   <script>
-    function swapThemeCss() {
-      const defaultTheme = '/css/semantic.css';
-      const darkTheme = '/css/semantic.slate.css';
+    const g_defaultTheme = '/css/semantic.css';
+    const g_darkTheme = '/css/semantic.slate.css';
 
+    function swapThemeCss() {
       let sheet = document.querySelector('#themeCSS');
       if (!sheet) {
         return;
       }
 
-      if (sheet.getAttribute('href') === defaultTheme) {
-        sheet.setAttribute('href', darkTheme);
+      if (sheet.getAttribute('href') === g_defaultTheme) {
+        sheet.setAttribute('href', g_darkTheme);
       } else {
-        sheet.setAttribute('href', defaultTheme);
+        sheet.setAttribute('href', g_defaultTheme);
       }
+    }
+
+    function setThemeCss(dark) {
+      let sheet = document.querySelector('#themeCSS');
+      if (!sheet) {
+        return;
+      }
+
+      sheet.setAttribute('href', dark ? g_darkTheme : g_defaultTheme);
     }
 
     swapThemeCss();
