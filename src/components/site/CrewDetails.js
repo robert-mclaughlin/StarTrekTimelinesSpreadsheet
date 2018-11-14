@@ -1,5 +1,5 @@
-import React from 'react'
-import { Dropdown, Header, Image, Icon, Modal, Rating, Label, Grid, Popup, Divider, Button } from 'semantic-ui-react'
+import React from 'react';
+import { Dropdown, Header, Image, Modal, Rating, Label, Grid, Popup, Divider, Button } from 'semantic-ui-react';
 
 import { ItemDisplay } from './ItemDisplay';
 import { ItemSources } from './ItemSources';
