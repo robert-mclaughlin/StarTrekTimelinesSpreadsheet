@@ -85,7 +85,7 @@ export class CryoCollections extends React.Component {
                         text: 'Show complete collections',
                         canCheck: true,
                         isChecked: this.state.showComplete,
-                        onClick: () => { this.setState({showComplete: !this.state.showComplete}); }
+                        onClick: () => { this.setState({showComplete: !this.state.showComplete}, () => { this._updateCommandItems(); }); }
                     }]
                 }
             }]);

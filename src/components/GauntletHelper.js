@@ -31,6 +31,14 @@ class GauntletCrew extends React.Component {
 			<div className="ui attached segment" style={{ backgroundColor: getTheme().palette.themeLighter, padding: '2px' }}>
 				{this.props.crew.debuff / 4} battles
 			</div>
+			{this.props.showStats && <div className="ui attached segment" style={{ backgroundColor: getTheme().palette.themeLighter, padding: '2px' }}>
+				{this.props.crew.skills.map((skill) =>
+					<span className='gauntletCrew-statline' key={skill.skill}>
+						<img src={CONFIG.SPRITES['icon_' + skill.skill].url} height={18} /> {CONFIG.SKILLS[skill.skill]} ({skill.min} - {skill.max})
+					</span>
+				)}
+				<p className='gauntletCrew-statline'>Crit chance {this.props.crew.crit_chance}%</p>
+			</div>}
 			<div className="ui bottom attached primary button" onClick={() => this.props.revive(this.props.crew.disabled)}>
 				<i className="money bill alternate outline icon"></i>
 				{this.props.crew.disabled ? 'Revive (30 dil)' : 'Restore (30 dil)'}
@@ -184,6 +192,7 @@ export class GauntletHelper extends React.Component {
 			calculating: false,
 			logPath: undefined,
 			showSpinner: true,
+			showStats: false,
 			windowWidth: 0,
 			windowHeight: 0
 		};
@@ -242,6 +251,14 @@ export class GauntletHelper extends React.Component {
 							this.setState({
 								bestFirst: isChecked
 							}, () => { this._updateCommandItems(); });
+						}
+					},{
+						key: 'showStats',
+						text: 'Show crew stats in top row',
+						canCheck: true,
+						isChecked: this.state.showStats,
+						onClick: () => {
+							this.setState({ showStats: !this.state.showStats }, () => { this._updateCommandItems(); });
 						}
 					}]
 				}
@@ -545,7 +562,7 @@ export class GauntletHelper extends React.Component {
 				<div className='tab-panel' data-is-scrollable='true'>
 					<span className='quest-mastery'>Featured skill is <img src={CONFIG.SPRITES['icon_' + this.state.gauntlet.contest_data.featured_skill].url} height={18} /> {CONFIG.SKILLS[this.state.gauntlet.contest_data.featured_skill]}; Featured traits are {this.state.gauntlet.contest_data.traits.map(trait => STTApi.getTraitName(trait)).join(", ")}</span>
 					<div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)' }} >
-						{this.state.gauntlet.contest_data.selected_crew.map((crew) => <GauntletCrew maxwidth={this.state.windowWidth / 6} key={crew.crew_id} crew={crew} revive={(save) => this._payToReviveCrew(crew.crew_id, save)} />)}
+						{this.state.gauntlet.contest_data.selected_crew.map((crew) => <GauntletCrew showStats={this.state.showStats} maxwidth={this.state.windowWidth / 6} key={crew.crew_id} crew={crew} revive={(save) => this._payToReviveCrew(crew.crew_id, save)} />)}
 					</div>
 
 					{this.state.lastErrorMessage && <p>Error: '{this.state.lastErrorMessage}'</p>}
