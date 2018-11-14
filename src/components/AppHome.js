@@ -264,10 +264,10 @@ export class AppHome extends React.Component {
 				return <CrewDuplicates onCommandItemsUpdate={commandItemsUpdater} />;
 
 			case 'IncompleteMissions':
-				return <IncompleteMissions onCommandItemsUpdate={commandItemsUpdater} />;
+				return <IncompleteMissions />;
 
 			case 'CryoCollections':
-				return <CryoCollections />;
+				return <CryoCollections onCommandItemsUpdate={commandItemsUpdater} />;
 
 			case 'FactionDetails':
 				return <FactionDetails />;

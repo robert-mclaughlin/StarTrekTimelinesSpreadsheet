@@ -3,7 +3,7 @@ import React from 'react';
 import STTApi from 'sttapi';
 
 class CryoCollection extends React.Component {
-	constructor(props) {
+    constructor(props) {
         super(props);
 
         if (!this.props.collection.iconUrl) {
@@ -61,13 +61,46 @@ class CryoCollection extends React.Component {
 }
 
 export class CryoCollections extends React.Component {
-	constructor(props) {
+    constructor(props) {
         super(props);
+
+        this.state = {
+            showComplete: false
+        };
     }
 
-	render() {
-		return <div className='tab-panel' data-is-scrollable='true'>
-            {STTApi.playerData.character.cryo_collections.map(collection => <CryoCollection key={collection.id} collection={collection} />)}
+    componentDidMount() {
+        this._updateCommandItems();
+    }
+
+    _updateCommandItems() {
+        if (this.props.onCommandItemsUpdate) {
+            this.props.onCommandItemsUpdate([{
+                key: 'settings',
+                text: 'Settings',
+                iconProps: { iconName: 'Equalizer' },
+                subMenuProps: {
+                    items: [{
+                        key: 'showComplete',
+                        text: 'Show complete collections',
+                        canCheck: true,
+                        isChecked: this.state.showComplete,
+                        onClick: () => { this.setState({showComplete: !this.state.showComplete}); }
+                    }]
+                }
+            }]);
+        }
+    }
+
+    render() {
+        let collections = STTApi.playerData.character.cryo_collections;
+
+        if (!this.state.showComplete) {
+            collections = collections.filter(c => c.milestone.goal !== 0);
+        }
+
+        return <div className='tab-panel' data-is-scrollable='true'>
+            {collections.map(collection => <CryoCollection key={collection.id} collection={collection} />)}
         </div>;
-	}
+    }
 }
