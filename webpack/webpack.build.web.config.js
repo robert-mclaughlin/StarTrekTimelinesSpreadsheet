@@ -89,7 +89,7 @@ module.exports = merge(baseConfig, {
 				{ name: 'xlsx-populate', var: 'XlsxPopulate', path: 'browser/xlsx-populate.js' },
 				{ name: 'react', var: 'React', path: `umd/react.production.min.js` },
 				{ name: 'react-dom', var: 'ReactDOM', path: `umd/react-dom.production.min.js` },
-				{ name: 'semantic-ui-react', var: 'semanticUIReact', path: `semantic-ui-react.min` },
+				{ name: 'semantic-ui-react', var: 'semanticUIReact', path: `dist/umd/semantic-ui-react.min.js` },
 				{ name: 'lodash', var: '_', path: `lodash.min.js` }
 			],
 			publicPath: '/node_modules'
