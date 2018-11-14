@@ -30,7 +30,7 @@ export class AboutAndHelp extends React.Component {
 					<p dangerouslySetInnerHTML={{__html: snarkdown(this.state.version.body)}} />
 					<div className="ui primary button" onClick={() => openShellExternal(this.state.version.html_url)}>Download now</div>
 				</div>}
-			{/* #!elseif ENV === 'web' */}
+			{/* #!elseif ENV === 'web' || ENV === 'webtest' */}
 			<p style={{ backgroundColor: 'Tomato' }}><b>NOTE:</b> This web version is a very early prerelease for testing purposes only! I'm looking at overall feasibility as well as costs.</p>
 			{/* #!else */}
 			{/* #!endif */}

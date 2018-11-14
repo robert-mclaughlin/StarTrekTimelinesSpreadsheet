@@ -17,7 +17,7 @@ export class LoginDialog extends React.Component {
 	constructor(props) {
 		super(props);
 		this.state = {
-			hideDialog: !props.shownByDefault,
+			hideDialog: false,
 			errorMessage: null,
 			autoLogin: true,
 			showSpinner: false,
@@ -32,81 +32,71 @@ export class LoginDialog extends React.Component {
 
 		this._closeDialog = this._closeDialog.bind(this);
 
-// #!if ENV === 'electron'
+		// #!if ENV === 'electron'
 		this._connectFacebook = this._connectFacebook.bind(this);
-// #!endif
-	}
-
-	componentWillReceiveProps(nextProps) {
-		if (nextProps.shownByDefault !== this.props.shownByDefault) {
-			this.setState({hideDialog: !nextProps.shownByDefault});
-		}
+		// #!endif
 	}
 
 	render() {
-		return (
-			<div>
-				<Dialog
-					hidden={this.state.hideDialog}
-					onDismiss={this._closeDialog}
-					dialogContentProps={{
-						type: DialogType.normal,
-						title: 'Login to Star Trek Timelines'
-					}}
-					modalProps={{
-						isBlocking: true
-					}}
-				>
-					{this.state.errorMessage && (
-						<MessageBar messageBarType={MessageBarType.error} isMultiline={false}>
-							<span>{this.state.errorMessage}</span>
-						</MessageBar>
-					)}
+		return <Dialog
+			hidden={this.state.hideDialog}
+			onDismiss={this._closeDialog}
+			dialogContentProps={{
+				type: DialogType.normal,
+				title: 'Login to Star Trek Timelines'
+			}}
+			modalProps={{
+				isBlocking: true
+			}}
+		>
+			{this.state.errorMessage && (
+				<MessageBar messageBarType={MessageBarType.error} isMultiline={false}>
+					<span>{this.state.errorMessage}</span>
+				</MessageBar>
+			)}
 
-					<Pivot>
-						<PivotItem linkText='Username and password'>
-							<TextField
-								label='Username (e-mail)'
-								value={this.state.username}
-								onChanged={(value) => { this.setState({ username: value }) }}
-							/>
-
-							<TextField
-								label='Password'
-								value={this.state.password}
-								type='password'
-								onChanged={(value) => { this.setState({ password: value }) }}
-							/>
-						</PivotItem>
-						{/* #!if ENV === 'electron' */}
-						<PivotItem linkText='Facebook'>
-							<center style={{ marginTop:'5px' }} >
-								<PrimaryButton onClick={this._connectFacebook} text='Connect with Facebook' disabled={this.state.waitingForFacebook} />
-								<Image src={this.state.facebookImageUrl} height={200} />
-								<p>{this.state.facebookStatus}</p>
-							</center>
-						</PivotItem>
-						{/* #!endif */}
-					</Pivot>
-
-					<Checkbox
-						label='Stay logged in'
-						checked={this.state.autoLogin}
-						onChange={(ev, checked) => { this.setState({ autoLogin: checked }); }}
+			<Pivot>
+				<PivotItem linkText='Username and password'>
+					<TextField
+						label='Username (e-mail)'
+						value={this.state.username}
+						onChanged={(value) => { this.setState({ username: value }) }}
 					/>
 
-					<DialogFooter>
-						<PrimaryButton onClick={this._closeDialog} text='Login' disabled={this.state.showSpinner} />
-						{this.state.showSpinner && 
-							<div className="ui medium centered text active inline loader">Logging in...</div>
-						}
-					</DialogFooter>
-				</Dialog>
-			</div>
-		);
+					<TextField
+						label='Password'
+						value={this.state.password}
+						type='password'
+						onChanged={(value) => { this.setState({ password: value }) }}
+					/>
+				</PivotItem>
+				{/* #!if ENV === 'electron' */}
+				<PivotItem linkText='Facebook'>
+					<center style={{ marginTop: '5px' }} >
+						<PrimaryButton onClick={this._connectFacebook} text='Connect with Facebook' disabled={this.state.waitingForFacebook} />
+						<Image src={this.state.facebookImageUrl} height={200} />
+						<p>{this.state.facebookStatus}</p>
+					</center>
+				</PivotItem>
+				{/* #!endif */}
+			</Pivot>
+
+			<Checkbox
+				label='Stay logged in'
+				checked={this.state.autoLogin}
+				onChange={(ev, checked) => { this.setState({ autoLogin: checked }); }}
+			/>
+
+			<DialogFooter>
+				<PrimaryButton onClick={this._closeDialog} text='Login' disabled={this.state.showSpinner} />
+				{this.state.showSpinner &&
+					<div className="ui medium centered text active inline loader">Logging in...</div>
+				}
+			</DialogFooter>
+		</Dialog>;
 	}
 
-// #!if ENV === 'electron'
+	// #!if ENV === 'electron'
 	_connectFacebook() {
 		this.setState({
 			waitingForFacebook: true
@@ -133,7 +123,7 @@ export class LoginDialog extends React.Component {
 
 		ipcRenderer.send("fb-authenticate", "yes");
 	}
-// #!endif
+	// #!endif
 
 	_closeDialog() {
 		this.setState({ showSpinner: true, errorMessage: null });
@@ -150,9 +140,9 @@ export class LoginDialog extends React.Component {
 			this.setState({ showSpinner: false, hideDialog: true });
 			this.props.onAccessToken();
 		})
-		.catch((error) => {
-			console.error(error);
-			this.setState({ showSpinner: false, hideDialog: false, errorMessage: error.message });
-		});
+			.catch((error) => {
+				console.error(error);
+				this.setState({ showSpinner: false, hideDialog: false, errorMessage: error.message });
+			});
 	}
 }

@@ -140,7 +140,7 @@ There is no server associated with this tool, all state stays on your device. He
 The tool never stores your username or password and it only sends it to DisruptorBeam's official servers for login purposes. If you check the "Stay logged in" checkbox in the login dialog, the tool will store an access_token on your local device in the IndexedDB database.
 
 ### Web version
-If you're using the web version of the tool (currently in pre-alpha), I need to proxy all requests to DB servers through an Azure function due to the CORS policy on DB servers (the API is located at https://stttools.azurewebsites.net/api/). Same privacy policy applies as above, I'll never store any of your private data. However, for cost reducing purposes, I need to cache some data in Azure storage. In addition, the built-in Azure diagnostics system will log some data about the function invocations (which is purged after 30 days). This is a comprehensive list of all the data that the web version stores:
+If you're using the web version of the tool (currently in pre-alpha), I need to proxy all requests to DB servers through an Azure function due to the CORS policy on DB servers (the API is located at https://iampicard.com/). Same privacy policy applies as above, I'll never store any of your private data. However, for cost reducing purposes, I need to cache some data on the server's storage. In addition, the built-in diagnostics system will log some data about the function invocations (which is purged after 30 days). This is a comprehensive list of all the data that the web version stores:
 - Equipment details (recipe tree, item sources);
 - Crew stats for imoortalized crew;
 - Images / icons associated with crew / items;

@@ -42,12 +42,12 @@ module.exports = merge(baseConfig, {
 			},
 			{
 				test: /\.jsx?$/,
-				use: [{ loader: 'babel-loader' }, { loader: 'webpack-preprocessor-loader', options: { params: { ENV: 'web' } } }],
+				use: [{ loader: 'babel-loader' }, { loader: 'webpack-preprocessor-loader', options: { params: { ENV: 'webtest' } } }],
 				include: defaultInclude
 			},
 			{
 				test: /\.tsx?$/,
-				use: [{ loader: 'babel-loader' }, { loader: 'ts-loader' }, { loader: 'webpack-preprocessor-loader', options: { params: { ENV: 'web' } } }],
+				use: [{ loader: 'babel-loader' }, { loader: 'ts-loader' }, { loader: 'webpack-preprocessor-loader', options: { params: { ENV: 'webtest' } } }],
 				include: defaultInclude
 			}
 		]
