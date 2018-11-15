@@ -3,7 +3,7 @@ import React from 'react';
 import { ItemDisplay } from './ItemDisplay';
 
 import STTApi from 'sttapi';
-import { CONFIG } from 'sttapi';
+import { CONFIG, refreshAllFactions, loadFactionStore } from 'sttapi';
 
 const CURRENCIES = {
     premium_earnable: {
@@ -82,12 +82,10 @@ class FactionDisplay extends React.Component {
     }
 
     refreshStore() {
-        STTApi.executeGetRequestWithUpdates("commerce/store_layout_v2/" + this.props.faction.shop_layout).then((factionData) => {
-            let storeItems = factionData[0].grids.map(grid => grid.primary_content[0]);
-
+        loadFactionStore(this.props.faction).then(() => {
             this.setState({
                 showSpinner: false,
-                storeItems
+                storeItems: this.props.faction.storeItems
             });
         });
     }
@@ -155,27 +153,12 @@ export class FactionDetails extends React.Component {
         super(props);
 
         this.state = {
-            showSpinner: true,
-            spinnerLabel: 'factions'
+            showSpinner: true
         };
 
-        STTApi.executeGetRequestWithUpdates("character/refresh_all_factions").then((data) => {
-            let factions = [];
-            for (let faction of STTApi.playerData.character.factions) {
-                factions.push(faction);
-
-                this.setState({
-                    spinnerLabel: `${faction.name} faction details`
-                });
-
-                STTApi.imageProvider.getImageUrl(faction.icon.file, faction).then((found) => {
-                    found.id.iconUrl = found.url;
-                }).catch((error) => { console.warn(error); });
-            }
-
+        refreshAllFactions().then(() => {
             this.setState({
-                showSpinner: false,
-                factions
+                showSpinner: false
             });
         });
     }
@@ -183,12 +166,12 @@ export class FactionDetails extends React.Component {
     render() {
         if (this.state.showSpinner) {
             return <div className="centeredVerticalAndHorizontal">
-                <div className="ui massive centered text active inline loader">Loading {this.state.spinnerLabel}...</div>
+                <div className="ui massive centered text active inline loader">Loading factions...</div>
             </div>;
         }
 
         return <div className='tab-panel' data-is-scrollable='true'>
-            {this.state.factions.map(faction => <FactionDisplay key={faction.name} faction={faction} />)}
+            {STTApi.playerData.character.factions.map(faction => <FactionDisplay key={faction.name} faction={faction} />)}
         </div>;
     }
 }
