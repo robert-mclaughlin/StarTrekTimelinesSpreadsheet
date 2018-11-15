@@ -132,10 +132,15 @@ export class VoyageCrew extends React.Component {
 			});
 		}
 
+		let curVoy = '';
+		if (STTApi.playerData.character.voyage && STTApi.playerData.character.voyage.length > 0) {
+			curVoy = `${CONFIG.SKILLS[STTApi.playerData.character.voyage[0].skills.primary_skill]} primary / ${CONFIG.SKILLS[STTApi.playerData.character.voyage[0].skills.secondary_skill]} secondary`;
+		}
+
 		return (
 			<div style={{ margin: '5px' }}>
 				<Message attached>
-					Configure the settings below, then click on the "Calculate" button to see the recommendations. Current voyage is <b>{CONFIG.SKILLS[STTApi.playerData.character.voyage[0].skills.primary_skill]} primary / {CONFIG.SKILLS[STTApi.playerData.character.voyage[0].skills.secondary_skill]} secondary</b>.
+					Configure the settings below, then click on the "Calculate" button to see the recommendations. Current voyage is <b>{curVoy}</b>.
 				</Message>
 				<Form className='attached fluid segment' loading={this.state.generatingVoyCrewRank || (this.state.state === 'inprogress')}>
 					<Form.Group inline>
