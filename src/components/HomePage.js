@@ -217,6 +217,19 @@ export class HomePage extends React.Component {
             }
         });
 
+        const neededEquipment = STTApi.getNeededEquipment({ onlyFavorite: false, onlyNeeded: true, onlyFaction: false, cadetable: false, allLevels: false, userText: undefined });
+        let factionBuyable = [];
+        for (let equipment of neededEquipment) {
+            factionBuyable = factionBuyable.concat(equipment.factionSources.map(entry => `${equipment.equipment.name} for ${entry.cost_amount} ${CONFIG.CURRENCIES[entry.cost_currency].name} in the ${entry.faction.name} shop`));
+        }
+        if (factionBuyable.length > 0) {
+            recommendations.push({
+                title: 'Needed equipment in the faction shops',
+                icon: Priority.INFO,
+                content: <p style={{ margin: '0' }}>You can find some needed equipment in the faction shops: <b>{ factionBuyable.join(', ') }</b>. Check them out in the 'Factions' tab.</p>
+            });
+        }
+
         this.state = { recommendations };
     }
 

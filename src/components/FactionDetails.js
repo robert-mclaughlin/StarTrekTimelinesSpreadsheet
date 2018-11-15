@@ -5,28 +5,13 @@ import { ItemDisplay } from './ItemDisplay';
 import STTApi from 'sttapi';
 import { CONFIG, refreshAllFactions, loadFactionStore } from 'sttapi';
 
-const CURRENCIES = {
-    premium_earnable: {
-        name: 'merits',
-        icon: 'images_currency_pe_currency_0'
-    },
-    premium_purchasable: {
-        name: 'dilithium',
-        icon: 'images_currency_pp_currency_0'
-    },
-    nonpremium: {
-        name: 'credits',
-        icon: 'images_currency_sc_currency_0'
-    }
-};
-
 class StoreItem extends React.Component {
     constructor(props) {
         super(props);
     }
 
     render() {
-        let curr = CURRENCIES[this.props.storeItem.offer.cost.currency];
+        let curr = CONFIG.CURRENCIES[this.props.storeItem.offer.cost.currency];
 
         let locked = this.props.storeItem.locked || (this.props.storeItem.offer.purchase_avail === 0);
 

@@ -145,17 +145,11 @@ export class NeededEquipment extends React.Component {
 			</div>)
 		}
 
-		const CURRENCIES = {
-			premium_earnable: 'merits',
-			premium_purchasable: 'dilithium',
-			nonpremium: 'credits'
-		};
-
 		if (factionSources.length > 0) {
 			res.push(<div key={'factionstores'}>
 				<b>Faction shops: </b>
 				{factionSources.map((entry, idx) =>
-					`${entry.cost_amount} ${CURRENCIES[entry.cost_currency]} in the ${entry.faction.name} store`
+					`${entry.cost_amount} ${CONFIG.CURRENCIES[entry.cost_currency].name} in the ${entry.faction.name} shop`
 				).join(', ')}
 			</div>)
 		}
