@@ -84,6 +84,7 @@ export class NeededEquipment extends React.Component {
 		let shipBattles = equipment.item_sources.filter(e => e.type === 2);
 		let factions = equipment.item_sources.filter(e => e.type === 1);
 		let cadetSources = entry.cadetSources;
+		let factionSources = entry.factionSources;
 
 		let res = [];
 
@@ -136,12 +137,27 @@ export class NeededEquipment extends React.Component {
 		}
 
 		if (factions.length > 0) {
-			res.push(<p key={'factions'}>
+			res.push(<div key={'factions'}>
 				<b>Faction missions: </b>
 				{factions.map((entry, idx) =>
 					`${entry.name} (${entry.chance_grade}/5)`
 				).join(', ')}
-			</p>)
+			</div>)
+		}
+
+		const CURRENCIES = {
+			premium_earnable: 'merits',
+			premium_purchasable: 'dilithium',
+			nonpremium: 'credits'
+		};
+
+		if (factionSources.length > 0) {
+			res.push(<div key={'factionstores'}>
+				<b>Faction shops: </b>
+				{factionSources.map((entry, idx) =>
+					`${entry.cost_amount} ${CURRENCIES[entry.cost_currency]} in the ${entry.faction.name} store`
+				).join(', ')}
+			</div>)
 		}
 
 		return <div>{res}</div>;
