@@ -130,6 +130,13 @@
     position: relative;
 }
 
+.tab-panel-x {
+    -webkit-overflow-scrolling: touch;
+    max-height: calc(100vh - 46px);
+    padding: 5px 0;
+    position: relative;
+}
+
 .embedded-crew-grid {
     -webkit-overflow-scrolling: touch;
     overflow-x: hidden;

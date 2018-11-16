@@ -217,7 +217,7 @@ export class HomePage extends React.Component {
             }
         });
 
-        const neededEquipment = STTApi.getNeededEquipment({ onlyFavorite: false, onlyNeeded: true, onlyFaction: false, cadetable: false, allLevels: false, userText: undefined });
+        const neededEquipment = STTApi.getNeededEquipment({ onlyNeeded: true, onlyFaction: false, cadetable: false, allLevels: false, userText: undefined }, []);
         let factionBuyable = [];
         for (let equipment of neededEquipment) {
             factionBuyable = factionBuyable.concat(equipment.factionSources.map(entry => `${equipment.equipment.name} for ${entry.cost_amount} ${CONFIG.CURRENCIES[entry.cost_currency].name} in the ${entry.faction.name} shop`));

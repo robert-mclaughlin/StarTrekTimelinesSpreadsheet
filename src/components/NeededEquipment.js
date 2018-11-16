@@ -1,6 +1,7 @@
 import React from 'react';
-import { SearchBox } from 'office-ui-fabric-react/lib/SearchBox';
 import { getTheme } from '@uifabric/styling';
+
+import { Input, Dropdown, Grid } from 'semantic-ui-react';
 
 import { ItemDisplay } from './ItemDisplay';
 import { ReplicatorDialog } from './ReplicatorDialog';
@@ -18,10 +19,23 @@ export class NeededEquipment extends React.Component {
 	constructor(props) {
 		super(props);
 
+		let peopleList = [];
+		STTApi.allcrew.forEach(crew => {
+			let have = STTApi.roster.find(c => c.symbol === crew.symbol);
+
+			peopleList.push({
+				key: crew.id,
+				value: crew.id,
+				image: { src: crew.iconUrl },
+				text: `${crew.name} (${have ? 'owned' : 'unowned'} ${crew.max_rarity}*)`
+			});
+		});
+
 		this.state = {
 			neededEquipment: [],
+			peopleList: peopleList,
+			currentSelectedItems: [],
 			filters: {
-				onlyFavorite: false,
 				onlyNeeded: true,
 				onlyFaction: false,
 				cadetable: false,
@@ -50,7 +64,7 @@ export class NeededEquipment extends React.Component {
 	}
 
 	_filterNeededEquipment(filters) {
-		const neededEquipment = STTApi.getNeededEquipment(filters);
+		const neededEquipment = STTApi.getNeededEquipment(filters, this.state.currentSelectedItems);
 
 		return this.setState({
 			neededEquipment: neededEquipment
@@ -157,6 +171,17 @@ export class NeededEquipment extends React.Component {
 		return <div>{res}</div>;
 	}
 
+	_selectFavorites() {
+		let dupeChecker = new Set(this.state.currentSelectedItems);
+		STTApi.roster.filter(c => c.favorite).forEach(crew => {
+            if (!dupeChecker.has(crew.id)) {
+                dupeChecker.add(crew.id);
+            }
+		});
+		
+		this.setState({ currentSelectedItems: Array.from(dupeChecker.values()) });
+	}
+
 	componentDidMount() {
 		this._updateCommandItems();
 		this._filterNeededEquipment(this.state.filters);
@@ -173,9 +198,7 @@ export class NeededEquipment extends React.Component {
 						items: [{
 							key: 'onlyFavorite',
 							text: 'Show only for favorite crew',
-							canCheck: true,
-							isChecked: this.state.filters.onlyFavorite,
-							onClick: () => { this._toggleFilter('onlyFavorite'); }
+							onClick: () => { this._selectFavorites(); }
 						},
 						{
 							key: 'onlyNeeded',
@@ -295,7 +318,7 @@ export class NeededEquipment extends React.Component {
 
 	render() {
 		if (this.state.neededEquipment) {
-			return (<div className='tab-panel' data-is-scrollable='true'>
+			return (<div className='tab-panel-x' data-is-scrollable='true'>
 				<p>Equipment required to fill all open slots for all crew currently in your roster{!this.state.filters.allLevels && <span>, for their current level band</span>}</p>
 				<small>Note that partially complete recipes result in zero counts for some crew and items</small>
 
@@ -305,10 +328,19 @@ export class NeededEquipment extends React.Component {
 					<br />
 				</div>}
 
-				<SearchBox placeholder='Filter...'
-					onChange={(newValue) => this._filterText(newValue)}
-					onSearch={(newValue) => this._filterText(newValue)}
-				/>
+				<Grid>
+					<Grid.Column width={6}>
+						<Input fluid icon='search' placeholder='Filter...' value={this.state.filters.userText} onChange={(e, {value}) => this._filterText(value)} />
+					</Grid.Column>
+					<Grid.Column width={10}>
+						<Dropdown clearable fluid multiple search selection options={this.state.peopleList}
+							placeholder='Select or search crew'
+							label='Show only for these crew'
+							value={this.state.currentSelectedItems}
+							onChange={(e, { value }) => this.setState({ currentSelectedItems: value }, () => this._filterText(this.state.filters.userText))}
+						/>
+					</Grid.Column>
+				</Grid>
 
 				{this.state.neededEquipment.map((entry, idx) =>
 					<div key={idx} className="ui raised segment" style={{ display: 'grid', gridTemplateColumns: '128px auto', gridTemplateAreas: `'icon name' 'icon details'`, padding: '8px 4px', margin: '8px', backgroundColor: getTheme().palette.themeLighter }}>
