@@ -130,6 +130,9 @@ export class VoyageCrew extends React.Component {
 		}
 
 		let curVoy = '';
+		if (STTApi.playerData.character.voyage_descriptions && STTApi.playerData.character.voyage_descriptions.length > 0) {
+			curVoy = `${CONFIG.SKILLS[STTApi.playerData.character.voyage_descriptions[0].skills.primary_skill]} primary / ${CONFIG.SKILLS[STTApi.playerData.character.voyage_descriptions[0].skills.secondary_skill]} secondary`;
+		}
 		if (STTApi.playerData.character.voyage && STTApi.playerData.character.voyage.length > 0) {
 			curVoy = `${CONFIG.SKILLS[STTApi.playerData.character.voyage[0].skills.primary_skill]} primary / ${CONFIG.SKILLS[STTApi.playerData.character.voyage[0].skills.secondary_skill]} secondary`;
 		}
