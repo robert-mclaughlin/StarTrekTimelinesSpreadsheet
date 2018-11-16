@@ -38,7 +38,6 @@ export class VoyageCrew extends React.Component {
 			activeEvent: undefined,
 			peopleList: [],
 			currentSelectedItems: [],
-			preselectedIgnored: [],
 			error: undefined,
 			generatingVoyCrewRank: false
 		};
@@ -47,7 +46,7 @@ export class VoyageCrew extends React.Component {
 		let result = bonusCrewForCurrentEvent();
 		if (result) {
 			this.state.activeEvent = result.eventName;
-			this.state.preselectedIgnored = result.crewIds;
+			this.state.currentSelectedItems = result.crewIds;
 		}
 
 		STTApi.roster.forEach(crew => {
@@ -58,8 +57,6 @@ export class VoyageCrew extends React.Component {
 				text: crew.name
 			});
 		});
-
-		this.state.currentSelectedItems = this.state.peopleList.filter(p => this.state.preselectedIgnored.indexOf(p.key) != -1);
 
 		this._calcVoyageData = this._calcVoyageData.bind(this);
 		this._startVoyage = this._startVoyage.bind(this);
