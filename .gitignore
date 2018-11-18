@@ -6,3 +6,6 @@ builds/
 /notes.txt
 mobile/build.json
 native/bin/
+
+# Ignore All IDEA Folders
+.idea
