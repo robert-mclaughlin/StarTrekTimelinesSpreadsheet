@@ -91,14 +91,10 @@ Clone the repo and build with `node.js` v 10.
 
 Minimal set of steps required
 * `git clone --recurse-submodules https://github.com/IAmPicard/StarTrekTimelinesSpreadsheet.git`
-* `cd StarTrekTimelinesSpreadsheet\STTApi`
-* `npm install`
-* `cd ..`
-* `npm install`
+* `cd StarTrekTimelinesSpreadsheet`
+* `npm run install:all`
   * You may also need to `npm install electron` if you see the message `Error: Electron failed to install correctly, please delete node_modules/electron and try installing again`
   * You may need to `npm install bindings nan` if you see errors using the voyage estimator tool
-* `node_modules\.bin\electron-rebuild.cmd`
-  * `node_modules/.bin/electron-rebuild` on Ubuntu
 * `npm run dev`
 
 *Note*: if for some reason the above steps are not sufficient, you may need to manually build in STTApi\AssetParser (with npm install) before building STTApi.
