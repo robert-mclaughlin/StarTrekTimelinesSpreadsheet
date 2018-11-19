@@ -19,6 +19,7 @@ export class CrewPage extends React.Component {
         this.state = {
             showEveryone: false,
             showBuyback: true,
+            showCanTrain: false,
             groupRarity: false,
             compactMode: false,
             crewData: this.loadCrewData(false, true)
@@ -31,7 +32,7 @@ export class CrewPage extends React.Component {
         this._updateCommandItems();
     }
 
-    loadCrewData(showEveryone, showBuyback) {
+    loadCrewData(showEveryone, showBuyback, showCanTrain) {
         let crewData= STTApi.roster;
         if (showEveryone) {
             const isFFFE = (crew) => (crew.frozen > 0) || ((crew.rarity === crew.max_rarity) && (crew.level === 100));
@@ -47,6 +48,10 @@ export class CrewPage extends React.Component {
 
         if (!showBuyback) {
             crewData = crewData.filter(crew => !crew.buyback);
+        }
+
+        if(showCanTrain) {
+            crewData = crewData.filter(crew => crew.level !== crew.max_level);
         }
 
         return crewData;
@@ -112,11 +117,24 @@ export class CrewPage extends React.Component {
                             onClick: () => {
                                 let isChecked = !this.state.showBuyback;
                                 this.setState({
-                                    crewData: this.loadCrewData(this.state.showEveryone, isChecked),
+                                    crewData: this.loadCrewData(this.state.showEveryone, isChecked, this.state.showCanTrain),
                                     showBuyback: isChecked
                                 }, () => { this._updateCommandItems(); });
                             }
                         },
+                          {
+                            key: 'showCanTrain',
+                            text: 'Show crew that can receive training',
+                            canCheck: true,
+                            isChecked: this.state.showCanTrain,
+                            onClick: () => {
+                              let isChecked = !this.state.showCanTrain;
+                              this.setState({
+                                crewData: this.loadCrewData(this.state.showEveryone, this.state.showBuyback, isChecked),
+                                showCanTrain: isChecked
+                              }, () => { this._updateCommandItems(); });
+                            }
+                          },
                         {
                             key: 'compactMode',
                             text: 'Compact mode',
@@ -137,7 +155,7 @@ export class CrewPage extends React.Component {
                             onClick: () => {
                                 let isChecked = !this.state.showEveryone;
                                 this.setState({
-                                    crewData: this.loadCrewData(isChecked, this.state.showBuyback),
+                                    crewData: this.loadCrewData(isChecked, this.state.showBuyback, this.state.showCanTrain),
                                     showEveryone: isChecked
                                 }, () => { this._updateCommandItems(); });
                             }
