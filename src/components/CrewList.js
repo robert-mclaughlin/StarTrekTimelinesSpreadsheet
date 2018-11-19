@@ -21,14 +21,17 @@ import STTApi from 'sttapi';
 import { CONFIG } from 'sttapi';
 
 export class CrewList extends React.Component {
+
+	static defaultProps = {
+		sortColumn: 'max_rarity',
+	};
+
 	constructor(props) {
 		super(props);
 
-		let sortColumn = props.sortColumn ? props.sortColumn : 'max_rarity';
-
 		this.state = {
 			items: props.data,
-			sorted: [{ id: sortColumn, desc: false }],
+			sorted: [{ id: props.sortColumn, desc: false }],
 			selection: props.selectedIds ? props.selectedIds : new Set()
 		};
 
