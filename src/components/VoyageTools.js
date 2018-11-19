@@ -627,6 +627,7 @@ export class VoyageLog extends React.Component {
 				voyage: voyage,
 				voyageNarrative: voyageNarrative,
 				estimatedMinutesLeft: voyage.hp / 21,
+				estimatedMinutesLeftRefill: voyage.hp / 21,
 				nativeEstimate: false,
 				voyageRewards: voyageRewards
 			});
@@ -654,12 +655,16 @@ export class VoyageLog extends React.Component {
 				</p>
 			);
 		} else {
-			let minEstimate = (this.state.estimatedMinutesLeft * 0.75 - 1) * 60;
-			let maxEstimate = this.state.estimatedMinutesLeft * 60;
+			const getDilemmaChance = (estimatedMinutesLeft) => {
+				let minEstimate = (estimatedMinutesLeft * 0.75 - 1) * 60;
+				let maxEstimate = estimatedMinutesLeft * 60;
 
-			let chanceDilemma =
-				(100 * (this.state.seconds_between_dilemmas - this.state.seconds_since_last_dilemma - minEstimate)) / (maxEstimate - minEstimate);
-			chanceDilemma = (100 - Math.min(Math.max(chanceDilemma, 0), 100)).toFixed();
+				let chanceDilemma =
+					(100 * (this.state.seconds_between_dilemmas - this.state.seconds_since_last_dilemma - minEstimate)) / (maxEstimate - minEstimate);
+				chanceDilemma = (100 - Math.min(Math.max(chanceDilemma, 0), 100)).toFixed();
+
+				return chanceDilemma;
+			};
 
 			return (
 				<div>
@@ -674,6 +679,11 @@ export class VoyageLog extends React.Component {
 					</div>
 
 					<div className='ui blue label'>
+						Estimated time left (+1 refill): {formatTimeSeconds(this.state.estimatedMinutesLeftRefill * 60)}
+						{!this.state.nativeEstimate && <i className='spinner loading icon' />}
+					</div>
+
+					<div className='ui blue label'>
 						Estimated revival cost: {Math.floor((this.state.voyage.voyage_duration / 60 + this.state.estimatedMinutesLeft) / 5)} dilithium
 					</div>
 
@@ -682,7 +692,7 @@ export class VoyageLog extends React.Component {
 						Recall now
 					</button>
 
-					<p>There is an estimated {chanceDilemma}% chance for the voyage to reach next dilemma.</p>
+					<p>There is an estimated {getDilemmaChance(this.state.estimatedMinutesLeft)}% chance for the voyage to reach next dilemma.</p>
 				</div>
 			);
 		}
@@ -709,7 +719,14 @@ export class VoyageLog extends React.Component {
 			assignedCrew
 		};
 
-		estimateVoyageRemaining(options, estimate => this.setState({ estimatedMinutesLeft: estimate, nativeEstimate: true }));
+		estimateVoyageRemaining(options, estimate => {
+			this.setState({ estimatedMinutesLeft: estimate });
+
+			options.remainingAntiMatter += this.state.voyage.max_hp;
+			estimateVoyageRemaining(options, estimate => {
+				this.setState({ estimatedMinutesLeftRefill: estimate, nativeEstimate: true });
+			});
+		});
 	}
 
 	async _recall() {
