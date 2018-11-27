@@ -5,7 +5,7 @@ const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const WebpackCdnPlugin = require('webpack-cdn-plugin');
 const baseConfig = require('./webpack.base.config.js');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const FaviconsWebpackPlugin = require('favicons-webpack-plugin')
+const WebappWebpackPlugin = require('webapp-webpack-plugin');
 const PACKAGE = require('../package.json');
 
 // Config directories
@@ -54,7 +54,7 @@ module.exports = merge(baseConfig, {
 	},
 	target: 'web',
 	plugins: [
-		new FaviconsWebpackPlugin({
+		new WebappWebpackPlugin({
 			logo: SRC_DIR + '/assets/logo.png',
 			prefix: 'img/',
 			emitStats: false,
