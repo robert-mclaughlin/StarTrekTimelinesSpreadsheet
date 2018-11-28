@@ -75,7 +75,7 @@ export class CrewDuplicates extends React.Component {
             promises.push(STTApi.sellCrew(id));
         });
 
-        return Promise.all(promises).then(() => STTApi.refreshRoster()).then(() => {
+        return Promise.all(promises).catch((reason) => console.warn(reason)).then(() => STTApi.refreshRoster()).then(() => {
             this.setState({
                 duplicates: this._loadDuplicates(),
                 selectedIds: new Set()

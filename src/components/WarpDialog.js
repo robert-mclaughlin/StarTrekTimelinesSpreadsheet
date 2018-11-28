@@ -54,11 +54,20 @@ export class WarpDialog extends React.Component {
         });
     }
 
-    async _warp() {
-        let ephemerals = await STTApi.warpQuest(this.state.quest.id, this.state.mastery_level, this.state.warpCount);
+    async _warp(warpCount) {
+        while (warpCount > 10) {
+            let ephemerals = await STTApi.warpQuest(this.state.quest.id, this.state.mastery_level, 10);
+            // TODO: show rewards to the user somehow
+            console.log(ephemerals);
 
-        // TODO: show rewards to the user somehow
-        console.log(ephemerals);
+            warpCount -= 10;
+        }
+
+        if (warpCount > 0) {
+            let ephemerals = await STTApi.warpQuest(this.state.quest.id, this.state.mastery_level, warpCount);
+            // TODO: show rewards to the user somehow
+            console.log(ephemerals);
+        }
 
         this._closeDialog();
 
@@ -108,7 +117,8 @@ export class WarpDialog extends React.Component {
             </div>
 
             <DialogFooter>
-                <PrimaryButton onClick={() => this._warp()} text='Warp' disabled={(chronNeeded > chronAvailable) || this.state.mastery.locked} />
+                <PrimaryButton onClick={() => this._warp(10)} text='Warp 10' disabled={((this.state.mastery.energy_cost * 10) > chronAvailable) || this.state.mastery.locked} />
+                <PrimaryButton onClick={() => this._warp(this.state.warpCount)} text={`Warp ${this.state.warpCount}`} disabled={(chronNeeded > chronAvailable) || this.state.mastery.locked} />
                 <DefaultButton onClick={() => this._closeDialog()} text='Cancel' />
             </DialogFooter>
         </Dialog>;
