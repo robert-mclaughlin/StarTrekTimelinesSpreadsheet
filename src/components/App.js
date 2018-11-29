@@ -18,12 +18,16 @@
 import '../assets/css/App.css';
 import React from 'react';
 
+import { Header, Segment, Portal } from 'semantic-ui-react';
+
 // #!if ENV === 'electron'
 import { FileImageCache } from '../utils/fileImageCache.js';
 // #!else
 import { ServerImageProvider } from '../utils/serverImageCache.js';
 import { SiteHome } from './site/SiteHome';
 // #!endif
+
+import { getHello } from '../utils/langhello';
 
 import { AppHome } from './AppHome';
 
@@ -35,6 +39,8 @@ class App extends React.Component {
 
 		this.state = {
 			preBoot: true,
+			euUser: false,
+			helloLang: 'Hello',
 			anonymousUser: false
 		};
 
@@ -52,16 +58,27 @@ class App extends React.Component {
 		STTApi.setImageProviderOverride(new ServerImageProvider(STTApi.serverAddress));
 		// #!endif
 
-		STTApi.loginWithCachedAccessToken().then((success) => {
+		STTApi.loginWithCachedAccessToken().then(success => {
 			this.setState({ preBoot: false, anonymousUser: !success });
 		});
+
+		// #!if ENV === 'webtest' || ENV === 'web'
+		if (window.location.hostname !== 'eu.iampicard.com') {
+			fetch('http://extreme-ip-lookup.com/json')
+				.then(response => {
+					return response.json();
+				})
+				.then(ipData => {
+					this.setState({ helloLang: getHello(ipData.countryCode) });
+					if (ipData.continent === 'Europe') {
+						this.setState({ euUser: true });
+					}
+				});
+		}
+		// #!endif
 	}
 
-	render() {
-		if (this.state.preBoot) {
-			return <span />;
-		}
-
+	renderApp() {
 		// #!if ENV === 'web' || ENV === 'webtest'
 		if (this.state.anonymousUser) {
 			return <SiteHome onAccessToken={() => this.setState({ anonymousUser: false })} />;
@@ -69,6 +86,27 @@ class App extends React.Component {
 		// #!endif
 
 		return <AppHome onLogout={() => this.setState({ anonymousUser: true })} />;
+	}
+
+	render() {
+		if (this.state.preBoot) {
+			return <span />;
+		}
+
+		return (
+			<div>
+				<Portal open={this.state.euUser} onClose={() => this.setState({ euUser: false })}>
+					<Segment style={{ left: '40%', position: 'fixed', top: '5%', zIndex: 1000 }}>
+						<Header>{this.state.helloLang} !</Header>
+						<p>I have an European server that may be faster for you.</p>
+						<p>
+							Check it out at <a href='https://eu.iampicard.com'>eu.iampicard.com</a>.
+						</p>
+					</Segment>
+				</Portal>
+				{this.renderApp()}
+			</div>
+		);
 	}
 }
 

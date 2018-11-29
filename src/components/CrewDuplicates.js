@@ -58,6 +58,7 @@ export class CrewDuplicates extends React.Component {
         let selectedIds = new Set();
         duplicates.forEach(crew => {
             if ((crew.level === 1) && (crew.rarity === 1)) {
+                // TODO: only if player already has it FFFE
                 selectedIds.add(crew.crew_id);
             }
         });

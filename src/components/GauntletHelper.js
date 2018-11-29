@@ -102,7 +102,7 @@ class GauntletMatch extends React.Component {
 	}
 
 	_playMatch() {
-		playContest(this.props.gauntlet.id, this.props.match.crewOdd.crew_id, this.props.match.opponent.player_id, this.props.match.opponent.crew_id, this.props.match).
+		playContest(this.props.gauntlet.id, this.props.match.crewOdd.crew_id, this.props.match.opponent.player_id, this.props.match.opponent.crew_id, this.props.match, this.props.consecutive_wins).
 			then((data) => {
 				let logPath = undefined;
 
