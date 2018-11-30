@@ -27,6 +27,7 @@ import { CrewDuplicates } from './CrewDuplicates.js';
 import { IncompleteMissions } from './IncompleteMissions.js';
 import { CryoCollections } from './CryoCollections';
 import { FactionDetails } from './FactionDetails';
+import { Shuttles } from './Shuttles';
 import { ModalNotification } from './ModalNotification';
 import { loadUITheme } from './Styles';
 
@@ -272,6 +273,9 @@ export class AppHome extends React.Component {
 			case 'FactionDetails':
 				return <FactionDetails />;
 
+			case 'Shuttles':
+				return <Shuttles />;
+
 			default:
 				return <span>Error! Unknown tab selected.</span>;
 		}
@@ -392,6 +396,7 @@ export class AppHome extends React.Component {
 		return [
 			this._tabMenuItem({ key: 'Fleet', itemIcon: 'WindDirection' }),
 			this._tabMenuItem({ key: 'FactionDetails', name: 'Factions', itemIcon: 'Teamwork' }),
+			this._tabMenuItem({ key: 'Shuttles', name: 'Shuttles', itemIcon: 'Sections' }),
 			this._tabMenuItem({ key: 'CryoCollections', name: 'Cryo collections', itemIcon: 'CheckList' })];
 	}
 

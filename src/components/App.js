@@ -64,7 +64,7 @@ class App extends React.Component {
 
 		// #!if ENV === 'webtest' || ENV === 'web'
 		if (window.location.hostname !== 'eu.iampicard.com') {
-			fetch('http://extreme-ip-lookup.com/json')
+			fetch('https://extreme-ip-lookup.com/json')
 				.then(response => {
 					return response.json();
 				})

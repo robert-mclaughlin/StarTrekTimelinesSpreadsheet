@@ -105,26 +105,43 @@ export class HomePage extends React.Component {
                 title: 'Unused shuttle(s)',
                 icon: Priority.QUESTION,
                 content: <div>
-                    <p style={{ margin: '0' }}>You have {STTApi.playerData.character.shuttle_bays - STTApi.playerData.character.shuttle_adventures.length} shuttles just idling in their bays instead of out bringing goodies.</p>
+                    <p style={{ margin: '0' }}>You have {STTApi.playerData.character.shuttle_bays - STTApi.playerData.character.shuttle_adventures.length} shuttle(s) just idling in their bays instead of out bringing goodies.</p>
                     <p style={{ margin: '0' }}>See the 'Needed Equipment' tab for recommendations on best factions to send your shuttles for.</p>
                 </div>
             });
         }
 
-        let shuttleReturn = Math.min(...STTApi.playerData.character.shuttle_adventures.map(sa => (sa.shuttles[0].expires_in || 0)));
-        if (shuttleReturn === 0) {
+        let shuttles = STTApi.playerData.character.shuttle_adventures.map(sa => sa.shuttles[0]);
+
+        let shuttleReturn = shuttles.filter(sa => (sa.state === 2)).length;
+        if (shuttleReturn > 0) {
             recommendations.push({
-                title: 'Shuttles are back',
+                title: 'Some shuttles are back',
                 icon: Priority.EXCLAMATION,
-                content: <p style={{ margin: '0' }}>Your shuttles ({STTApi.playerData.character.shuttle_adventures.map(sa => sa.name).join(', ')}) have returned. Go into the game to collect your rewards and send them back out!</p>
-            });
-        } else {
-            recommendations.push({
-                title: `Shuttles will be back in ${formatTimeSeconds(shuttleReturn)}`,
-                icon: Priority.CHECK,
-                content: <p style={{ margin: '0' }}>Your shuttles ({STTApi.playerData.character.shuttle_adventures.map(sa => sa.name).join(', ')}) are on their way.</p>
+                content: <p style={{ margin: '0' }}>Your shuttles ({shuttles.filter(sa => (sa.state === 2)).map(sa => sa.name).join(', ')}) have returned. Go into the game to collect your rewards and send them back out!</p>
             });
         }
+
+        const getShuttleState = (state) => {
+            switch (state) {
+                case 0:
+                    return 'Opened';
+                case 1:
+                    return 'In progress';
+                case 2:
+                    return 'Complete';
+                case 3:
+                    return 'Expired';
+                default:
+                    return 'UNKNOWN';
+            }
+        };
+
+        recommendations.push({
+            title: 'Shuttle status',
+            icon: Priority.CHECK,
+            content: <p style={{ margin: '0' }}>{shuttles.map(sa => <span key={sa.id}>{sa.name} - <i>{getShuttleState(sa.state)}</i> ({formatTimeSeconds(sa.expires_in)})</span>).reduce((prev, curr) => [prev, ', ', curr])}</p>
+        });
 
         let overflowingItems = STTApi.playerData.character.items.filter(item => item.quantity > 32000);
         if (overflowingItems.length > 0) {
