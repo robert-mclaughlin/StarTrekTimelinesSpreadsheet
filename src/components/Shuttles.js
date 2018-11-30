@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Button, Image, Item, List } from 'semantic-ui-react';
+import { Button, Image, Item, List, Dropdown } from 'semantic-ui-react';
 
 import STTApi from 'sttapi';
 import { CONFIG, shuttleComplete, shuttleRedeemToken, shuttleStart, formatTimeSeconds } from 'sttapi';
@@ -50,14 +50,13 @@ export class Shuttles extends React.Component {
 				tokens: event.content.shuttles.map(s => s.token),
 				nextVP: eventVP ? eventVP.quantity : 0
 			};
-        }
-        
-        this.slotCalculator();
+		}
+
+		this.slotCalculator();
 
 		this.state = {
 			currentEvent,
-			eventImageUrl: undefined,
-			shuttles: STTApi.playerData.character.shuttle_adventures.map(adventure => adventure.shuttles[0])
+			eventImageUrl: undefined
 		};
 	}
 
@@ -124,82 +123,147 @@ export class Shuttles extends React.Component {
 		let actualPercent = percent * 100;
 	}
 
+	_shuttleChance(challenge_rating, numberofSlots, skillSum) {
+		return Math.floor(
+			100 /
+				(1 +
+					Math.exp(
+						STTApi.serverConfig.config.shuttle_adventures.sigmoid_steepness *
+							(STTApi.serverConfig.config.shuttle_adventures.sigmoid_midpoint - (skillSum / (challenge_rating * numberofSlots)))
+					))
+		);
+	}
+
 	slotCalculator() {
-        let crew_bonuses = {};
-        if (
+		let crew_bonuses = {};
+		if (
 			STTApi.playerData.character.events &&
 			STTApi.playerData.character.events.length > 0 &&
 			STTApi.playerData.character.events[0].content.content_type === 'shuttles' &&
 			STTApi.playerData.character.events[0].opened
 		) {
 			// In a shuttle event
-            let event = STTApi.playerData.character.events[0];
-            crew_bonuses = event.content.shuttles[0].crew_bonuses;
-        }
+			let event = STTApi.playerData.character.events[0];
+			crew_bonuses = event.content.shuttles[0].crew_bonuses;
+		}
 
 		let sortedRoster = [];
 		STTApi.roster.forEach(crew => {
-            let bonus = 1;
-            if (crew_bonuses[crew.symbol]) {
-                bonus = crew_bonuses[crew.symbol];
-            }
+			if (crew.buyback || crew.frozen) {
+				return;
+			}
+
+			let bonus = 1;
+			if (crew_bonuses[crew.symbol]) {
+				bonus = crew_bonuses[crew.symbol];
+			}
 
 			sortedRoster.push({
-				crew,
+				crew_id: crew.id,
 				command_skill: crew.command_skill_core * bonus,
 				science_skill: crew.science_skill_core * bonus,
 				security_skill: crew.security_skill_core * bonus,
 				engineering_skill: crew.engineering_skill_core * bonus,
 				diplomacy_skill: crew.diplomacy_skill_core * bonus,
 				medicine_skill: crew.medicine_skill_core * bonus,
-            });
+				total: 0
+			});
 		});
 
 		STTApi.playerData.character.shuttle_adventures.forEach(adventure => {
-			let challenge_rating = adventure.challenge_rating;
 			let shuttle = adventure.shuttles[0];
+			shuttle.challenge_rating = adventure.challenge_rating;
 
-            // TODO: this assumes there are at most 2 skills in each slot
-            shuttle.calcSlots = [];
+			// TODO: this assumes there are at most 2 skills in each slot
+			shuttle.calcSlots = [];
 			shuttle.slots.forEach(slot => {
-				let calcSlot = {};
+				let calcSlot = {
+					bestCrew: JSON.parse(JSON.stringify(sortedRoster)) // Start with a copy
+				};
 				if (slot.skills.length === 1) {
 					// AND or single
-                    calcSlot.skills = slot.skills[0].split(',');
-                    if (calcSlot.skills.length === 1) {
-                        calcSlot.type = 'SINGLE';
-                        calcSlot.bestCrew = [...sortedRoster].sort((a, b) => a[calcSlot.skills[0]] - b[calcSlot.skills[0]]);
-                    } else {
-                        calcSlot.type = 'AND';
-                        calcSlot.bestCrew = [...sortedRoster].sort((a, b) => {
-                            let a1 = a[calcSlot.skills[0]];
-                            let a2 = a[calcSlot.skills[1]];
-
-                            let b1 = b[calcSlot.skills[0]];
-                            let b2 = b[calcSlot.skills[1]];
-
-                            let atotal = Math.max(a1, a2) + Math.min(a1, a2) * STTApi.serverConfig.config.shuttle_adventures.secondary_skill_percentage;
-                            let btotal = Math.max(b1, b2) + Math.min(b1, b2) * STTApi.serverConfig.config.shuttle_adventures.secondary_skill_percentage;
-
-                            return atotal - btotal;
-                        });
-                    }
+					calcSlot.skills = slot.skills[0].split(',');
+					if (calcSlot.skills.length === 1) {
+						calcSlot.type = 'SINGLE';
+						calcSlot.bestCrew.forEach(c => {
+							c.total = c[calcSlot.skills[0]];
+						});
+					} else {
+						calcSlot.type = 'AND';
+						calcSlot.bestCrew.forEach(c => {
+							let a1 = c[calcSlot.skills[0]];
+							let a2 = c[calcSlot.skills[1]];
+							c.total = Math.floor(
+								Math.max(a1, a2) + Math.min(a1, a2) * STTApi.serverConfig.config.shuttle_adventures.secondary_skill_percentage
+							);
+						});
+					}
 				} else {
 					// OR
 					calcSlot.type = 'OR';
-                    calcSlot.skills = slot.skills;
-                    calcSlot.bestCrew = [...sortedRoster].sort((a, b) => Math.max(a[calcSlot.skills[0]], a[calcSlot.skills[1]]) - Math.max(b[calcSlot.skills[0]], b[calcSlot.skills[1]]));
-                }
+					calcSlot.skills = slot.skills;
+					calcSlot.bestCrew.forEach(c => {
+						c.total = Math.max(c[calcSlot.skills[0]], c[calcSlot.skills[1]]);
+					});
+				}
 
-                calcSlot.bestCrew = calcSlot.bestCrew.reverse();
+				let seen = new Set();
+				calcSlot.bestCrew = calcSlot.bestCrew.filter(c => c.total > 0).filter(c => (seen.has(c.crew_id) ? false : seen.add(c.crew_id)));
+				calcSlot.bestCrew.sort((a, b) => a.total - b.total);
+				calcSlot.bestCrew = calcSlot.bestCrew.reverse();
 
-                // TODO: I should cache the presorted lists since more than one slot will share the same config
+				calcSlot.bestCrew.forEach(c => {
+					c.crew = STTApi.roster.find(cr => cr.id === c.crew_id);
+					c.text = `${c.crew.name} (${c.total})`;
+					c.value = c.crew.symbol;
+					c.image = c.crew.iconUrl;
+				});
 
-                console.log(calcSlot);
-                
-                shuttle.calcSlots.push(calcSlot);
+				calcSlot.selection = calcSlot.bestCrew[0].value;
+
+				// TODO: we could cache the presorted lists since more than one slot will share the same config
+				shuttle.calcSlots.push(calcSlot);
 			});
 		});
+
+		setImmediate(() => this._reconcileCalc());
+	}
+
+	_chooseSlot(calcSlot, value) {
+		calcSlot.selection = value;
+
+		this._reconcileCalc(calcSlot);
+	}
+
+	_reconcileCalc(modified) {
+		// A crew can't be part of multiple shuttles
+
+		// TODO: balancing
+		let selections = new Set();
+		if (modified) {
+			selections.add(modified.selection);
+		}
+
+		STTApi.playerData.character.shuttle_adventures.forEach(adventure => {
+			let shuttle = adventure.shuttles[0];
+
+			shuttle.calcSlots.forEach(calcSlot => {
+				if (calcSlot === modified) {
+					return;
+				}
+
+				calcSlot.selection = undefined;
+				for (let bc of calcSlot.bestCrew) {
+					if (!selections.has(bc.value)) {
+						calcSlot.selection = bc.value;
+						selections.add(bc.value);
+						break;
+					}
+				}
+			});
+		});
+
+		this.setState({ shuttles: STTApi.playerData.character.shuttle_adventures.map(adventure => adventure.shuttles[0]) });
 	}
 
 	getState(state) {
@@ -219,7 +283,7 @@ export class Shuttles extends React.Component {
 
 	async _completeShuttle(shuttle_id) {
 		let promises = [];
-		for (let i = 0; i < 21; i++) {
+		for (let i = 0; i < 5; i++) {
 			promises.push(shuttleComplete(shuttle_id));
 		}
 
@@ -227,12 +291,11 @@ export class Shuttles extends React.Component {
 			.catch(error => {
 				/*console.warn(error);*/
 			})
-			.then(() => this.setState({ shuttles: STTApi.playerData.character.shuttle_adventures.map(adventure => adventure.shuttles[0]) }));
+			.then(() => this._reconcileCalc());
 	}
 
 	renderShuttle(shuttle) {
-        let faction = STTApi.playerData.character.factions.find(faction => faction.id === shuttle.faction_id);
-        console.log(shuttle);
+		let faction = STTApi.playerData.character.factions.find(faction => faction.id === shuttle.faction_id);
 
 		return (
 			<Item key={shuttle.id}>
@@ -246,7 +309,27 @@ export class Shuttles extends React.Component {
 						<p>{shuttle.description}</p>
 						<p>Faction: {faction.name}</p>
 						<p>Expires in {formatTimeSeconds(shuttle.expires_in)}</p>
-                        {shuttle.calcSlots.map(calcSlot => <p><b>{calcSlot.skills.join(` ${calcSlot.type} `)}</b> : {calcSlot.bestCrew[0].crew.name}</p>)}
+						{shuttle.calcSlots.map((calcSlot, idx) => (
+							<div key={idx}>
+								<b>{calcSlot.skills.map(s => CONFIG.SKILLS[s]).join(` ${calcSlot.type} `)}</b>
+								<Dropdown
+									fluid
+									selection
+									options={calcSlot.bestCrew}
+									onChange={(e, { value }) => this._chooseSlot(calcSlot, value)}
+									value={calcSlot.selection}
+								/>
+							</div>
+						))}
+						Chance:{' '}
+						{this._shuttleChance(
+							shuttle.challenge_rating,
+							shuttle.slots.length,
+							shuttle.calcSlots.reduce((p, c) => {
+								return p + (c.selection ? c.bestCrew.find(cr => cr.value === c.selection).total : 0);
+							}, 0)
+						)}{' '}
+						%
 					</Item.Description>
 					<Item.Extra>
 						State: {this.getState(shuttle.state)}
@@ -272,7 +355,7 @@ export class Shuttles extends React.Component {
 				<h3>Crew bonuses:</h3>
 				<List horizontal>
 					{event.crew_bonuses.map(cb => (
-						<List.Item>
+						<List.Item key={cb.avatar.symbol}>
 							<Image avatar src={cb.iconUrl} />
 							<List.Content>
 								<List.Header>{cb.avatar.name}</List.Header>
@@ -288,6 +371,10 @@ export class Shuttles extends React.Component {
 	}
 
 	render() {
+		if (!this.state.shuttles) {
+			return <p>Calculating...</p>;
+		}
+
 		return (
 			<div className='tab-panel' data-is-scrollable='true'>
 				<div style={{ padding: '10px' }}>
