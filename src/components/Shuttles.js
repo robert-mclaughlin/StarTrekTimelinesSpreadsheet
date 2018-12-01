@@ -129,7 +129,7 @@ export class Shuttles extends React.Component {
 				(1 +
 					Math.exp(
 						STTApi.serverConfig.config.shuttle_adventures.sigmoid_steepness *
-							(STTApi.serverConfig.config.shuttle_adventures.sigmoid_midpoint - (skillSum / (challenge_rating * numberofSlots)))
+							(STTApi.serverConfig.config.shuttle_adventures.sigmoid_midpoint - skillSum / (challenge_rating * numberofSlots))
 					))
 		);
 	}
