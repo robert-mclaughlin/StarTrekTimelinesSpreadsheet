@@ -62,7 +62,7 @@
     "babel-loader": "latest",
     "copy-webpack-plugin": "^4.6.0",
     "css-loader": "latest",
-    "electron": "latest",
+    "electron": "^3.0.10",
     "electron-builder": "latest",
     "electron-packager": "latest",
     "electron-rebuild": "latest",

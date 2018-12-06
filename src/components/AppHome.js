@@ -28,6 +28,7 @@ import { IncompleteMissions } from './IncompleteMissions.js';
 import { CryoCollections } from './CryoCollections';
 import { FactionDetails } from './FactionDetails';
 import { Shuttles } from './Shuttles';
+import { Experiments } from './Experiments';
 import { ModalNotification } from './ModalNotification';
 import { loadUITheme } from './Styles';
 
@@ -276,6 +277,9 @@ export class AppHome extends React.Component {
 			case 'Shuttles':
 				return <Shuttles />;
 
+			case 'Experiments':
+				return <Experiments />;
+
 			default:
 				return <span>Error! Unknown tab selected.</span>;
 		}
@@ -287,6 +291,7 @@ export class AppHome extends React.Component {
 			name: tab.name || tab.key,
 			iconProps: { iconName: tab.itemIcon },
 			iconOnly: tab.iconOnly,
+			disabled: tab.disabled,
 			onClick: () => {
 				this._switchTab(tab.key);
 			}
@@ -397,7 +402,8 @@ export class AppHome extends React.Component {
 			this._tabMenuItem({ key: 'Fleet', itemIcon: 'WindDirection' }),
 			this._tabMenuItem({ key: 'FactionDetails', name: 'Factions', itemIcon: 'Teamwork' }),
 			this._tabMenuItem({ key: 'Shuttles', name: 'Shuttles', itemIcon: 'Sections' }),
-			this._tabMenuItem({ key: 'CryoCollections', name: 'Cryo collections', itemIcon: 'CheckList' })];
+			this._tabMenuItem({ key: 'CryoCollections', name: 'Cryo collections', itemIcon: 'CheckList' }),
+			this._tabMenuItem({ key: 'Experiments', name: 'Experiments', itemIcon: 'TestAutoSolid', disabled: true })];
 	}
 
 	_getNavItems() {

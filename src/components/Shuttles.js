@@ -271,7 +271,7 @@ export class Shuttles extends React.Component {
 			case 0:
 				return 'Opened';
 			case 1:
-				return 'In process';
+				return 'In progress';
 			case 2:
 				return 'Complete';
 			case 3:
