@@ -403,7 +403,7 @@ export class AppHome extends React.Component {
 			this._tabMenuItem({ key: 'FactionDetails', name: 'Factions', itemIcon: 'Teamwork' }),
 			this._tabMenuItem({ key: 'Shuttles', name: 'Shuttles', itemIcon: 'Sections' }),
 			this._tabMenuItem({ key: 'CryoCollections', name: 'Cryo collections', itemIcon: 'CheckList' }),
-			this._tabMenuItem({ key: 'Experiments', name: 'Experiments', itemIcon: 'TestAutoSolid', disabled: false })];
+			this._tabMenuItem({ key: 'Experiments', name: 'Experiments', itemIcon: 'TestAutoSolid', disabled: true })];
 	}
 
 	_getNavItems() {
