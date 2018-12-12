@@ -316,6 +316,10 @@ class GalaxyEvent extends React.Component {
 				});
 			});
 
+			// TODO: compare with future galaxy events
+			let toSave = farmList.map(fl => ({ equipment_id: fl.equipment.id, equipment_symbol: fl.equipment.symbol, count: fl.count }));
+			console.log(toSave);
+
 			this.state = { event: STTApi.playerData.character.events[0], crew_bonuses, activeIndex: -1, eventEquip, farmList };
 		} else {
 			this.state = { event: undefined };
