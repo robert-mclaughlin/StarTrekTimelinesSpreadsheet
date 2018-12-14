@@ -433,8 +433,8 @@ export class HomePage extends React.Component {
 								target='_blank'
 								data-patreon-widget-type='become-patron-button'>
 								<img src='https://c5.patreon.com/external/logo/become_a_patron_button.png' />
-							</a>
-							{STTApi.playerData.patreonData && <a href={STTApi.playerData.patreonData.loginUrl}>Already a supporter? Log in with Patreon to unlock Patreon-only features</a>}
+							</a><br/>
+							{STTApi.playerData.patreonData && <a href={STTApi.playerData.patreonData.loginUrl}>Already a supporter? Log in here</a>}
 						</div>
 
 						<h3>Welcome, {STTApi.playerData.character.display_name}!</h3>
