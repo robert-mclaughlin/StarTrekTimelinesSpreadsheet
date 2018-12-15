@@ -231,13 +231,12 @@ export class HomePage extends React.Component {
 					</div>
 				)
 			});
-        }
+		}
 
-        if (STTApi.playerData.character.open_packs && STTApi.playerData.character.open_packs.length > 0) {
-            // Active behold
-
-            // TODO: help with making choice
-        }
+		if (STTApi.playerData.character.open_packs && STTApi.playerData.character.open_packs.length > 0) {
+			// Active behold
+			// TODO: help with making choice
+		}
 
 		if (STTApi.playerData.character.voyage.length === 0) {
 			recommendations.push({
@@ -412,10 +411,12 @@ export class HomePage extends React.Component {
 					</div>
 
 					<button className='ui primary button' onClick={() => this.props.onLogout()}>
-						<i className='icon sign out' />Logout
+						<i className='icon sign out' />
+						Logout
 					</button>
 					<button className='ui primary button' onClick={() => this.props.onRefresh()}>
-						<i className='icon refresh' />Refresh
+						<i className='icon refresh' />
+						Refresh
 					</button>
 					<button className='ui icon button' onClick={() => openDevTools()}>
 						<i className='icon bug' />
@@ -428,13 +429,15 @@ export class HomePage extends React.Component {
 					</div>
 					<div style={{ gridArea: 'description' }}>
 						<div style={{ float: 'right' }}>
-							<a
-								href='https://www.patreon.com/bePatron?u=10555637'
-								target='_blank'
-								data-patreon-widget-type='become-patron-button'>
-								<img src='https://c5.patreon.com/external/logo/become_a_patron_button.png' />
-							</a><br/>
-							{STTApi.playerData.patreonData && <a href={STTApi.playerData.patreonData.loginUrl}>Already a supporter? Log in here</a>}
+							{(!STTApi.playerData.patreonData || !STTApi.playerData.patreonData.patron) && (
+								<a href='https://www.patreon.com/bePatron?u=10555637' target='_blank' data-patreon-widget-type='become-patron-button'>
+									<img src='https://c5.patreon.com/external/logo/become_a_patron_button.png' />
+								</a>
+							)}
+							<br />
+							{STTApi.playerData.patreonData && !STTApi.playerData.patreonData.patron && (
+								<a href={STTApi.playerData.patreonData.loginUrl}>Already a supporter? Log in here</a>
+							)}
 						</div>
 
 						<h3>Welcome, {STTApi.playerData.character.display_name}!</h3>
