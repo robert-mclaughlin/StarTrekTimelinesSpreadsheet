@@ -24,7 +24,7 @@ class VoyageWorker : public Nan::AsyncProgressWorkerBase<PackedResult>
 	{
 		float finalScore;
 		auto finalResult = voyageCalculator->Calculate([&](const VoyageTools::CrewArray &bestSoFar, float bestScore) {
-			auto resultSoFar = ResultToStruct(bestSoFar, bestScore, voyageCalculator.get());
+			resultSoFar = ResultToStruct(bestSoFar, bestScore, voyageCalculator.get());
 			progress.Send(&resultSoFar, 1);
 		}, finalScore);
 
@@ -52,17 +52,12 @@ class VoyageWorker : public Nan::AsyncProgressWorkerBase<PackedResult>
   private:
 	Nan::Callback *progressCallback;
 	PackedResult result;
+	PackedResult resultSoFar;
 	std::unique_ptr<VoyageTools::VoyageCalculator> voyageCalculator;
 
 	Nan::MaybeLocal<v8::Object> PackBuffer(const PackedResult *data)
 	{
-		// This looks strange, but the v8 Buffer takes ownership of the memory and will release it when the JS object
-		// goes out of scope; hence, we can't use smart pointers and stuff
-		size_t size = sizeof(PackedResult) / sizeof(std::uint8_t);
-		std::uint8_t* transferMyOwnership = new std::uint8_t[size];
-		memcpy(transferMyOwnership, reinterpret_cast<const std::uint8_t*>(data), size);
-
-		return Nan::NewBuffer((char*)transferMyOwnership, size);
+		return Nan::CopyBuffer(reinterpret_cast<const char*>(data), sizeof(PackedResult) / sizeof(char));
 	}
 };
 

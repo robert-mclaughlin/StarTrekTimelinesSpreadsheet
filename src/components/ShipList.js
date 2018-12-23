@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactTable from "react-table";
+import { DefaultButton } from 'office-ui-fabric-react/lib/Button';
 import { Image, ImageFit } from 'office-ui-fabric-react/lib/Image';
 
 import { RarityStars } from './RarityStars';
