@@ -453,8 +453,8 @@ export class HomePage extends React.Component {
 						{STTApi.fleetData && <h4>Note from your fleet ({STTApi.fleetData.name}) admiral</h4>}
 						{STTApi.fleetData && <p>{STTApi.fleetData.motd}</p>}
 
-						{STTApi.playerData.motd && <h4>Note from DisruptorBeam: {STTApi.playerData.motd.title}</h4>}
-						{STTApi.playerData.motd && (
+						{STTApi.playerData.motd && STTApi.playerData.motd.title && <h4>Note from DisruptorBeam: {STTApi.playerData.motd.title}</h4>}
+						{STTApi.playerData.motd && STTApi.playerData.motd.text && (
 							<p
 								style={{ fontSize: '0.9em' }}
 								dangerouslySetInnerHTML={{ __html: STTApi.playerData.motd.text.trim().replace(/(?:\r\n|\r|\n)/g, '<br />') }}

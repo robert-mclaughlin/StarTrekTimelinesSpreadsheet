@@ -283,7 +283,7 @@ export class Shuttles extends React.Component {
 
 	async _completeShuttle(shuttle_id) {
 		let promises = [];
-		for (let i = 0; i < 5; i++) {
+		for (let i = 0; i < 1; i++) {
 			promises.push(shuttleComplete(shuttle_id));
 		}
 
