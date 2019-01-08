@@ -267,7 +267,7 @@ void VoyageCalculator::updateSlotRosterScores() noexcept
 }
 
 // Used for logging only
-constexpr const char* SkillName(std::uint8_t skillId) noexcept
+/*constexpr*/ const char* SkillName(std::uint8_t skillId) noexcept
 {
 	switch(skillId) {
 		case 0:

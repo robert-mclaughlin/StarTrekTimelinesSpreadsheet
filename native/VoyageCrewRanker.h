@@ -23,6 +23,10 @@ struct RankedCrew {
 };
 
 struct VoyageEstimate {
+	VoyageEstimate(std::uint8_t _primarySkill, std::uint8_t _secondarySkill) :
+		primarySkill(_primarySkill), secondarySkill(_secondarySkill)
+	{}
+
 	std::uint8_t primarySkill;
 	std::uint8_t secondarySkill;
 	float estimate {0.0};

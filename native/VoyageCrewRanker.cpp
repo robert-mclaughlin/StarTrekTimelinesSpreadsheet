@@ -21,7 +21,7 @@ RankedResult RankVoyageCrew(const char *jsonInput) noexcept
 		calculator.SetInput(primarySkill, secondarySkill);
 		calculator.DisableTraits();
 
-		result.Estimates.emplace_back(VoyageEstimate{primarySkill, secondarySkill});
+		result.Estimates.emplace_back(primarySkill, secondarySkill);
 		CrewArray voyCrew =
 			calculator.Calculate([](auto...){}, result.Estimates.back().estimate);
 		for (size_t iCrew = 0; iCrew < SLOT_COUNT; ++iCrew) {
