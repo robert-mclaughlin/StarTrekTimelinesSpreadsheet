@@ -234,9 +234,14 @@ export class CrewList extends React.Component {
 					let crew = p.original;
 
 					if (crew.crew_id)
-						return (<Checkbox label='Airlock'
+						return (<div><Checkbox label='Airlock'
 							checked={this._isSelected(crew.crew_id)}
-							onChange={(ev, isChecked) => this._onSelectionChange(crew.crew_id, isChecked)} />);
+							onChange={(ev, isChecked) => this._onSelectionChange(crew.crew_id, isChecked)} />
+							{(crew.buyback && crew.expires_in === null) && 
+							<TooltipHost content={`${crew.short_name} is stuck in the airlock. You need to contact DB support to release them!`} calloutProps={{ gapSpace: 0 }}>
+							<p style={{color:'red'}}>ERROR!</p>
+						</TooltipHost>}
+							</div>);
 					else
 						return <span />;
 				}

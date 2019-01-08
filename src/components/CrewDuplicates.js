@@ -44,7 +44,7 @@ export class CrewDuplicates extends React.Component {
     }
 
     _loadDuplicates() {
-        let uniq = STTApi.roster.filter((crew) => !crew.buyback)
+        let uniq = STTApi.roster.filter((crew) => !crew.buyback || (crew.buyback && crew.expires_in === null))
             .map((crew) => { return { count: 1, crewId: crew.id }; })
             .reduce((a, b) => {
                 a[b.crewId] = (a[b.crewId] || 0) + b.count;
@@ -70,18 +70,16 @@ export class CrewDuplicates extends React.Component {
         this.setState({ selectedIds }, () => { this._updateCommandItems(); });
     }
 
-    _dismissDupes() {
-        let promises = [];
-        this.state.selectedIds.forEach(id => {
-            promises.push(STTApi.sellCrew(id));
-        });
+    async _dismissDupes() {
+        try {
+            await STTApi.sellManyCrew(Array.from(this.state.selectedIds));
+            await STTApi.refreshRoster();
+        }
+        catch(err) {
+            console.warn(err);
+        }
 
-        return Promise.all(promises).catch((reason) => console.warn(reason)).then(() => STTApi.refreshRoster()).then(() => {
-            this.setState({
-                duplicates: this._loadDuplicates(),
-                selectedIds: new Set()
-            });
-        });
+        this.setState(this._loadDuplicates());
     }
 
     _dismissConfirmationDialog() {
@@ -109,11 +107,11 @@ export class CrewDuplicates extends React.Component {
             if (!crew) return;
 
             if ((crew.level === 1) && (crew.rarity === 1)) {
-                crewList.push(<span>
+                crewList.push(<span key={crew.crew_id}>
                     <b>{crew.name}</b> (level {crew.level}, rarity {crew.rarity})
 				</span>);
             } else {
-                crewList.push(<span style={{ color: 'red', fontWeight: 'bold' }}>
+                crewList.push(<span key={crew.crew_id} style={{ color: 'red', fontWeight: 'bold' }}>
                     <b>{crew.name}</b> (level {crew.level}, rarity {crew.rarity})
 				</span>);
             }
